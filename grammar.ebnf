@@ -1,0 +1,86 @@
+program              ::= {statement}
+
+statement            ::= variable_declaration_statement
+                       | assignment_statement
+                       | if_statement
+                       | while_statement
+                       | function_definition_statement
+                       | struct_definition_statement
+                       | return_statement;
+
+return_statement ::== 'return', expression;
+
+variable_declaration_statement ::= variable_declaration, ';';
+variable_declaration ::= identifier, ':', ['mut'], type, ['=', expression];
+
+assignment_statement ::= identifier, '=', expression, ';';
+
+if_statement ::= 'if', expression, 'begin', program, 'end', ['else', 'begin', program, 'end'];
+
+while_statement ::= 'while', expression, 'begin', program, 'end';
+
+function_definition_statement ::= identifier, '(', arg_list, ')', ':', type, 'begin', program, 'end'; 
+
+struct_definition_statement ::= identifier, ':', 'struct', 'begin', {variable_declaration_statement} ,'end';
+
+expression ::= logical_or_expression;
+logical_or_expression ::= logical_and_expression, {'|', logical_and_expression};
+logical_and_expression ::= relational_expr {'&', relational_expr};
+relational_expr ::= additive_expr, {relational_operator, additive_expr};
+additive_expr ::= multi_expr, {additive_operator, multi_expr};
+multi_expr: unary_expr, {multi_operator, unary_expr};
+unary_expr ::= ['-'], term;
+term ::=  literal
+		| identifier
+        | function_call;
+
+function_call ::= identifier, '(', [expression , (',', expression)], ')';
+
+arg_list ::= variable_declaration , {',', variable_declaration};
+type ::=  'int'
+        | 'float'
+        | 'str'
+        | 'null'
+        | identifier;
+
+literal ::=   int_literal
+            | float_literal
+            | str_literal;
+            | 'null'
+
+str_literal ::= ''',{all_chars_from_utf8_if_Apostrophe_is_escaped} , ''';
+
+int_literal ::=  '0'
+                 | digit_positive, {digit};
+
+float_literal ::= int_literal, ".", digit, { digit };
+
+digit ::= digit_positive 
+		| '0';
+
+digit_positive ::= '1' 
+				  | '2' 
+				  | '3' 
+				  | '4' 
+				  | '5' 
+				  | '6' 
+				  | '7' 
+				  | '8' 
+				  | '9';
+				  
+
+
+identifier ::= letter, {alphanumeric | '_'};
+alphanumeric ::= letter | digit;
+letter ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
+		 | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
+		 | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
+		 | 'V' | 'W' | 'X' | 'Y' | 'Z' | 'a' | 'b'
+		 | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i'
+		 | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p'
+		 | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w'
+		 | 'x' | 'y' | 'z' ;
+
+comment ::= '@', {all_exept_newline}, newline;
+newline ::=   '\n'
+            | '\r\n';
