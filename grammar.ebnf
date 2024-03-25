@@ -1,8 +1,8 @@
-program              ::= {statement};
+program             ::= {statement};
 
-block ::= 'begin', program, 'end';
+block 				::= 'begin', program, 'end';
 
-statement            ::= variable_declaration_statement
+statement           ::=  variable_declaration_statement
                        | assignment_statement
                        | if_statement
                        | while_statement
@@ -10,56 +10,61 @@ statement            ::= variable_declaration_statement
                        | type_definition_statement
                        | return_statement;
 
-return_statement ::== 'return', expression;
+return_statement 				::== 'return', expression;
 
-variable_declaration_statement ::= variable_declaration, ';';
-variable_declaration ::= identifier, ':', ['mut'], type, ['=', expression];
+variable_declaration_statement 	::= variable_declaration, ';';
+variable_declaration 			::= identifier, ':', ['mut'], type, ['=', expression];
 
-object_access ::= identifier
-assignment_statement ::= identifier, '=', expression, ';';
 
-if_statement ::= 'if', expression, block, ['else', block];
+assignment_statement 			::= object_access, '=', expression, ';';
 
-while_statement ::= 'while', expression, block;
+if_statement 					::= 'if', expression, block, ['else', block];
 
-function_definition_statement ::= identifier, '(', arg_list, ')', ':', type, block; 
+while_statement 				::= 'while', expression, block;
 
-type_definition_statement ::= identifier, ':', ['variant'], 'struct', 'begin', {variable_declaration_statement} ,'end';
+function_definition_statement 	::= identifier, '(', params, ')', ':', type, block; 
 
-expression ::= logical_or_expression;
-logical_or_expression ::= logical_and_expression, {'|', logical_and_expression};
-logical_and_expression ::= relational_expr {'&', relational_expr};
-relational_expr ::= additive_expr, {relational_operator, additive_expr};
-additive_expr ::= multi_expr, {additive_operator, multi_expr};
-multi_expr: unary_expr, {multi_operator, unary_expr};
-unary_expr ::= ['-'], term;
-term ::=  literal
-		| identifier
-        | function_call;
+type_definition_statement		::= identifier, ':', ['variant'], 'struct', 'begin', {variable_declaration_statement} ,'end';
+
+expression 				::= logical_or_expression;
+logical_or_expression 	::= logical_and_expression, {'|', logical_and_expression};
+logical_and_expression 	::= relational_expr {'&', relational_expr};
+relational_expr 		::= additive_expr, {relational_operator, additive_expr};
+additive_expr 			::= multi_expr, {additive_operator, multi_expr};
+multi_expr				::= unary_expr, {multi_operator, unary_expr};
+unary_expr 				::= ['-'], term;
+term 					::=	literal
+						  | object_access;
+
+ident_or_func 			::= identifier
+						  | function_call;
+
+object_access ::=  ident_or_func, {('.', object_access) | '[', expression, ']'}; ### ASK FOR HELP
 
 function_call ::= identifier, '(', [expression , (',', expression)], ')';
 
-arg_list ::= variable_declaration , {',', variable_declaration};
-type ::=  'int'
-        | 'float'
-        | 'str'
-        | 'null'
-        | identifier;
+params 		  ::= variable_declaration , {',', variable_declaration};
 
-literal ::=   int_literal
-            | float_literal
-            | str_literal;
-            | 'null'
+type 		  ::=  'int'
+        		| 'float'
+        		| 'str'
+        		| 'null'
+        		| identifier;
 
-str_literal ::= ''',{all_chars_from_utf8_if_Apostrophe_is_escaped} , ''';
+literal 	 ::=  int_literal
+            	| float_literal
+            	| str_literal;
+            	| 'null'
 
-int_literal ::=  '0'
+str_literal  ::= ''',{all_chars_from_utf8_if_Apostrophe_is_escaped} , ''';
+
+int_literal  ::=  '0'
                  | digit_positive, {digit};
 
 float_literal ::= int_literal, ".", digit, { digit };
 
-digit ::= digit_positive 
-		| '0';
+digit 		::= digit_positive 
+				| '0';
 
 digit_positive ::= '1' 
 				  | '2' 
@@ -73,7 +78,7 @@ digit_positive ::= '1'
 				  
 
 
-identifier ::= letter, {alphanumeric | '_'};
+identifier 	 ::= letter, {alphanumeric | '_'};
 alphanumeric ::= letter | digit;
 letter ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
 		 | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
