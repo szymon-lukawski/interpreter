@@ -455,31 +455,3 @@ l3 : Outer;
 l3.v = l2;
 
 print(l3.v.v.v);
-
-
-first_list : list(int);
-ref(first_list).push_back('1');
-ref(first_list).push_back(2);
-ref(first_list).push_back(4.0);
-
-print(first_list); @ 1 2 4
-print(ref(first_list)); @ 1 2 4
-
-suma : int = 0;
-i : int = 0;
-
-while i < ref(first_list).length 
-begin
-    print(ref(first_list)[i]);
-    i += 1;
-end
-
-copy_first_list = first_list;
-print(copy_first_list); @ 1 2 4
-
-while i < ref(copy_first_list).length 
-begin
-    print(ref(copy_first_list)[i]);
-    copy_first_list.pop(0)
-end
-
