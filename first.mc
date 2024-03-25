@@ -201,9 +201,6 @@ num1: mut int
 
 
 
-
-
-
 one_arg_function(arg1: int) : int 
 begin
     return arg1 + 1;
@@ -323,7 +320,7 @@ begin
     srednia: mut float;
 end
 
-pawel: Student;
+pawel: Student; @ ASK: czy zmienna niemutowalna dopuszcza posiadanie atrubutów mutowalnych w przypadku gdy ich nie zmieniamy?
 pawel.imie = 'Pawel';
 pawel.nazwisko = 'Kowalski';
 pawel.wiek = 21;
@@ -339,18 +336,150 @@ monika.wiek += 1;
 monika.srednia = 4.67;
 
 
+Leaf : struct
+begin
+    value : mut int
+end
+
+Node : struct
+begin
+    value : mut int; 
+    left_child : mut Node = null;
+    right_child : mut Node null;
+end
+
+BinaryTree : variant struct
+begin
+    l : Leaf;
+    n : Node;
+end
+
+ll : Leaf;
+lr : Leaf;
+rl : Leaf;
+rr : Leaf;
+ll.value = 1;
+lr.value = 2;
+rl.value = 3;
+rr.value = 4;
+
+l : Node;
+l.value = 5;
+l.left_child = ll;
+l.right_child = lr;
+
+r : Node;
+r.value = 6;
+r.left_child = rl;
+r.right_child = rr;
+
+my_tree : Node;
+my_tree.value = 7;
+my_tree.left_child = l;
+my_tree.right_child = r;
+
+traverse_binary_tree_in_order(tree: BinaryTree) : null
+begin
+    if curr_type(ref(tree)) == Leaf
+    begin
+        print(ref(tree).value);
+    end
+    else
+    begin
+        traverse_binary_tree_in_order(ref(ref(tree).left_child)); @ automatyczna konwersja z typu Node do typu BinaryTree
+        print(ref(tree).value);
+        traverse_binary_tree_in_order(ref(ref(tree).right_child));
+    end
+end 
+
+add_one_to_binary_tree(BinaryTree): null
+begin
+    if curr_type(ref(tree)) == Leaf
+    begin
+        ref(tree).value += 1;
+    end
+    else
+    begin
+        traverse_binary_tree_in_order(ref(ref(tree).left_child)); @ automatyczna konwersja z typu Node do typu BinaryTree
+        ref(tree).value += 1;
+        traverse_binary_tree_in_order(ref(ref(tree).right_child));
+    end
+end
+
+traverse_binary_tree_in_order(ref(my_tree)); @ Na ekranie: `1257634`
+add_one_to_binary_tree(my_tree);
+traverse_binary_tree_in_order(ref(my_tree)); @ Na ekranie: `1257634`
+add_one_to_binary_tree(ref(my_tree));
+traverse_binary_tree_in_order(ref(my_tree)); @ Na ekranie: `2368745`
+
+return_some_string() : str
+begin
+    return 'to jest string';
+end
+
+@ prezentacja dostepu do danych:
+print(return_some_string()[0]) @ prosty dostęp po indeksie
+
+jan : Student;
+pawel.imie = 'jan';
+
+return_some_student() : Student
+begin
+    return jan;
+end
+
+print(return_some_student().imie[0]) @ `j`
+
+Inner : struct
+begin
+    v : int;
+end
+
+Middle : struct
+begin
+    v : Inner;
+end
+
+Outer : struct
+begin
+    v : Middle;
+end
+
+l1 : Inner;
+l1.v = 123;
+
+l2 : Middle;
+l2.v = l1;
+
+l3 : Outer;
+l3.v = l2;
+
+print(l3.v.v.v);
 
 
-int_lub_str1: mut variant(int, str) = 1;
-print(int_lub_str1); @ '1' - 1 zamienione na '1'
-print(type(int_lub_str1.get_value())); @ int
+first_list : list(int);
+ref(first_list).push_back('1');
+ref(first_list).push_back(2);
+ref(first_list).push_back(4.0);
 
-int_lub_str2: mut variant(int, str) = '1';
-print(type(int_lub_str2.get_value())); @ str
+print(first_list); @ 1 2 4
+print(ref(first_list)); @ 1 2 4
 
+suma : int = 0;
+i : int = 0;
 
-@ Funkcja z argumentami przekazywanymi przez referencje (typy proste)
-@ Struktura
-@ Czy struktura musi być zdefiniowana wyzej niz jest uzywana skoro mamy leniwie parsować input?
-@ Wariant to ENUM? Czy po prostu to jest klasa przechowywyjąca wartość jednej z podanych klas?
-@ Funkcje z argumentami typu nieprostego - struktury + warianty
+while i < ref(first_list).length 
+begin
+    print(ref(first_list)[i]);
+    i += 1;
+end
+
+copy_first_list = first_list;
+print(copy_first_list); @ 1 2 4
+
+while i < ref(copy_first_list).length 
+begin
+    print(ref(copy_first_list)[i]);
+    copy_first_list.pop(0)
+end
+
