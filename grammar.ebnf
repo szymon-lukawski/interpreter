@@ -10,48 +10,48 @@ statement           ::=  variable_declaration_statement
                        | type_definition_statement
                        | return_statement;
 
-return_statement 				::== 'return', expression;
+return_statement                ::== 'return', expression;
 
-variable_declaration_statement 	::= variable_declaration, ';';
-variable_declaration 			::= identifier, ':', ['mut'], type, ['=', expression];
+variable_declaration_statement  ::= variable_declaration, ';';
+variable_declaration            ::= identifier, ':', ['mut'], type, ['=', expression];
 
 
-assignment_statement 			::= object_access, '=', expression, ';';
+assignment_statement            ::= object_access, '=', expression, ';';
 
-if_statement 					::= 'if', expression, block, ['else', block];
+if_statement                    ::= 'if', expression, block, ['else', block];
 
-while_statement 				::= 'while', expression, block;
+while_statement                 ::= 'while', expression, block;
 
-function_definition_statement 	::= identifier, '(', params, ')', ':', type, block; 
+function_definition_statement   ::= identifier, '(', params, ')', ':', type, block; 
 
-type_definition_statement		::= identifier, ':', ['variant'], 'struct', 'begin', {variable_declaration_statement} ,'end';
+type_definition_statement       ::= identifier, ':', ['variant'], 'struct', 'begin', {variable_declaration_statement} ,'end';
 
-expression 				::= logical_or_expression;
-logical_or_expression 	::= logical_and_expression, {'|', logical_and_expression};
-logical_and_expression 	::= relational_expr {'&', relational_expr};
-relational_expr 		::= additive_expr, {relational_operator, additive_expr};
-additive_expr 			::= multi_expr, {additive_operator, multi_expr};
-multi_expr				::= unary_expr, {multi_operator, unary_expr};
-unary_expr 				::= ['-'], term;
-term 					::=	literal
-						  | object_access;
+expression              ::= logical_or_expression;
+logical_or_expression   ::= logical_and_expression, {'|', logical_and_expression};
+logical_and_expression  ::= relational_expr {'&', relational_expr};
+relational_expr         ::= additive_expr, {relational_operator, additive_expr};
+additive_expr           ::= multi_expr, {additive_operator, multi_expr};
+multi_expr              ::= unary_expr, {multi_operator, unary_expr};
+unary_expr              ::= ['-'], term;
+term                    ::=	literal
+                          | object_access;
 
-ident_or_func 			::= identifier
-						  | function_call;
+ident_or_func           ::= identifier
+                          | function_call;
 
 object_access ::=  ident_or_func, {('.', object_access) | '[', expression, ']'}; ### ASK FOR HELP
 
 function_call ::= identifier, '(', [expression , (',', expression)], ')';
 
-params 		  ::= variable_declaration , {',', variable_declaration};
+params        ::= variable_declaration , {',', variable_declaration};
 
-type 		  ::=  'int'
+type          ::=  'int'
         		| 'float'
         		| 'str'
         		| 'null'
         		| identifier;
 
-literal 	 ::=  int_literal
+literal        ::=  int_literal
             	| float_literal
             	| str_literal;
             	| 'null'
@@ -63,7 +63,7 @@ int_literal  ::=  '0'
 
 float_literal ::= int_literal, ".", digit, { digit };
 
-digit 		::= digit_positive 
+digit          ::= digit_positive 
 				| '0';
 
 digit_positive ::= '1' 
@@ -78,7 +78,7 @@ digit_positive ::= '1'
 				  
 
 
-identifier 	 ::= letter, {alphanumeric | '_'};
+identifier   ::= letter, {alphanumeric | '_'};
 alphanumeric ::= letter | digit;
 letter ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
 		 | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
