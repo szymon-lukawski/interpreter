@@ -36,10 +36,12 @@ unary_expr              ::= ['-'], term;
 term                    ::=	literal
                           | object_access;
 
+object_access           ::=  idx_ident_or_func, {('.', idx_ident_or_func)};
+idx_ident_or_func       ::= ident_or_func, {'[', expression ,']'};
 ident_or_func           ::= identifier
                           | function_call;
 
-object_access ::=  ident_or_func, {('.', object_access) | '[', expression, ']'}; ### ASK FOR HELP
+
 
 function_call ::= identifier, '(', [expression , (',', expression)], ')';
 
