@@ -1,11 +1,15 @@
 # TKOM Projekt
-
 #### Szymon Łukawski
 
-## Temat Projektu:
-
-Tematem projektu jest implementacja interpretera własnego języka ogólnego przeznaczenia w `Python`-ie w którym:
- + niestandardowe typy danych: 
+Tematem projektu jest implementacja interpretera własnego języka ogólnego przeznaczenia w `Python`-ie.   
+### 1. Zarys:
+ + Typy wbudowane to:
+   + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite z przedziału [-99 999 999; +99 999 999]
+   + `float` - typ liczbowy zmiennoprzecinkowy z utratą precyzji. Podobny do typu float64 ze standardu `IEEE 754-1985`. Operacje na liczbach float zgodne z operacjami w języku python3.
+   + `str` - typ reprezentujący ciąg znaków.
+   + `null` - specjalny typ reprezentujący dokładnie jedną specjalną wartość `null`. Proba uzyskania wartości zmiennej niezainicjowanej zwraca błąd, a **nie** wartość `null`!
+ + Niestandardowe typy danych: 
+   + Język umozliwia tworzenie zlozonych typow danych przez programiste.
    + `struct` - struktura, typ złozony z agregacji innych typów.
      + dostęp do atrybutów instancji struktury po nazwie atrybutu: `nazwa_instancji.nazwa_atrybutu`
      + brak mozliwości przypisania nowej wartości do atrubutu mutowalnego gdy instancja struktury jest niemutowalna
@@ -19,18 +23,25 @@ Tematem projektu jest implementacja interpretera własnego języka ogólnego prz
    5. `*; /` - mnozenie, dzielenie
    6. `-` - przeciwieństwo (unarny)
    7. `()` - nawiasowanie
- + typy wbudowane to:
-   + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite z przedziału [-99 999 999; +99 999 999]
-   + `float` - typ liczbowy zmiennoprzecinkowy z utratą precyzji. Operacje na liczbach float zgodne z operacjami w języku python3.
-   + `str` - typ reprezentujący ciąg znaków.
- + komentarz do końca linii po znaku `@`
+ + komentarze:
+   +  znak `@` - komentarz do końca lini
+   +  koniec linii to znak `\n`
  + zmienne:
-    + typowanie jest **słabe**
+    + typowanie jest **słabe**. Szczegóły w sekcji **Słabe Typowanie**.
     + zmienne są domyślnie **niemutowalne**
     + argumenty funkcji przekazywane są domyślnie przez **wartość** 
-    + nowy zakres widoczności zmiennej jest wyznaczany przez zagniezdzone słowa kluczowe `begin` oraz `end`
+  + Zakresy widoczności obiektów:
+    + obiekty to: 
+      + zmienne
+      + struktury:
+        1. warianty
+      + funkcje
+    + domyślny jest zakres globalny
+    + nowe zakresy są ograniczone przez słowa kluczowe `begin` oraz `end`
+    + zakresy mogą być zagniezdzone
+    + zakres bardziej zagniezdzony "przysłania" nazwy z zakresow mniej zagniezdzonych
   
-#### Typowanie jest słabe zatem tabele konwersji typów wbudowanych:
+### 2. Słabe Typowanie
 
 ##### Pojęcia:
  + ***Current type*** - obecny typ pewnej wartości.
@@ -39,8 +50,8 @@ Tematem projektu jest implementacja interpretera własnego języka ogólnego prz
 
 Ogólne zasady konwersji:
  1. Jezeli ***Current type*** jest ten sam co ***Target type*** to nic nie rób.
- 2. Kazdy typ bazowy ma listę potencjalnych konwersji do innych typów bazowych:
-    1. `int` do `float` zawsze
+ 2. Kazdy typ wbudowany ma listę potencjalnych konwersji do innych typów wbudowanych:
+    1. `int` do `float` zawsze. Ta konwersja zachodzi bez utraty precyzji. 
     2. `int` do `str` zawsze
     3. `float` do `int` jeśli wartość po zaokrągleniu jest z przedziału `int`.  
     4. `float` do `str` zawsze - do doprecyzowania czy ciąg 64 zer i jedynek czy do siódmej cyfry rozwinięcia dziesiętnego.
