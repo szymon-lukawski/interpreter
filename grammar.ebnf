@@ -1,15 +1,15 @@
 program             ::= {statement};
 
-block 				::= 'begin', program, 'end';
-
 statement           ::=  variable_declaration_statement
                        | assignment_statement
                        | if_statement
                        | while_statement
                        | function_definition_statement
                        | type_definition_statement
-                       | return_statement;
+                       | return_statement
+					   | block;
 
+block 				            ::= 'begin', program, 'end';
 return_statement                ::== 'return', expression;
 
 variable_declaration_statement  ::= variable_declaration, ';';
@@ -66,31 +66,31 @@ int_literal  ::=  '0'
 float_literal ::= int_literal, ".", digit, { digit };
 
 digit          ::= digit_positive 
-				| '0';
+                | '0';
 
 digit_positive ::= '1' 
-				  | '2' 
-				  | '3' 
-				  | '4' 
-				  | '5' 
-				  | '6' 
-				  | '7' 
-				  | '8' 
-				  | '9';
+                 | '2' 
+                 | '3' 
+                 | '4' 
+                 | '5' 
+                 | '6' 
+                 | '7' 
+                 | '8' 
+                 | '9';
 				  
 
 
 identifier   ::= letter, {alphanumeric | '_'};
 alphanumeric ::= letter | digit;
-letter ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
-		 | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
-		 | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
-		 | 'V' | 'W' | 'X' | 'Y' | 'Z' | 'a' | 'b'
-		 | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i'
-		 | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p'
-		 | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w'
-		 | 'x' | 'y' | 'z' ;
+letter       ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
+               | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
+               | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
+               | 'V' | 'W' | 'X' | 'Y' | 'Z' | 'a' | 'b'
+               | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i'
+               | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p'
+               | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w'
+               | 'x' | 'y' | 'z' ;
 
-comment ::= '@', {all_exept_newline}, newline;
-newline ::=   '\n'
-            | '\r\n';
+comment      ::= '@', {all_exept_newline}, newline;
+newline      ::= '\n'
+              |  '\r\n';
