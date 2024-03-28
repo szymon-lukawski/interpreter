@@ -134,6 +134,82 @@ Przykład prezentuję zagniezdzenie typów oraz operator dostępowy do pól stru
 Próba odwołania się do nieistniejącego pola zwraca błąd `CellNameError: <nazwa nieistniejacego pola>`
 W tym przykladzie `janek.a` zwroci bląd `CellNameError: 'a'`
 
+```
+Punkt2D : struct
+begin
+  x : mut int = 0;
+  y : mut int = 0;
+end
+
+Punkt3D : struct
+begin
+  x : mut int = 0;
+  y : mut int = 0;
+  z : mut int = 0;
+end
+
+Punkt : variant struct
+begin
+    p2d : Punkt2D;
+    p3d : Punkt3D;
+end
+
+A : Punkt2D;
+B : Punkt3D;
+
+punkt : Punkt = A;
+wiadomosc : str;
+
+visit punkt
+begin
+    case Punkt2D
+    begin
+        wiadmosc = '[' + p2d.x + '; ' +p2d.y + ']';
+    end
+    case Punkt3D
+    begin
+        wiadmosc = '[' + p3d.x + '; ' +p3d.y + '; ' +p3d.z + ']';
+    end
+end
+print(wiadomosc);
+```
+Powyzszy program prezentuje wariant oraz instrukcję `visit`.
+W tym przykladzie zmienna wariantowa `punkt` przechowuje wartość typu `Punkt2D` zatem w instrukcji visit przechodzimy do odpowiadającemu temu typowi bloku (blok po `case Punkt2D`).
+Generacja wiadomości w tym przykladzie dotyka tematu operatorów, który będzie omawiany pózniej.
+Próba storzenia bloku `case <NazwaTypuNieistniejacaWDefinicjiRozwazanegoWariantu>` zwroci błąd `VariantTypeNotFound: '<NazwaTypuNieistniejacaWDefinicjiRozwazanegoWariantu>'`.
+Próba stworzenia powtarzajacego się bloku `case` zwroci błąd `CaseRedefinitionError: '<NazwaPowtarzającegoTypu>'` czyli w sytuacji:
+```
+visit punkt
+begin
+    case Punkt2D
+    begin
+        wiadmosc = '[' + p2d.x + '; ' +p2d.y + ']';
+    end
+    case Punkt2D @ CaseRedefinitionError: 'Punkt2D'
+    begin
+        wiadmosc = '[' + p3d.x + '; ' +p3d.y + '; ' +p3d.z + ']'; @ UndefinedIdentifierError : 'p3d'
+    end
+end
+```
+`@` - komentarz po końca linii. 
+
+### Komentarze:
+
+Tylko komentarze jednolinijkowe: `@`. 
+Znak `@` najlepiej stawiać albo na końcu wpisanej instrukcji albo w zupełnie nowej linii.
+```
+@ To sa przyklady dobrych komentarzy
+a : int = 12; @ To rowniez
+Czlowiek : struct @ To tez
+begin @ to tez
+end @ to tez
+```
+```
+a : int @ to są przyklady blednych kometarzy;
+Czlowiek @ To tez : struct 
+begin @ to tez
+end @ to tez
+```
 
 
 
