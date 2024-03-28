@@ -1,14 +1,55 @@
-# TKOM Projekt
-#### Szymon Łukawski
+# Projekt TKOM - Dokumentacja Wstępna
 
-Tematem projektu jest implementacja interpretera własnego języka ogólnego przeznaczenia w `Python`-ie.   
-### 1. Zarys:
- + Typy wbudowane to:
+Szymon Łukawski
+
+## Wstęp
+Tematem projektu jest implementacja interpretera własnego języka ogólnego przeznaczenia w `Python`-ie. 
+Zachowanie zmiennych:
++ typowanie jest **słabe** Typowanie**.
++ **domyślnie stałe**
++ przekazywane przez **wartość** 
+
+Dodakowo mozliwość definiowania struktur oraz struktury wariantowej - typy definiowane przez uzytkownika.
+## 1. Zarys:
+```
+print('Hello World!');
+```
+Wypisywanie literału.
+
+### Typy wbudowane to:
    + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite z przedziału [-99 999 999; +99 999 999]
    + `float` - typ liczbowy zmiennoprzecinkowy z utratą precyzji. Podobny do typu float64 ze standardu `IEEE 754-1985`. Operacje na liczbach float zgodne z operacjami w języku python3.
    + `str` - typ reprezentujący ciąg znaków.
-   + `null` - specjalny typ reprezentujący dokładnie jedną specjalną wartość `null`. Proba uzyskania wartości zmiennej niezainicjowanej zwraca błąd, a **nie** wartość `null`!
- + Niestandardowe typy danych: 
+   + `null_type` - specjalny typ reprezentujący dokładnie jedną specjalną wartość `null`. Proba uzyskania wartości zmiennej niezainicjowanej zwraca błąd, a **nie** wartość `null`!
+  
+#### Przykłady:
+Najpierw przykład a pózniej wyjaśnienie:
+  ```
+  calkowita          : int = 10;
+  zmiennoprzecinkowa : float = 3.14;
+  napis              : str = 'Ala ma kota.';
+  ```
+1. Przykład ilustrujący typowe definiowanie zmiennych.
+```
+x : int = 1;
+```
+2. Zmienna `x` jest niemutowalna. Próba zmiany jej wartości zwróci błąd `ReassignmentError`.
+```
+y : mut int = 1;
+y = 2;
+```
+3. Definiowanie zmiennej mutowalnej. Zmiana wartości nie zwraca błędu.
+```
+z1 : int;
+z1 = 0;
+z2 : mut int;
+z2 = 11; 
+```
+4. Zarówno zmienne mutowalne jak i niemutowalne mogą nie mieć przypisanej wartości. Próba nadania wartości zmiennej niemutowalnej nie zwraca błędu (o ile typ się zgadza. O kompatybilności typów pózniej).
+   Próba odczytania wartości zmiennej która nie ma nadanej wartości zwraca błąd, a nie wartość `null`. 
+
+
+### Niestandardowe typy danych: 
    + Język umozliwia tworzenie zlozonych typow danych przez programiste.
    + `struct` - struktura, typ złozony z agregacji innych typów.
      + dostęp do atrybutów instancji struktury po nazwie atrybutu: `nazwa_instancji.nazwa_atrybutu`
