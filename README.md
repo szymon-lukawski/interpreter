@@ -75,19 +75,19 @@ Znienna typu `str` z przypisaną wartością pustego stringa jest czym innym niz
 
 #### Przykłady:
 ```
-Person : struct
+Czlowiek : struct
 begin
-    name : str;
-    age  : mut int;
+    imie : str;
+    wiek  : mut int;
 end
-janek : Person;
-janek.name = 'Janek';
-janek.age = 20;
+janek : Czlowiek;
+janek.imie = 'Janek';
+janek.wiek = 20;
 ```
 Definicja struktury jest zawarta między słowami kluczowymi `begin` oraz `end`.
 Definicja struktury składa się z zera lub więcej definicji zmiennych - pól w tej strukturze.
-Zdefiniowanie zmiennej typu `Person` odbywa się analogicznie jak przy definicji zmiennych o typach wbudowanych.
-Próba zmiany wartości pola `age` w instancji struktury `Person` np. `janek.age=21;` zwróci błąd `ReassignmentError` - zmienna `janek` jest niemutowalna.
+Zdefiniowanie zmiennej typu `Czlowiek` odbywa się analogicznie jak przy definicji zmiennych o typach wbudowanych.
+Próba zmiany wartości pola `wiek` w instancji struktury `Czlowiek` np. `janek.wiek=21;` zwróci błąd `ReassignmentError` - zmienna `janek` jest niemutowalna.
 Zeby zmiana wartości pól w strukturze była mozliwa, zarówno sama zmienna musi być mutowalna jak i jej pola muszą być mutowalne.
 ```
 cos : Cos;
@@ -95,6 +95,45 @@ Cos : struct begin end;
 ```
 Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zatem zwróbu `UndefinedTypeError: 'Cos'`.
 Struktura moze nie miec zadnych pól.
+
+```
+Kod_pocztowy : struct
+begin
+  wartosc : str;
+end
+
+Adres : struct
+begin 
+  miasto : mut str;
+  kod_pocztowy : mut Kod_pocztowy;
+end
+
+Czlowiek : struct
+begin
+    imie : str;
+    wiek  : mut int;
+    adres : mut Adres;
+end
+
+janek : mut Czlowiek;
+janek.imie = 'Janek';
+janek.wiek = 20;
+
+kod_pocz_janka : Kod_pocztowy;
+kod_pocz_janka.wartosc = '00-111';
+
+adres_janka : Adres;
+adres_janka.miasto = 'Warszawa';
+adres_janka.kod_pocztowy = kod_pocztowy_janka;
+
+janek.adres = adres_janka;
+print('Kod pocztowy Janka to: ');
+print(janek.adres.kod_pocztowy.wartosc);
+```
+Przykład prezentuję zagniezdzenie typów oraz operator dostępowy do pól struktury: `<instancja_typu>.<nazwa_pola>`.
+Próba odwołania się do nieistniejącego pola zwraca błąd `CellNameError: <nazwa nieistniejacego pola>`
+W tym przykladzie `janek.a` zwroci bląd `CellNameError: 'a'`
+
 
 
 
