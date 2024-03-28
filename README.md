@@ -1,5 +1,4 @@
 # Projekt TKOM - Dokumentacja Wstępna
-
 Szymon Łukawski
 
 ## Wstęp
@@ -10,14 +9,21 @@ Zachowanie zmiennych:
 + przekazywane przez **wartość** 
 
 Dodakowo mozliwość definiowania struktur oraz struktury wariantowej - typy definiowane przez uzytkownika.
-## 1. Zarys:
+## 1. Zarys uruchomienia:
 ```
 print('Hello World!');
 ```
 Wypisywanie literału.
-
-### Typy wbudowane to:
-   + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite z przedziału [-99 999 999; +99 999 999]
+Po pobraniu repozytorium i zaintalowaniu zalezności z pliku `requirements.txt` nalezy w terminalu wpisać:
+```
+>python3 interpreter.py <nazwa_pliku>
+Hello World!
+>
+```
+Plik musi mieć rozszerzenie `.mc`. 
+Istnieje mozliwość stworzenia pliku konfiguracyjnego `config.json` który steruje parametrami interpretera m.i. limity dla typu `int`.
+## Typy wbudowane to:
+   + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite, domyślnie z przedziału [-99 999 999; +99 999 999]
    + `float` - typ liczbowy zmiennoprzecinkowy z utratą precyzji. Podobny do typu float64 ze standardu `IEEE 754-1985`. Operacje na liczbach float zgodne z operacjami w języku python3.
    + `str` - typ reprezentujący ciąg znaków.
    + `null_type` - specjalny typ reprezentujący dokładnie jedną specjalną wartość `null`. Proba uzyskania wartości zmiennej niezainicjowanej zwraca błąd, a **nie** wartość `null`!
@@ -33,21 +39,32 @@ Najpierw przykład a pózniej wyjaśnienie:
 ```
 x : int = 1;
 ```
-2. Zmienna `x` jest niemutowalna. Próba zmiany jej wartości zwróci błąd `ReassignmentError`.
+1. Zmienna `x` jest niemutowalna. Próba zmiany jej wartości zwróci błąd `ReassignmentError`.
 ```
 y : mut int = 1;
 y = 2;
 ```
-3. Definiowanie zmiennej mutowalnej. Zmiana wartości nie zwraca błędu.
+1. Definiowanie zmiennej mutowalnej. Zmiana wartości nie zwraca błędu.
 ```
 z1 : int;
 z1 = 0;
 z2 : mut int;
 z2 = 11; 
 ```
-4. Zarówno zmienne mutowalne jak i niemutowalne mogą nie mieć przypisanej wartości. Próba nadania wartości zmiennej niemutowalnej nie zwraca błędu (o ile typ się zgadza. O kompatybilności typów pózniej).
+1. Zarówno zmienne mutowalne jak i niemutowalne mogą nie mieć przypisanej wartości. Próba nadania wartości zmiennej niemutowalnej nie zwraca błędu (o ile typ się zgadza. O kompatybilności typów pózniej).
    Próba odczytania wartości zmiennej która nie ma nadanej wartości zwraca błąd, a nie wartość `null`. 
 
+```
+x : mut int;
+x = - 99999999;
+x = 99999999;
+```
+Oto domyślne limity dla zmiennej int. Limity mozna modyfikować plikiem konfiguracyjnym o nazwie `config.json` w katalogu w którym uruchomiony został interpreter. Próba stworzenia lierału integer spoza zakresu zgłasza błąd  `LiteralError`
+
+```
+y : str = '';
+```
+Znienna typu `str` z przypisaną wartością pustego stringa jest czym innym niz zmienna `str` bez przypisanej wartości.
 
 ### Niestandardowe typy danych: 
    + Język umozliwia tworzenie zlozonych typow danych przez programiste.
@@ -55,8 +72,34 @@ z2 = 11;
      + dostęp do atrybutów instancji struktury po nazwie atrybutu: `nazwa_instancji.nazwa_atrybutu`
      + brak mozliwości przypisania nowej wartości do atrubutu mutowalnego gdy instancja struktury jest niemutowalna
    + `variant` - tagged union:
-     + dostęp do atrybutów instancji wariantu po nazwie pola, analogicznie jak w przypadku struktur. Wyjątek gdy nazwa atrybutu istnieje ale wariant aktualnie okupowany przez inny typ.
- + zachowane są priorytety operacji matematycznych, logicznych oraz porównania:
+
+#### Przykłady:
+```
+Person : struct
+begin
+    name : str;
+    age  : mut int;
+end
+janek : Person;
+janek.name = 'Janek';
+janek.age = 20;
+```
+Definicja struktury jest zawarta między słowami kluczowymi `begin` oraz `end`.
+Definicja struktury składa się z zera lub więcej definicji zmiennych - pól w tej strukturze.
+Zdefiniowanie zmiennej typu `Person` odbywa się analogicznie jak przy definicji zmiennych o typach wbudowanych.
+Próba zmiany wartości pola `age` w instancji struktury `Person` np. `janek.age=21;` zwróci błąd `ReassignmentError` - zmienna `janek` jest niemutowalna.
+Zeby zmiana wartości pól w strukturze była mozliwa, zarówno sama zmienna musi być mutowalna jak i jej pola muszą być mutowalne.
+```
+cos : Cos;
+Cos : struct begin end;
+```
+Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zatem zwróbu `UndefinedTypeError: 'Cos'`.
+Struktura moze nie miec zadnych pól.
+
+
+
+### Operacje
+  zachowane są priorytety operacji matematycznych, logicznych oraz porównania:
    1. `|` - lub
    2. `&` - i
    3. `<=; <; ==; !=; >=; >` - operatory porównania
