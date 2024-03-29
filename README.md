@@ -72,6 +72,8 @@ Znienna typu `str` z przypisaną wartością pustego stringa jest czym innym niz
      + dostęp do atrybutów instancji struktury po nazwie atrybutu: `nazwa_instancji.nazwa_atrybutu`
      + brak mozliwości przypisania nowej wartości do atrubutu mutowalnego gdy instancja struktury jest niemutowalna
    + `variant` - tagged union:
+     + typy w wariancie nie mogą się powtarzać
+     + azeby przypisac wartosc do zmiennej wariantowej nalezy uzyć bezpośrednio jednego z typów składowych wariantu.
 
 #### Przykłady:
 ```
@@ -195,7 +197,8 @@ end
 
 ### Komentarze:
 
-Tylko komentarze jednolinijkowe: `@`. 
+Tylko komentarze jednolinijkowe: `@`.
+Koniec linii to znak `\n` 
 Znak `@` najlepiej stawiać albo na końcu wpisanej instrukcji albo w zupełnie nowej linii.
 ```
 @ To sa przyklady dobrych komentarzy
@@ -224,11 +227,11 @@ W ściśle określonych sytuacjach następuje automatyczna konwersja z typu do i
    + `str`: zawsze, reprezentowana jako zaokrąglona liczba dziesiętna, zawsze z literalnym rozwinięciem 7 cyfr po przecinku
    + `struct`: nigdy
    + `variant`: nigdy
- +  + Z `str` do:
-   + `int`: jezeli wartosc typu `str` zlozona ze znakow cyfr oraz cyfry z przedzialu dla `int`. Jeśli wartość typu `str` zawiera znak `.` mozliwa jest konwersja dwuetapowa, najpierw z typu `str` do float (jesli się uda), następnie z `float` do `int`.
-   + `float`: jezeli wartość typu `str` zlozona ze znakow cyfr i ewentualnie z kropki. Jezeli po kropce znajduje się wiecej niz 7 cyfr, kolejne cyfry nie mają wpływu na wartość liczby po konwersji.
-   + `struct`: nigdy
-   + `variant`: nigdy
+  + Z `str` do:
+     + `int`: jezeli wartosc typu `str` zlozona ze znakow cyfr oraz cyfry z przedzialu dla `int`. Jeśli wartość typu `str` zawiera znak `.` mozliwa jest konwersja dwuetapowa, najpierw z typu `str` do float (jesli się uda), następnie z `float` do `int`.
+     + `float`: jezeli wartość typu `str` zlozona ze znakow cyfr i ewentualnie z kropki. Jezeli po kropce znajduje się wiecej niz 7 cyfr, kolejne cyfry nie mają wpływu na wartość liczby po konwersji.
+     + `struct`: nigdy
+     + `variant`: nigdy
  + Konwersje z typów definiowanych przez uzytkownika za pomocą : `struct` oraz  `variant`, nie mają automatycznej konwersji do typów wbudowanych 
 ```
 print(1.0);       @ wyświetla na ekranie 7 cyfr rozwinięcia dziesiętnego: '1.0000000'
@@ -241,46 +244,65 @@ Generalne zasady dla operacji:
  + pierwszy argument operacji to argument tuz przed operatorem
  + typ pierwszego argumentu definiuje typ wyniku operacji - **Mogą być wyjątki!**
 
-Priorytety:
+Priorytety operacji posortowane od najmniejszego do najwyzszego:
    1. `|` - lub
    2. `&` - i
    3. `<=; <; ==; !=; >=; >` - operatory porównania
    4. `+; -` - dodawanie, odejmowanie
    5. `*; /` - mnozenie, dzielenie
    6. `-` - przeciwieństwo (unarny)
-   7. `()` - nawiasowanie
- + komentarze:
-   +  znak `@` - komentarz do końca lini
-   +  koniec linii to znak `\n`
- + zmienne:
-    + typowanie jest **słabe**. Szczegóły w sekcji **Słabe Typowanie**.
-    + zmienne są domyślnie **niemutowalne**
-    + argumenty funkcji przekazywane są domyślnie przez **wartość** 
-  + Zakresy widoczności obiektów:
-    + obiekty to: 
-      + zmienne
-      + struktury:
-        1. warianty
-      + funkcje
-    + domyślny jest zakres globalny
-    + nowe zakresy są ograniczone przez słowa kluczowe `begin` oraz `end`
-    + zakresy mogą być zagniezdzone
-    + zakres bardziej zagniezdzony "przysłania" nazwy z zakresow mniej zagniezdzonych
+   7. `.` - operator dostepu do pola w strukturze
+   8. `()` - nawiasowanie
+
+Przykłady:
+
+
+### Funkcje
+    + argumenty do funkcji przekazywane są przez **wartość** 
+    + 
+### Zakresy widoczności obiektów:
+  + obiekty to: 
+    + zmienne
+    + struktury
+    + warianty
+    + funkcje
+  + Rózne rodzaje obiektow mogą mieć tą samą nazwę w tym samym zakresie
+  ```
+  A : int;
+  A : struct begin end
+  A : variant struct begin A : int; end
+  A() : int begin return 0; end @ definicja funkcji o nazwie A 
+  ```
+  + Funkcje o róznej liczbie parametrow równiez mogą miec tą samą nazwę:
+```
+A() : int begin return 0; end
+A(param1: int) : int begin return 1; end
+A(param1: int, param2: int) : int begin return 2; end
+```
+  + domyślny jest zakres globalny
+  + obiekty nie mogą mieć nazwy ze zbioru ***słów kluczowych***.
+  + nowe zakresy są ograniczone przez słowa kluczowe `begin` oraz `end` - ***Wyjątek*** w instrukcji `visit` widoczna jest dodatkowo nazwa z definicji wariantu odpowiadająca typowi z przypadku `case` 
+```
+W : variant struct
+begin
+a : int;
+b : str;
+end
+
+c : W = 1;
+
+visit c
+begin
+    case int
+    begin
+        print('Widoczna zmienna a');
+    end
+    case str
+    begin
+        print('Widoczna zmienna b');
+    end
+end
+```
+  + zakresy mogą być zagniezdzone
+  + zakres bardziej zagniezdzony "przysłania" nazwy z zakresow mniej zagniezdzonych
   
-### 2. Słabe Typowanie
-
-##### Pojęcia:
- + ***Current type*** - obecny typ pewnej wartości.
- + ***Target type*** - typ do którego interpreter zamierza skonwertować wartość  typu ***current type***.
-
-
-Ogólne zasady konwersji:
- 1. Jezeli ***Current type*** jest ten sam co ***Target type*** to nic nie rób.
- 2. Kazdy typ wbudowany ma listę potencjalnych konwersji do innych typów wbudowanych:
-    1. `int` do `float` zawsze. Ta konwersja zachodzi bez utraty precyzji. 
-    2. `int` do `str` zawsze
-    3. `float` do `int` jeśli wartość po zaokrągleniu jest z przedziału `int`.  
-    4. `float` do `str` zawsze - do doprecyzowania czy ciąg 64 zer i jedynek czy do siódmej cyfry rozwinięcia dziesiętnego.
-    5. `str` do `float` gdy wartość da się zinterpretować jak `float` analogicznie jak w gramatyce języka. Gdy wartość nie ma znaku `.` konwersja następuję pośrednio ze `str` do `int`, a następnie z `int` do `float`
-    6. `str` do `int` gdy wartość da się zinterpretować jak `int` analogicznie jak w gramatyce języka. Gdy wartość ma znak `.` interpretujemy jak `float` i konwertujemy do `int` jeśli się da.
- 3. TODO: specjalne funckje konwersji w definicji struktur.
