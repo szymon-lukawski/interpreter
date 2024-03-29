@@ -281,9 +281,26 @@ Priorytety operacji posortowane od najmniejszego do najwyzszego:
    5. `*; /` - mnozenie, dzielenie
    6. `-` - przeciwieństwo (unarny)
    7. `.` - operator dostepu do pola w strukturze
-   8. `()` - nawiasowanie
+
+'|' oraz '&' - zwraca wartość typu `int` 0 albo 1. Następuje automatyczna konwersja pierwszego jak i drugiego argumentu na typ `int` i następnie wykonywana jest operacja.
+
+Pierwszy argument to `str`:
+ + `+` - konkatenacja
+ + `-` - usunięcie pierwszego wystąpienia wartosci drugiego argumentu z pierwszego
+ + `==` oraz `!=` - porównanie znak po znaku
+ + `*` jeśli drugi argument jest typu `int` to powtórzenie sekwencji czyli `'ABC'*3` to `'ABCABCABC'`, jeśli drugi argument jest typu `str` to iloczyn kartezjański czyli `'AB'*'12'` to `'A1A2B1B2'`
+ + `/` usuniecie kazdego wystapienia wartosci drugiego argumentu z pierwszego
+
+Tylko struktury oraz warianty mają dostęp do operatora `.`
+
+Dla typów `int` oraz `float` operacje porównania, dodawanie, odejmowanie, mnozenie, przeciwieństwo - **Zgodnie z intuicją**
+
+Gdy pierwszy argument jest typu `int` to dzielenie jest całkowite
+
+
 
 Przykłady:
+
 
 
 ### Funkcje
@@ -414,6 +431,7 @@ print(x); @ 1
   + odwołania się do nieistniejącego pola w strukturze
   + niestniejaca nazwa typu w waraincie podczas instrukcji `visit`
   + powtórka typu w przypadkach w instrukcji `visit`
+  + niewspierana operacja, np `'abb' < 'abc'`
   
 + błędy podczas wykonania:
   + dzielenie przez zero
