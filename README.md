@@ -172,7 +172,7 @@ begin
   z : mut int = 0;
 end
 
-Punkt : variant struct
+Punkt : variant
 begin
     p2d : Punkt2D;
     p3d : Punkt3D;
@@ -188,11 +188,11 @@ visit punkt
 begin
     case Punkt2D
     begin
-        wiadmosc = '[' + p2d.x + '; ' +p2d.y + ']';
+        wiadmosc = '[' + p2d.x + '; ' + p2d.y + ']';
     end
     case Punkt3D
     begin
-        wiadmosc = '[' + p3d.x + '; ' +p3d.y + '; ' +p3d.z + ']';
+        wiadmosc = '[' + p3d.x + '; ' + p3d.y + '; ' + p3d.z + ']';
     end
 end
 print(wiadomosc);
@@ -301,6 +301,49 @@ Gdy pierwszy argument jest typu `int` to dzielenie jest całkowite, gdy float to
   + istnieją funkcje wbudowane:
     + `print(msg : str) : null begin ... end` - funkcja do wyswietlania typu `str`
     + `read() : str begin ... end` - funkcja do wczytywania wartości typu `str` od uzytkownika.
+  + funkcje mozna definiowac w ciele innych funkcji
+```
+add(arg1: int, arg2: int) : int
+begin
+  add_sub_function(arg1: int, arg2: int) : int
+  begin
+    return arg1 + arg2;
+  end
+  
+  add(arg1: int, arg2: int) : int
+  begin
+    return add_sub_function(arg1, arg2);
+  end
+
+  return add(arg1, arg2);
+end
+```
+W tym przykładzie nie ma rekurencji. Funkcja wewnętrzna add przysłania nazwę funkcji add z odpowiadającymi sobie parametrami. 
+  + funkcje są 'widoczne' od momentu jej zadeklarowania:
+```
+@ Tutaj nie widać funkcji add
+add(arg1: int, arg2: int) : int
+begin
+  @ od tego momentu widać funkcję add
+  return arg1 + arg2;
+end
+@ tutaj tez widac funkcje add
+```
+```
+factorial(n : int) : int 
+begin
+  if n < 0
+  begin
+    return -1;
+  end
+  if n <= 1
+  begin
+    return 1;
+  end
+  return n*factorial(n-1);
+end
+
+```
   + argumenty do funkcji przekazywane są przez **wartość**: 
 ```
 add(a : int, b : int) : int
@@ -341,10 +384,11 @@ begin
   print(wiadomosc);
 end
 ```
-  + Jezeli w instrukcje w ciele funkcji się skończą to zwracany jest `null`. Jeśli funkcja powinna zwrócić inny typ to nastąpi błąd `TypeError: 'null_type' is not '<nazwa typu zadeklarowany w definicji funkcji>'`
+  + Jezeli instrukcje w ciele funkcji się skończą to zwracany jest `null`. Jeśli funkcja powinna zwrócić inny typ to nastąpi błąd `TypeError: 'null_type' is not '<nazwa typu zadeklarowany w definicji funkcji>'`
 
 
 ### Zakresy widoczności obiektów:
+  + 
   + obiekty to: 
     + zmienne
     + struktury
