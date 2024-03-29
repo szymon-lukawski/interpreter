@@ -295,13 +295,7 @@ Tylko struktury oraz warianty mają dostęp do operatora `.`
 
 Dla typów `int` oraz `float` operacje porównania, dodawanie, odejmowanie, mnozenie, przeciwieństwo - **Zgodnie z intuicją**
 
-Gdy pierwszy argument jest typu `int` to dzielenie jest całkowite
-
-
-
-Przykłady:
-
-
+Gdy pierwszy argument jest typu `int` to dzielenie jest całkowite, gdy float to dzielenie jest zgodnie z intuicją.
 
 ### Funkcje
   + istnieją funkcje wbudowane:
