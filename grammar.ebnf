@@ -10,15 +10,20 @@ statement           ::=  variable_declaration_statement
 					   | block
                        | comment;
 
+
+visit_statement ::= 'visit', object_access, 'begin', {case_section} ,'end';
+
+case_section ::= 'case', type, 'begin', program,'end';
+
 block 				            ::= 'begin', program, 'end';
-return_statement                ::== 'return', expression, ';';
+return_statement                ::== 'return', [expression], ';';
 
 variable_declaration_statement  ::= variable_declaration, ';';
 variable_declaration            ::= identifier, ':', ['mut'], type, ['=', expression];
 
 
 
-assignment_statement            ::= object_access, '=', expression, ';';
+assignment_statement            ::= identifier, {'.', identifier}, '=', expression, ';';
 
 if_statement                    ::= 'if', expression, block, ['else', block];
 
@@ -35,14 +40,18 @@ named_type_statement ::= identifier, ':', type, ';'
 expression              ::= logical_or_expression;
 logical_or_expression   ::= logical_and_expression, {'|', logical_and_expression};
 logical_and_expression  ::= relational_expr {'&', relational_expr};
-relational_expr         ::= additive_expr, {relational_operator, additive_expr};
+relational_expr         ::= additive_expr, [relational_operator, additive_expr];
 additive_expr           ::= multi_expr, {additive_operator, multi_expr};
 multi_expr              ::= unary_expr, {multi_operator, unary_expr};
 unary_expr              ::= ['-'], term;
 term                    ::=	literal
-                          | object_access;
+                          | object_access
+                          | '(', expression, ')';
 
-object_access           ::=  identifier, {('.', identifier)};
+object_access           ::=  func_or_ident, {('.', func_or_ident)};
+
+func_or_ident           ::= function_call | identifier;
+
 
 function_call ::= identifier, '(', [expression , (',', expression)], ')';
 
