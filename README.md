@@ -221,19 +221,26 @@ end
 
 Tylko komentarze jednolinijkowe: `@`.
 Koniec linii to znak `\n` 
+Nie mozna stawiac komentarzy w ciele definicji struktury.
 Znak `@` najlepiej stawiać albo na końcu wpisanej instrukcji albo w zupełnie nowej linii.
 ```
 @ To sa przyklady dobrych komentarzy
 a : int = 12; @ To rowniez
-Czlowiek : struct @ To tez
-begin @ to tez
-end @ to tez
+@ to jest poprawny komentarz
+Czlowiek : struct
+begin
+end @ to jest poprawny komentarz
+@ to jest poprawny komentarz
 ```
 ```
 a : int @ to są przyklady blednych kometarzy;
 Czlowiek @ To tez : struct 
 begin @ to tez
 end @ to tez
+
+Czlowiek : struct @ To tez
+begin @ to tez
+end @ to jest poprawny komentarz
 ```
 
 
@@ -391,14 +398,14 @@ print(x); @ 1
 
 ### Błędy
 + Po natrafieniu na błąd, przerywamy program
-+ LexerError:
++ błędy zwracane przez lekser:
   + za długie literały
   + za długie nazwy identyfikatora
   + uzycie niedozwolonego znaku, np emotki
-+ SyntacticError:
++ błędy zwracane przez parser:
   + niedopasowane nawiasy
   + niedopasowane `begin`, `end`
-+ SemanticError:
++ błędy semantyczne:
   + funkcja nieznaleziona, np jesli w wywołaniu podamy złą ilośc argumentów 
   + Niezgodność typów 
   + Błąd konwersji 
@@ -408,13 +415,16 @@ print(x); @ 1
   + niestniejaca nazwa typu w waraincie podczas instrukcji `visit`
   + powtórka typu w przypadkach w instrukcji `visit`
   
-+ RunTimeError:
++ błędy podczas wykonania:
   + dzielenie przez zero
   + próba uzyskania wartosci zmiennej niezainicjowanej
   
 + Pozycja błędu, numer wiersza, pozycja w wierszu - pozycja pierwszego znaku fragmentu kodu generującego błąd
 
 ### Testowanie
+Testy jednostkowe do kadej funkcji.
+Testy integracyjne do sprawdzenia współpracy między modułami projektu.
+Testy na całych złozonych programach.
   
 ### Gramatyka w EBNF 2.0:
 ```
@@ -429,7 +439,7 @@ statement           ::=  variable_declaration_statement
                        | return_statement
                        | block;
 
-block 				            ::= 'begin', program, 'end';
+block                           ::= 'begin', program, 'end';
 return_statement                ::== 'return', expression, ';';
 
 variable_declaration_statement  ::= variable_declaration, ';';
@@ -449,7 +459,7 @@ type_definition_statement       ::= struct_def | variant_def;
 struct_def                      ::= identifier, ':', 'struct', 'begin', {variable_declaration_statement} ,'end';
 variant_def                     ::= identifier, ':', 'variant', 'begin', {named_type_statement} ,'end';
 
-named_type_statement ::= identifier, ':', type, ';'
+named_type_statement            ::= identifier, ':', type, ';'
 
 expression              ::= logical_or_expression;
 logical_or_expression   ::= logical_and_expression, {'|', logical_and_expression};
