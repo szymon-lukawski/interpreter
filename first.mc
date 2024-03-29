@@ -1,8 +1,3 @@
-@ typowanie słabe
-@ zmienne są domyślnie niemutowalne tzn aeby zmienna była mutowalna trzeba to zaznaczyć
-@ Argumenty funkcji są przekazywane domyślnie przez wartość a nie przez referencję
-
-
 x0: int; @ Deklaracja istnienia zmiennej statycznej ale bez przypisywania wartości
 x0 = 1;
 x1: int;
@@ -18,23 +13,20 @@ x5 = '1.0';
 x6: int;
 x6 = '1.5';
 x7: int;
-x7 = '1.5a'; @ TypeCastError: "Can not automatically cast type: `str` into type: `int` ->  x7 = '1.5a';"
-
-
+@ x7 = '1.5a'; @ TypeCastError: [16, 6] : `str` to `int` : '1.5a'
 
 x1: int = 1; @ Najpopularniejsze przypisanie stałej właściwego typu do zmiennej statycznej
-x3: int = 1.0; @ Automatyczna konwersja z typu float do int i przypisanie wartości 1 do zmiennej statycznej
+x3: int = 1.0; @ Automatyczna konwersja z typu float do int i przypisanie wartości 1 do zmiennej niemutowalnej
 x4: int = 1.4; @ - || -
 x5: int = 1.5; @ to samo co `x5:int = 2;`
 x6: int = 1.6; @ - || - 
-x7: int = 1.23e3: @ LexerError: "Invalid token 'e' in numeric literal"
+@ x7: int = 1.23e3 @ LexerError
 x2: int = '1'; @ Automatyczna konwersja z typu str do int i przypisanie wartości 1 do zmiennej statycznej
 x2: int = '1.0'; @ Automatyczna konwersja z typu str do float do int i przypisanie wartości 1 do zmiennej statycznej
 x2: int = '1.4'; @ Automatyczna konwersja z typu str do float do int i przypisanie wartości 1 do zmiennej statycznej
-x2: int = '1.5'; @ Automatyczna konwersja z typu str do float do int i przypisanie wartości 2 do zmiennej statycznej
-x2: int = '1.6'; @ Automatyczna konwersja z typu str do float do int i przypisanie wartości 2 do zmiennej statycznej
+x2: int = '1.6'; @ Automatyczna konwersja z typu str do float do int i przypisanie wartości 1 do zmiennej statycznej
 
-x1 = 1; @ ReassignmentError: "Cannot reassign a value to a non mutable variable. Variable `x1` is of type: `int` not `mut int`"
+x1 = 1; @ ReassignmentError
 
 x8: mut int = 1;
 x9: mut int = '1';
@@ -42,57 +34,52 @@ x10: mut int = '1.0';
 x11: mut int = '1.4';
 x12: mut int = '1.5';
 x13: mut int = '1.6';
-x14: mut int = '1.6a'; @ TypeCastError: "Can not automatically cast `1.6a` into type: `mut int` "
-x15: mut int = 'a1.6'; @ TypeCastError: "Can not automatically cast `a1.6` into type: `mut int` "
-x16: mut int = 1.23e3; @ LexerError: "Invalid token 'e' in numeric literal"
+x14: mut int = '1.6a'; @ TypeCastError: `str` to `int` : '1.6a'
+x15: mut int = 'a1.6'; @ TypeCastError: `str` to `int` : 'a1.6'
+x16: mut int = 1.23e3; @ LexerError
 
 
 x7: mut int = 1;
 x7 = 1;
 x7 = 2; @ Da się przypisać wartość wielokrotnie do zmiennej mutowalnej
 x7 = 99999999; @ Arbitralnie wybrany limit (W pythonie nie ma to duzego znaczenia)
-x7 = 100000000; @ OverflowError: "Trying to assign not supported value to variable: `x7=100000000`"
+x7 = 100000000; @ OverflowError
 
 @ ------------------------------------
 
 y1: float = 1.0;
-y1: float = 1.0; @ RedefinitionError: "`y1` has been already defined in this scope"
+y1: float = 1.0; @ RedefinitionError: variable `y1` has been already defined in this scope
 y2: float = 1; @ int -> float
 y3: float = '1'; @ str -> int -> float
 y4: float = 1.4; @ float 
 y5: float = '1.4'; @ str -> float
 y6: float = '1.0'; @ str -> float (value convertable to int)
-y7: float = '1.6a'; @ TypeCastError: "Can not automatically cast `1.6a` into type: `float` "
-y8: float = 1.23e3; @ LexerError: "Invalid token 'e' in numeric literal"
+y7: float = '1.6a'; @ TypeCastError: `str` to `float`
+y8: float = 1.23e3; @ LexerError
 y9: float = 0.1 + 0.2;
 y10: float = 0.1 + '0.2';
-y11: float = '0.1' + '0.2';
-y12: float = '0.1' + 0.2;
-y13; float = 1 * 0.2;
-y14: float = 0.2 * 1;
-y15: float = 0.2 * 0.2;
-y16: float = 2 * 0.2;
-y17: float = 0.2 * 2;
-y18: float = power(10.0, 308);
-y18: float = power(10.0, 309); @ OverflowError
+y11: float = '0.1' + '0.2'; @ TypeCastError: `str` to `float` : '0.10.2'
+y12: float = '0.1' + 0.2;   @ TypeCastError: `str` to `float` : '0.10.2000000'
+y13; float = 1 * 0.2; @ 0.0
+y14: float = 0.2 * 1; @ 0.2
+y15: float = 0.2 * 0.2; @ 0.04
+y16: float = 2 * 0.2; @ 0
+y17: float = 0.2 * 2; @ 0.4
 
 y19: mut float = 1;
 y19 = 1.0;
 y19 = '1.0';
 y19 = '1';
 y19 = '1.4';
-y19 = '1.6a'; TypeCastError: "Can not automatically cast `1.6a` into type: `float`"
-y19 = 1.23e3; @ LexerError: "Invalid token 'e' in numeric literal"
-y19 = '10.0*5'; TypeCastError: "Can not automatically cast `10.0*5` into type: `float`"
-y19 = 99999999 + 1;  OverflowError
-y19 = '99999999' + 1;  OverflowError
-y19 = 99999999.0 + 1; To jest ok, float + int -> float + float
-y19 = '99999999.0' + '1'; To jest ok, str + str -> konkatenacja i pózniej konwersja na float (99999999.01)
-y19 = 1 + 99999999;  OverflowError
-y19 = 1 + '99999999';  OverflowError
-y19 = 1 + 99999999.0; To jest ok, int + float -> float + float
-y19 = '1'+'99999999.0'; To jest ok, str + str -> konkatenacja i pózniej konwersja na float (199999999.0)
-y19 = ⅓; LexerError: "Invalid token `⅓` in numeric literal"
+y19 = 99999999 + 1;       @ OverflowError
+y19 = '99999999' + 1;     @  '999999991' OverflowError
+y19 = 99999999.0 + 1;     @ To jest ok, float + int -> float + float
+y19 = '99999999.0' + '1'; @ To jest ok, str + str -> konkatenacja i pózniej konwersja na float (99999999.01)
+y19 = 1 + 99999999;       @  OverflowError
+y19 = 1 + '99999999';     @  OverflowError
+y19 = 1 + 99999999.0;     @ OverflowError
+y19 = '1'+'99999999.0';  @ To jest ok, str + str -> konkatenacja i pózniej konwersja na float (199999999.0)
+y19 = ⅓; @ LexerError
 y19 = '⅓'; TypeCastError: "Can not automatically cast `⅓` into type: `float`
 
 s0: str = '';
@@ -276,33 +263,6 @@ begin
     end
 end
 
-@ int + int <=> dodawanie intów
-@ float + float <=> dodawanie liczb float
-@ int + float <=> float + float
-@ int + str <=> zamieniasz str na liczbe jesli sie da
-@ float + int <=> float + float
-@ float + str <=> zamieniasz str na liczbe jesli sie da
-@ str + str <=> konkatenacja stringow
-@ str + int <=> potraktuj pierwszy znak jak liczbe i dodaj do niej int-a. nastepnie potraktuj jak stringa
-@ str + float <=> str + int
-
-@ int - int <=> odejmowanie intów
-@ float - float <=> odejmowanie liczb float
-@ int - float <=> float - float
-@ int - str <=> zamieniasz str na liczbe jesli sie da
-@ float - int <=> float - float
-@ float - str <=> zamieniasz str na liczbe jesli sie da
-@ str - str <=> usun pierwsze wystapienie drugiego stringa z pierwszego.
-@ str - int <=> potraktuj pierwszy znak jak liczbe i odejmij do niej int-a. nastepnie potraktuj jak stringa
-@ str - float <=> str - int
-
-@ int * int <=> mnozenie intow
-@ float * float <=> mnozenie floatow
-@ str * int <=> wynik to zwielokrotnienie stringa int razy
-@ str * float <=> str * int
-@ str * str <=> zamien drugiego stringa na liczbe, jesli nie to TypeCastErrort
-@ float * int <=> float * float
-@ float * str <=> zamien string na liczbe jesli sie da, jesli nie to TypeCastError
 
 
 NazwaStruktury: struct
@@ -346,6 +306,7 @@ begin
     value : mut int; 
     left_child : mut Node = null;
     right_child : mut Node null;
+
 end
 
 BinaryTree : variant struct
@@ -378,19 +339,35 @@ my_tree.value = 7;
 my_tree.left_child = l;
 my_tree.right_child = r;
 
+variant<int, float> w;
+w = 1.1;
+get<int>(w);
+int* i = get_if<int>(&w) 
+
+
+
+
 traverse_binary_tree_in_order(tree: BinaryTree) : null
 begin
-    if curr_type(ref(tree)) == Leaf
+    if curr_type(tree) == Leaf @ TODO
     begin
-        print(ref(tree).value);
+        print(tree.n.value);
     end
     else
     begin
         traverse_binary_tree_in_order(ref(ref(tree).left_child)); @ automatyczna konwersja z typu Node do typu BinaryTree
-        print(ref(tree).value);
+        print(tree.l.value);
         traverse_binary_tree_in_order(ref(ref(tree).right_child));
     end
 end 
+
+a : mut int = 1;
+b : ref mut int = ref(a);
+
+b = 2;
+
+
+
 
 add_one_to_binary_tree(BinaryTree): null
 begin
@@ -405,6 +382,7 @@ begin
         traverse_binary_tree_in_order(ref(ref(tree).right_child));
     end
 end
+
 
 traverse_binary_tree_in_order(ref(my_tree)); @ Na ekranie: `1257634`
 add_one_to_binary_tree(my_tree);
