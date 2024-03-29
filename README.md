@@ -258,8 +258,49 @@ Przykłady:
 
 
 ### Funkcje
-    + argumenty do funkcji przekazywane są przez **wartość** 
-    + 
+   + argumenty do funkcji przekazywane są przez **wartość**: 
+```
+add(a : int, b : int) : int
+begin
+  a = 100;
+  b = 101;
+  return a + b;
+end
+
+x : int = 0;
+y : int = 1;
+
+print(x); 
+print(y);
+c : int = add(x, y);
+print(x); 
+print(y); @ to samo co przed wywolaniem funkcji
+```
+   + Definicja funkcji w ogólności:
+```
+NazwaFunkcji : NazwaTypuZwracanejWartości
+begin
+<Ciało Funkcji>
+end
+```  
+  + Jezeli funkcja nie zwraca wartości nalezy w miejsce nazwy typu zwracanej wartosci wpisac specjalny typ `null_type`
+```
+wypisz_na_ekran(wiadomosc: str) : null_type 
+begin
+  print(wiadomosc);
+  return null;
+end
+```
+to samo co:
+```
+wypisz_na_ekran(wiadomosc: str) : null_type 
+begin
+  print(wiadomosc);
+end
+```
+  + Jezeli w instrukcje w ciele funkcji się skończą to zwracany jest `null`. Jeśli funkcja powinna zwrócić inny typ to nastąpi błąd `TypeError: 'null_type' is not '<nazwa typu zadeklarowany w definicji funkcji>'`
+
+
 ### Zakresy widoczności obiektów:
   + obiekty to: 
     + zmienne
