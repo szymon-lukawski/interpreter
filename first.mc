@@ -108,7 +108,7 @@ msg += '.'
 
 @ -----------------------------------------
 
-@ Język ma funkcje wbudowane (np: read, print, ref, power...):
+@ Język ma funkcje wbudowane (np: read, print):
 @ if oraz prezentacja zakresów oraz wartosc logiczna 1, uruchomienie funckji print
 if 1
 begin
@@ -121,8 +121,8 @@ begin
     end
 end
 @ Output:
-@ 0.1
-@ 0.2
+@ 0.1000000
+@ 0.2000000
 
 @ Definicja funckji
 nazwa_mojej_funckji_akceptuje_podkreslniki_i_cyfry_od_0_do_9(argument_1: int, argument_2: float): int
@@ -134,92 +134,43 @@ end
 
 @ Nazwa nie moze miec wiecej niz 60 (arbitralna liczba) znaków:
 
-ta_nazwa_funkcji_ma_ponad_60_znakow_wiec_jest_nieakceptowalna(): int  @ LexerError: "Identifier: `ta_nazwa_funkcji_ma_ponad_60_znakow_wiec_jest_nieakceptowalna` has more that 60 characters!"
+ta_nazwa_funkcji_ma_ponad_60_znakow_wiec_jest_nieakceptowalna(): int  
 begin
     return 0;
-end
+end @ IdentifierTooLongError
 
 @ dotyczy to wszystkich `identifier` - identyfikatorow:
-ta_nazwa_zmiennej_ma_ponad_60_znakow_wiec_jest_nieakceptowalna: int = 0; @ LexerError: "Identifier: `ta_nazwa_zmiennej_ma_ponad_60_znakow_wiec_jest_nieakceptowalna` has more that 60 characters!"
+ta_nazwa_zmiennej_ma_ponad_60_znakow_wiec_jest_nieakceptowalna: int = 0; @ IdentifierTooLongError
 
-to_wywolanie_funkcji_ma_ponad_60_znakow_i_taka_funkcja_nie_istnieje; LexerError: "Identifier: `to_wywolanie_funkcji_ma_ponad_60_znakow_i_taka_funkcja_nie_istnieje` has more that 60 characters!"
+to_wywolanie_funkcji_ma_ponad_60_znakow_i_taka_funkcja_nie_istnieje; @ @ IdentifierTooLongError
 
 
-change_first_letter_to_next(string_to_change: str): null
+null_function(arg1: str): null
 begin
 
-end
-
-
-
-@ Funkcja zwracajaca nic, prezentacja typu null, zazwyczaj uzyta razem z argumentami mutowalnymi. Funkcja null nie musi miec return, prezentacja while oraz indeksowanie typu mut str
-to_upper(string_to_change: mut str) : null
-begin
-    i: mut int = 0;
-    l: int = string_to_change.length;
-    current_letter: mut str;
-    while i < l:
-    begin
-        current_letter = string_to_change[i]; @ przekazanie znaku przez wartosc
-        if 97 <= current_letter & current_letter <= 122 @ ASCII 97 to `a` oraz ASCII 122 to `z`. Porównanie str do int to Porównanie pierwszej litery str
-        begin
-            current_letter -= 32 
-            string_to_change[i] = current_letter 
-        end
-    end
 end
 
 jakis_napis: mut str = 'ala';
 print(jakis_napis); @ 'ala'
-to_upper(jakis_napis);
-print(jakis_napis); @ 'ala' - przekazalismy jakis napis przez wartosc
-
-to_upper(ref(jakis_napis)); @ nawias dla czytelnosci argumentow: to_upper przyjmuje jeden argument, ref tez. 
-print(jakis_napis); 'ALA' - przekazalismy przez referencje 
-
-int add_arg2_to_arg1(arg1: mut int, arg2:int)
-begin
-    return ref(arg1) + arg2;
-end
 
 num1: mut int 
 
 
-
-
-
-one_arg_function(arg1: int) : int 
+f(arg1: int) : int 
 begin
     return arg1 + 1;
 end
-two_arg_function(arg1: int, arg2: int): int
+f(arg1: int, arg2: int): int
 begin
     return arg1 + arg2 + 1;
 end
-three_arg_function(arg1: int, arg2: int, arg3: int) : int
+f(arg1: int, arg2: int, arg3: int) : int
 begin
     return arg1 + arg2 + arg3 + 1;
 end
 
-case1 : mut int = one_arg_function(two_arg_function(three_arg_function(1, 2, 3), 4));
-case2 : mut int = three_arg_function(two_arg_function(one_arg_function(1), 2), 3, 4);
+x : int = f(3,f(2,f(1)),3)
 
-read_float() : float @ - mechanizm wyjątków + funckja wbudowana read (return read automatycznie konwertuje na zadeklarowany typ zwracany przez funkcje)
-begin
-    print('Write number:');
-    while 1
-    begin
-        try
-        begin
-            return read(); 
-        end
-        catch TypeCastError
-        begin
-            print('Can not interpret it as float. Try again');
-        end
-end
-
-@ Funckja kalkulatora - uzycie wczesniej zdefiniowanej funkcji bezargumentowej (read_float) + funkcji 1-argumentowej wbudowanej (print) która autmatycznie konwertuje float na str
 calculator() : null
 begin
     print('Witaj w kalkulatorze');
@@ -229,36 +180,47 @@ begin
     operacja: mut str;
     while 1
     begin
-        a = read_float();
-        print('Second number:');
+        print('First number:');
+        a = read();
         print('Wybierz operację (+, -, *, /) : ');
-        read(operacja);
+        operacja = read();
+        print('Second number:');
+        b = read();
         if operacja == '+'
         begin
             print(a+b);
         end
-        elif operacja == '-'
-        begin
-            print(a-b);
-        end
-        elif operacja == '*'
-        begin
-            print (a*b);
-        end
-        elif operacja == '/'
-        begin
-            if b == 0
+        else
+        begin 
+            if operacja == '-'
             begin
-                print('Dzielenie przez 0');
+                print(a-b);
             end
             else
             begin
-                print(a/b);
+                if operacja == '*'
+                begin
+                    print (a*b);
+                end
+                else
+                begin
+                    if operacja == '/'
+                    begin
+                        if b == 0
+                        begin
+                            print('Dzielenie przez 0');
+                        end
+                        else
+                        begin
+                            print(a/b);
+                        end
+                    end
+                    else
+                    begin
+                        print('Operation' operacja 'is not supported! Try again')
+                    end
+                end
             end
-        end
-        else
-        begin
-            print('Operation' operacja 'is not supported! Try again')
         end
     end
 end
@@ -280,13 +242,13 @@ begin
     srednia: mut float;
 end
 
-pawel: Student; @ ASK: czy zmienna niemutowalna dopuszcza posiadanie atrubutów mutowalnych w przypadku gdy ich nie zmieniamy?
+pawel: Student;
 pawel.imie = 'Pawel';
 pawel.nazwisko = 'Kowalski';
 pawel.wiek = 21;
 pawel.srednia = 4.254;
 
-monika: mut Student;
+monika: mut Student; @ zeby moc zmieniac wartosc pól mutowalnych zmienna musi byc mutowalna
 monika.imie = 'Monika';
 monika.nazwisko = 'Dąb';
 monika.wiek = 20;
@@ -309,7 +271,7 @@ begin
 
 end
 
-BinaryTree : variant struct
+BinaryTree : variant
 begin
     l : Leaf;
     n : Node;
@@ -339,74 +301,23 @@ my_tree.value = 7;
 my_tree.left_child = l;
 my_tree.right_child = r;
 
-variant<int, float> w;
-w = 1.1;
-get<int>(w);
-int* i = get_if<int>(&w) 
-
-
-
-
-traverse_binary_tree_in_order(tree: BinaryTree) : null
+sum(tree : BinaryTree): int
 begin
-    if curr_type(tree) == Leaf @ TODO
+    visit tree
     begin
-        print(tree.n.value);
-    end
-    else
-    begin
-        traverse_binary_tree_in_order(ref(ref(tree).left_child)); @ automatyczna konwersja z typu Node do typu BinaryTree
-        print(tree.l.value);
-        traverse_binary_tree_in_order(ref(ref(tree).right_child));
-    end
-end 
-
-a : mut int = 1;
-b : ref mut int = ref(a);
-
-b = 2;
-
-
-
-
-add_one_to_binary_tree(BinaryTree): null
-begin
-    if curr_type(ref(tree)) == Leaf
-    begin
-        ref(tree).value += 1;
-    end
-    else
-    begin
-        traverse_binary_tree_in_order(ref(ref(tree).left_child)); @ automatyczna konwersja z typu Node do typu BinaryTree
-        ref(tree).value += 1;
-        traverse_binary_tree_in_order(ref(ref(tree).right_child));
+        case Leaf
+        begin
+            return tree.l.value
+        end
+        case Node
+        begin
+            return tree.n.value + sum(tree.n.left_child) + sum(tree.n.left_child);
+        end
     end
 end
-
-
-traverse_binary_tree_in_order(ref(my_tree)); @ Na ekranie: `1257634`
-add_one_to_binary_tree(my_tree);
-traverse_binary_tree_in_order(ref(my_tree)); @ Na ekranie: `1257634`
-add_one_to_binary_tree(ref(my_tree));
-traverse_binary_tree_in_order(ref(my_tree)); @ Na ekranie: `2368745`
-
-return_some_string() : str
-begin
-    return 'to jest string';
-end
-
-@ prezentacja dostepu do danych:
-print(return_some_string()[0]) @ prosty dostęp po indeksie
 
 jan : Student;
 pawel.imie = 'jan';
-
-return_some_student() : Student
-begin
-    return jan;
-end
-
-print(return_some_student().imie[0]) @ `j`
 
 Inner : struct
 begin
