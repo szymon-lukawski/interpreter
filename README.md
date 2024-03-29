@@ -4,7 +4,7 @@ Szymon Łukawski
 ## Wstęp
 Tematem projektu jest implementacja interpretera własnego języka ogólnego przeznaczenia w `Python`-ie. 
 Zachowanie zmiennych:
-+ typowanie jest **słabe** Typowanie**.
++ typowanie jest **słabe**.
 + **domyślnie stałe**
 + przekazywane przez **wartość** 
 
@@ -21,11 +21,11 @@ Hello World!
 >
 ```
 Plik musi mieć rozszerzenie `.mc`. 
-Istnieje mozliwość stworzenia pliku konfiguracyjnego `config.json` który steruje parametrami interpretera m.i. limity dla typu `int`.
+Istnieje mozliwość stworzenia pliku konfiguracyjnego `config.json` który steruje parametrami interpretera m.i. limity dla typu `int`, limit długości typu `str`, maksymalna dlugosc identyfikatora.
 ## Typy wbudowane to:
    + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite, domyślnie z przedziału [-99 999 999; +99 999 999]
    + `float` - typ liczbowy zmiennoprzecinkowy z utratą precyzji. Podobny do typu float64 ze standardu `IEEE 754-1985`. Operacje na liczbach float zgodne z operacjami w języku python3.
-   + `str` - typ reprezentujący ciąg znaków.
+   + `str` - typ reprezentujący ciąg znaków. Mozna przechowywać znaki specjalne jak znak nowej linii, tabulacja itp. realizacja poprzez escaping `\`
    + `null_type` - specjalny typ reprezentujący dokładnie jedną specjalną wartość `null`. Proba uzyskania wartości zmiennej niezainicjowanej zwraca błąd, a **nie** wartość `null`!
   
 #### Przykłady:
@@ -35,23 +35,23 @@ Najpierw przykład a pózniej wyjaśnienie:
   zmiennoprzecinkowa : float = 3.14;
   napis              : str = 'Ala ma kota.';
   ```
-1. Przykład ilustrujący typowe definiowanie zmiennych.
+Przykład ilustrujący typowe definiowanie zmiennych.
 ```
 x : int = 1;
 ```
-1. Zmienna `x` jest niemutowalna. Próba zmiany jej wartości zwróci błąd `ReassignmentError`.
+Zmienna `x` jest niemutowalna. Próba zmiany jej wartości zwróci błąd `ReassignmentError`.
 ```
 y : mut int = 1;
 y = 2;
 ```
-1. Definiowanie zmiennej mutowalnej. Zmiana wartości nie zwraca błędu.
+Definiowanie zmiennej mutowalnej. Zmiana wartości nie zwraca błędu.
 ```
 z1 : int;
 z1 = 0;
 z2 : mut int;
 z2 = 11; 
 ```
-1. Zarówno zmienne mutowalne jak i niemutowalne mogą nie mieć przypisanej wartości. Próba nadania wartości zmiennej niemutowalnej nie zwraca błędu (o ile typ się zgadza. O kompatybilności typów pózniej).
+Zarówno zmienne mutowalne jak i niemutowalne mogą nie mieć przypisanej wartości. Próba nadania wartości zmiennej niemutowalnej nie zwraca błędu (o ile typ się zgadza. O kompatybilności typów pózniej).
    Próba odczytania wartości zmiennej która nie ma nadanej wartości zwraca błąd, a nie wartość `null`. 
 
 ```
@@ -71,6 +71,15 @@ Znienna typu `str` z przypisaną wartością pustego stringa jest czym innym niz
    + `struct` - struktura, typ złozony z agregacji innych typów.
      + dostęp do atrybutów instancji struktury po nazwie atrybutu: `nazwa_instancji.nazwa_atrybutu`
      + brak mozliwości przypisania nowej wartości do atrubutu mutowalnego gdy instancja struktury jest niemutowalna
+     + pola w strukturze mogą mieć przypisane wartości domyślne:
+```
+Point1D : struct
+begin
+  x : mut int = 0; @ wartość domyślna wynosi 0
+end
+p : Point;
+print(p.x); @ wyświela wartość domyślną po automatycznej konwersji z typu 'int' do 'str'
+``` 
    + `variant` - tagged union:
      + typy w wariancie nie mogą się powtarzać
      + azeby przypisac wartosc do zmiennej wariantowej nalezy uzyć bezpośrednio jednego z typów składowych wariantu.
@@ -223,8 +232,8 @@ W ściśle określonych sytuacjach następuje automatyczna konwersja z typu do i
    + `struct`: nigdy
    + `variant`: nigdy
  + Z `float` do:
-   + `int`: tylko gdy wartosc jest z zakresu typu `int`
-   + `str`: zawsze, reprezentowana jako zaokrąglona liczba dziesiętna, zawsze z literalnym rozwinięciem 7 cyfr po przecinku
+   + `int`: tylko gdy wartosc po odcięciu części ułamkowej jest z zakresu typu `int`.
+   + `str`: zawsze, reprezentowana jako zaokrąglona liczba dziesiętna, zawsze z rozwinięciem 7 cyfr po przecinku
    + `struct`: nigdy
    + `variant`: nigdy
   + Z `str` do:
@@ -232,7 +241,7 @@ W ściśle określonych sytuacjach następuje automatyczna konwersja z typu do i
      + `float`: jezeli wartość typu `str` zlozona ze znakow cyfr i ewentualnie z kropki. Jezeli po kropce znajduje się wiecej niz 7 cyfr, kolejne cyfry nie mają wpływu na wartość liczby po konwersji.
      + `struct`: nigdy
      + `variant`: nigdy
- + Konwersje z typów definiowanych przez uzytkownika za pomocą : `struct` oraz  `variant`, nie mają automatycznej konwersji do typów wbudowanych 
+ + Typy definiowane przez uzytkownika za pomocą : `struct` oraz  `variant`, nie mają automatycznej konwersji do typów wbudowanych 
 ```
 print(1.0);       @ wyświetla na ekranie 7 cyfr rozwinięcia dziesiętnego: '1.0000000'
 ```
@@ -258,7 +267,10 @@ Przykłady:
 
 
 ### Funkcje
-   + argumenty do funkcji przekazywane są przez **wartość**: 
+  + istnieją funkcje wbudowane:
+    + `print(msg : str) : null begin ... end` - funkcja do wyswietlania typu `str`
+    + `read() : str begin ... end` - funkcja do wczytywania wartości typu `str` od uzytkownika.
+  + argumenty do funkcji przekazywane są przez **wartość**: 
 ```
 add(a : int, b : int) : int
 begin
@@ -346,4 +358,125 @@ end
 ```
   + zakresy mogą być zagniezdzone
   + zakres bardziej zagniezdzony "przysłania" nazwy z zakresow mniej zagniezdzonych
+```
+x : int = 1;
+print(x); @ 1
+begin
+  x : str = 'Ala ma kota';
+  begin
+    x : float = 2.0;
+    print(x); @ 2.0000000
+  end
+  begin
+    x : float = 3.0;
+    print(x); @ 3.0000000
+  end
+  print(x); @ Ala ma kota
+end
+print(x); @ 1
+```
   
+### Gramatyka w EBNF 2.0:
+```
+program             ::= {statement};
+
+statement           ::=  variable_declaration_statement
+                       | assignment_statement
+                       | if_statement
+                       | while_statement
+                       | function_definition_statement
+                       | type_definition_statement
+                       | return_statement
+                       | block;
+
+block 				            ::= 'begin', program, 'end';
+return_statement                ::== 'return', expression, ';';
+
+variable_declaration_statement  ::= variable_declaration, ';';
+variable_declaration            ::= identifier, ':', ['mut'], type, ['=', expression];
+
+
+
+assignment_statement            ::= object_access, '=', expression, ';';
+
+if_statement                    ::= 'if', expression, block, ['else', block];
+
+while_statement                 ::= 'while', expression, block;
+
+function_definition_statement   ::= identifier, '(', params, ')', ':', type, block; 
+
+type_definition_statement       ::= struct_def | variant_def;
+struct_def                      ::= identifier, ':', 'struct', 'begin', {variable_declaration_statement} ,'end';
+variant_def                     ::= identifier, ':', 'variant', 'begin', {named_type_statement} ,'end';
+
+named_type_statement ::= identifier, ':', type, ';'
+
+expression              ::= logical_or_expression;
+logical_or_expression   ::= logical_and_expression, {'|', logical_and_expression};
+logical_and_expression  ::= relational_expr {'&', relational_expr};
+relational_expr         ::= additive_expr, {relational_operator, additive_expr};
+additive_expr           ::= multi_expr, {additive_operator, multi_expr};
+multi_expr              ::= unary_expr, {multi_operator, unary_expr};
+unary_expr              ::= ['-'], term;
+term                    ::=	literal
+                          | object_access;
+
+object_access           ::=  identifier, {('.', identifier)};
+
+function_call ::= identifier, '(', [expression , (',', expression)], ')';
+
+param         ::= identifier, ':', ['mut'], type;
+params        ::= param , {',', param};
+
+type          ::=  'int'
+        		| 'float'
+        		| 'str'
+        		| 'null'
+        		| identifier;
+
+literal        ::=  int_literal
+            	| float_literal
+            	| str_literal;
+            	| 'null'
+
+----------------------------------------------------------------------------------------
+
+str_literal  ::= ''',{all_chars_from_utf8_if_Apostrophe_is_escaped} , ''';
+
+int_literal  ::=  '0'
+                 | digit_positive, {digit};
+
+float_literal ::= int_literal, ".", digit, { digit };
+
+digit          ::= digit_positive 
+                | '0';
+
+digit_positive ::= '1' 
+                 | '2' 
+                 | '3' 
+                 | '4' 
+                 | '5' 
+                 | '6' 
+                 | '7' 
+                 | '8' 
+                 | '9';
+				  
+
+
+identifier   ::= letter, {alphanumeric | '_'};
+alphanumeric ::= letter | digit;
+letter       ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
+               | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N'
+               | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U'
+               | 'V' | 'W' | 'X' | 'Y' | 'Z' | 'a' | 'b'
+               | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i'
+               | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p'
+               | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w'
+               | 'x' | 'y' | 'z' ;
+
+comment      ::= '@', {all_exept_newline}, newline;
+newline      ::= '\n'
+              |  '\r\n';
+
+
+```
