@@ -437,6 +437,9 @@ print(x); @ 1
 Testy jednostkowe do kadej funkcji.
 Testy integracyjne do sprawdzenia współpracy między modułami projektu.
 Testy na całych złozonych programach.
+
+### Więcej przykładów:
+W pliku `first.mc`
   
 ### Gramatyka w EBNF 2.0:
 ```
