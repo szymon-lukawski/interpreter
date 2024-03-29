@@ -7,7 +7,8 @@ statement           ::=  variable_declaration_statement
                        | function_definition_statement
                        | type_definition_statement
                        | return_statement
-					   | block;
+					   | block
+                       | comment;
 
 block 				            ::= 'begin', program, 'end';
 return_statement                ::== 'return', expression, ';';
