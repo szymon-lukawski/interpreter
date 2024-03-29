@@ -234,11 +234,14 @@ W ściśle określonych sytuacjach następuje automatyczna konwersja z typu do i
 print(1.0);       @ wyświetla na ekranie 7 cyfr rozwinięcia dziesiętnego: '1.0000000'
 ```
 
-1. Operacje
-
 ### Operacje
+Generalne zasady dla operacji:
+ + operacje mają rózny priorytet
+ + operacje są lewo-łączne dla operatorów o tym samym priorytecie, `x * y * z` to to samo co `(x * y) * z`
+ + pierwszy argument operacji to argument tuz przed operatorem
+ + typ pierwszego argumentu definiuje typ wyniku operacji - **Mogą być wyjątki!**
 
-  zachowane są priorytety operacji matematycznych, logicznych oraz porównania:
+Priorytety:
    1. `|` - lub
    2. `&` - i
    3. `<=; <; ==; !=; >=; >` - operatory porównania
