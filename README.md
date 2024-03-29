@@ -9,6 +9,19 @@ Zachowanie zmiennych:
 + przekazywane przez **wartość** 
 
 Dodakowo mozliwość definiowania struktur oraz struktury wariantowej - typy definiowane przez uzytkownika.
+
+## Struktura Projektu
+Projekt podzielony na części:
+1. Czytanie z wejścia, plik lub strumień, znak po znaku i przekazuje wszystkich znaków dalej. Jeśli koniec wejscia to wysyla specjalny znak konca wejscia. Zapytany o kojelny znak znowu specjalny znak konca wejscia, i tak do końca.
+2. Filtr Znaków, niektóre znaki nie są potrzebne lekserowi, jesli natrafi na znak do odfiltrowania do prosi o kolejny az nastrafi na znak nie do odfiltrowania, ten przekazuje dalej. 
+3. Analizator Leksykalny, generowanie tokenów, grupowanie znaków.
+4. Filtr tokenów, np. token komentarza jest odfiltrowywany
+5. Analizator Składniowy, generowanie drzewa programu na podstawie gramatyki
+6. Zmiana z duzego drzewa programu do AST
+7. Analizator Semantyczny, sprawdza zakresy zmiennych, poprawnosc typów itp korzysta z tabeli symboli.
+8. Tree traverser
+9. Interpreter
+
 ## 1. Zarys uruchomienia:
 ```
 print('Hello World!');
@@ -375,6 +388,33 @@ begin
 end
 print(x); @ 1
 ```
+
+### Błędy
++ Po natrafieniu na błąd, przerywamy program
++ LexerError:
+  + za długie literały
+  + za długie nazwy identyfikatora
+  + uzycie niedozwolonego znaku, np emotki
++ SyntacticError:
+  + niedopasowane nawiasy
+  + niedopasowane `begin`, `end`
++ SemanticError:
+  + funkcja nieznaleziona, np jesli w wywołaniu podamy złą ilośc argumentów 
+  + Niezgodność typów 
+  + Błąd konwersji 
+  + brak `return` w ciele funkcji zwracającej typ inny niz `null_type`
+  + ponowne przypisanie wartosci do zmiennej niemutowalnej
+  + odwołania się do nieistniejącego pola w strukturze
+  + niestniejaca nazwa typu w waraincie podczas instrukcji `visit`
+  + powtórka typu w przypadkach w instrukcji `visit`
+  
++ RunTimeError:
+  + dzielenie przez zero
+  + próba uzyskania wartosci zmiennej niezainicjowanej
+  
++ Pozycja błędu, numer wiersza, pozycja w wierszu - pozycja pierwszego znaku fragmentu kodu generującego błąd
+
+### Testowanie
   
 ### Gramatyka w EBNF 2.0:
 ```
