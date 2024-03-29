@@ -10,10 +10,11 @@ statement           ::=  variable_declaration_statement
 					   | block;
 
 block 				            ::= 'begin', program, 'end';
-return_statement                ::== 'return', expression;
+return_statement                ::== 'return', expression, ';';
 
 variable_declaration_statement  ::= variable_declaration, ';';
 variable_declaration            ::= identifier, ':', ['mut'], type, ['=', expression];
+
 
 
 assignment_statement            ::= object_access, '=', expression, ';';
@@ -24,7 +25,11 @@ while_statement                 ::= 'while', expression, block;
 
 function_definition_statement   ::= identifier, '(', params, ')', ':', type, block; 
 
-type_definition_statement       ::= identifier, ':', ['variant'], 'struct', 'begin', {variable_declaration_statement} ,'end';
+type_definition_statement       ::= struct_def | variant_def;
+struct_def                      ::= identifier, ':', 'struct', 'begin', {variable_declaration_statement} ,'end';
+variant_def                     ::= identifier, ':', 'variant', 'begin', {named_type_statement} ,'end';
+
+named_type_statement ::= identifier, ':', type, ';'
 
 expression              ::= logical_or_expression;
 logical_or_expression   ::= logical_and_expression, {'|', logical_and_expression};
@@ -36,16 +41,12 @@ unary_expr              ::= ['-'], term;
 term                    ::=	literal
                           | object_access;
 
-object_access           ::=  idx_ident_or_func, {('.', idx_ident_or_func)};
-idx_ident_or_func       ::= ident_or_func, {'[', expression ,']'};
-ident_or_func           ::= identifier
-                          | function_call;
-
-
+object_access           ::=  identifier, {('.', identifier)};
 
 function_call ::= identifier, '(', [expression , (',', expression)], ')';
 
-params        ::= variable_declaration , {',', variable_declaration};
+param         ::= identifier, ':', ['mut'], type;
+params        ::= param , {',', param};
 
 type          ::=  'int'
         		| 'float'
