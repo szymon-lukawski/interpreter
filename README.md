@@ -212,8 +212,32 @@ end @ to tez
 ```
 
 
+### Słabe Typowanie
+W ściśle określonych sytuacjach następuje automatyczna konwersja z typu do innego typu.
+ + Z `int` do:
+   + `float`: zawsze
+   + `str`: zawsze, `print(123);` - wyswietli 123
+   + `struct`: nigdy
+   + `variant`: nigdy
+ + Z `float` do:
+   + `int`: tylko gdy wartosc jest z zakresu typu `int`
+   + `str`: zawsze, reprezentowana jako zaokrąglona liczba dziesiętna, zawsze z literalnym rozwinięciem 7 cyfr po przecinku
+   + `struct`: nigdy
+   + `variant`: nigdy
+ +  + Z `str` do:
+   + `int`: jezeli wartosc typu `str` zlozona ze znakow cyfr oraz cyfry z przedzialu dla `int`. Jeśli wartość typu `str` zawiera znak `.` mozliwa jest konwersja dwuetapowa, najpierw z typu `str` do float (jesli się uda), następnie z `float` do `int`.
+   + `float`: jezeli wartość typu `str` zlozona ze znakow cyfr i ewentualnie z kropki. Jezeli po kropce znajduje się wiecej niz 7 cyfr, kolejne cyfry nie mają wpływu na wartość liczby po konwersji.
+   + `struct`: nigdy
+   + `variant`: nigdy
+ + Konwersje z typów definiowanych przez uzytkownika za pomocą : `struct` oraz  `variant`, nie mają automatycznej konwersji do typów wbudowanych 
+```
+print(1.0);       @ wyświetla na ekranie 7 cyfr rozwinięcia dziesiętnego: '1.0000000'
+```
+
+1. Operacje
 
 ### Operacje
+
   zachowane są priorytety operacji matematycznych, logicznych oraz porównania:
    1. `|` - lub
    2. `&` - i
