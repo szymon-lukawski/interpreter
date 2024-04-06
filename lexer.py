@@ -85,6 +85,7 @@ class Lexer:
 
 
     def _parse_identifier(self):
+        # TODO Add limit to identifier length
         buffer : List[str] = []
         char = self.reader.char
         if char in string.ascii_letters:
@@ -102,7 +103,28 @@ class Lexer:
 
 
     def _parse_number(self):
-        pass
+        # TODO add limit
+        value = int(self.reader.char)
+        char = self.reader.get_next_char()
+
+        while char is not None and char.isdigit():
+            value += value*10 + int(char)
+            char = self.reader.get_next_char()
+
+        if char == '.':
+            char = self.reader.get_next_char()
+            if char is not None and char.isdigit():
+                value += value*10 + int(char)
+                counter = 1
+                while char is not None and char.isdigit():
+                    value += value*10 + int(char)
+                    char = self.reader.get_next_char()
+                    counter += 1
+                return MyToken(TokenType.FLOAT_LITERAL, value/(10**counter))
+            else:
+                raise MyTokenException("Float literal has to have a digit after dot")
+        else:
+            return MyToken(TokenType.INT_LITERAL, value)
 
     def _parse_other(self):
         pass
