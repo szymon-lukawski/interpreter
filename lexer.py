@@ -15,8 +15,11 @@ class Lexer:
 
     STRING_LITERAL_DELIMITER = "'"
     STRING_ESCAPE = "\\"
+    INT_LIMIT = 10**8 - 1
 
-    def __init__(self, reader: CharReader) -> None:
+    def __init__(self, reader: CharReader, INT_LIMIT = 10**8 - 1) -> None:
+        Lexer.INT_LIMIT = INT_LIMIT
+
         self.reader = reader
         self.reader.next_char()
 
@@ -59,6 +62,8 @@ class Lexer:
         if char is None:
             raise MyTokenException("String literal not properly ended!")
         is_escaped = char == Lexer.STRING_ESCAPE
+
+        # TODO add proper handling of other escaped characters
 
         while char != Lexer.STRING_LITERAL_DELIMITER or is_escaped:
             string_literal_value.append(char)
@@ -103,31 +108,35 @@ class Lexer:
 
 
     def _parse_number(self):
-        # TODO add limit
+        # TODO add limit to float
         value = int(self.reader.char)
         char = self.reader.get_next_char()
 
         while char is not None and char.isdigit():
-            value += value*10 + int(char)
+            if value > Lexer.INT_LIMIT:
+                raise MyTokenException("INT LITERAL value to big")
+            value = value*10 + int(char)
             char = self.reader.get_next_char()
 
         if char == '.':
             char = self.reader.get_next_char()
             if char is not None and char.isdigit():
-                value += value*10 + int(char)
+                value = value*10 + int(char)
+                char = self.reader.get_next_char()
                 counter = 1
                 while char is not None and char.isdigit():
-                    value += value*10 + int(char)
+                    value = value*10 + int(char)
                     char = self.reader.get_next_char()
                     counter += 1
-                return MyToken(TokenType.FLOAT_LITERAL, value/(10**counter))
+                self.curr_token = MyToken(TokenType.FLOAT_LITERAL, value/(10**counter))
             else:
                 raise MyTokenException("Float literal has to have a digit after dot")
         else:
-            return MyToken(TokenType.INT_LITERAL, value)
+            self.curr_token = MyToken(TokenType.INT_LITERAL, value)
 
     def _parse_other(self):
-        pass
+        char = self.reader.char
+        
 
     def _is_end_of_file(self):
         return self.reader.char is None
