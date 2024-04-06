@@ -6,6 +6,9 @@ from token_type import TokenType
 from keywords import KEYWORDS_STRS, KEYWORDS_TO_TOKEN_TYPE
 from char_reader import CharReader
 from my_token import MyToken
+from my_token_exceptions import MyTokenException
+
+from utils import is_identifier_body, is_value_a_keyword
 
 class Lexer:
     """Lexer"""
@@ -53,22 +56,50 @@ class Lexer:
         string_literal_value: List[str] = []
 
         char = self.reader.get_next_char()
+        if char is None:
+            raise MyTokenException("String literal not properly ended!")
         is_escaped = char == Lexer.STRING_ESCAPE
 
         while char != Lexer.STRING_LITERAL_DELIMITER or is_escaped:
             string_literal_value.append(char)
             char = self.reader.get_next_char()
+            if char is None:
+                raise MyTokenException("String literal not properly ended!")
             is_escaped = char == Lexer.STRING_ESCAPE
 
         string_literal_value = "".join(string_literal_value)
 
         if string_literal_value in KEYWORDS_STRS:
-            return MyToken(KEYWORDS_TO_TOKEN_TYPE[string_literal_value])
+            self.curr_token = MyToken(KEYWORDS_TO_TOKEN_TYPE[string_literal_value])
 
         self.curr_token = MyToken(TokenType.STR_LITERAL, string_literal_value)
 
     def _parse_keyword_or_identifier(self):
-        pass
+        self._parse_identifier()
+
+        if is_value_a_keyword(self.curr_token.value):
+            self.curr_token.type = KEYWORDS_TO_TOKEN_TYPE[self.curr_token.value]
+            self.curr_token.value = None
+        
+
+
+
+    def _parse_identifier(self):
+        buffer : List[str] = []
+        char = self.reader.char
+        if char in string.ascii_letters:
+            buffer.append(char)
+            char = self.reader.get_next_char()
+        else:
+            raise MyTokenException("Identifier can not start with non ascii letter")
+        while char is not None and is_identifier_body(char):
+            buffer.append(char)
+            char = self.reader.get_next_char()
+
+        value = "".join(buffer)
+
+        self.curr_token = MyToken(TokenType.IDENTIFIER, value)
+
 
     def _parse_number(self):
         pass
