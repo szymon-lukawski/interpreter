@@ -153,6 +153,9 @@ class Lexer:
         if char == "@":
             self.reader.next_char()
             self._parse_comment()
+        elif char == ",":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.COMMA)
         elif char == "(":
             self.reader.next_char()
             self.curr_token = MyToken(TokenType.LEFT_BRACKET)
