@@ -178,10 +178,10 @@ def test_basic_if_statement():
     assert l.get_next_token() == MyToken(TokenType.IF)
     assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1)
     assert l.get_next_token() == MyToken(TokenType.BEGIN)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER)
+    assert l.get_next_token() == MyToken(TokenType.PRINT)
     assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
     assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, 'Hello')
     assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
     assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
     assert l.get_next_token() == MyToken(TokenType.END)
-    assert l.get_next_token() is None
+    assert l.get_next_token() == MyToken(TokenType.EOT)

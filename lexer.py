@@ -1,4 +1,5 @@
 """Lexer class"""
+
 import string
 from typing import List
 
@@ -10,6 +11,7 @@ from my_token_exceptions import MyTokenException
 
 from utils import is_identifier_body, is_value_a_keyword
 
+
 class Lexer:
     """Lexer"""
 
@@ -17,7 +19,7 @@ class Lexer:
     STRING_ESCAPE = "\\"
     INT_LIMIT = 10**8 - 1
 
-    def __init__(self, reader: CharReader, INT_LIMIT = 10**8 - 1) -> None:
+    def __init__(self, reader: CharReader, INT_LIMIT=10**8 - 1) -> None:
         Lexer.INT_LIMIT = INT_LIMIT
 
         self.reader = reader
@@ -38,7 +40,7 @@ class Lexer:
         self._skip_whitespaces()
 
         if self._is_end_of_file():
-            self.curr_token = MyToken(TokenType.END)
+            self.curr_token = MyToken(TokenType.EOT)
             return
 
         self._parse_token()
@@ -72,6 +74,7 @@ class Lexer:
                 raise MyTokenException("String literal not properly ended!")
             is_escaped = char == Lexer.STRING_ESCAPE
 
+        self.reader.next_char()
         string_literal_value = "".join(string_literal_value)
 
         if string_literal_value in KEYWORDS_STRS:
@@ -85,13 +88,10 @@ class Lexer:
         if is_value_a_keyword(self.curr_token.value):
             self.curr_token.type = KEYWORDS_TO_TOKEN_TYPE[self.curr_token.value]
             self.curr_token.value = None
-        
-
-
 
     def _parse_identifier(self):
         # TODO Add limit to identifier length
-        buffer : List[str] = []
+        buffer: List[str] = []
         char = self.reader.char
         if char in string.ascii_letters:
             buffer.append(char)
@@ -106,7 +106,6 @@ class Lexer:
 
         self.curr_token = MyToken(TokenType.IDENTIFIER, value)
 
-
     def _parse_number(self):
         # TODO add limit to float
         value = int(self.reader.char)
@@ -115,20 +114,22 @@ class Lexer:
         while char is not None and char.isdigit():
             if value > Lexer.INT_LIMIT:
                 raise MyTokenException("INT LITERAL value to big")
-            value = value*10 + int(char)
+            value = value * 10 + int(char)
             char = self.reader.get_next_char()
 
-        if char == '.':
+        if char == ".":
             char = self.reader.get_next_char()
             if char is not None and char.isdigit():
-                value = value*10 + int(char)
+                value = value * 10 + int(char)
                 char = self.reader.get_next_char()
                 counter = 1
                 while char is not None and char.isdigit():
-                    value = value*10 + int(char)
+                    value = value * 10 + int(char)
                     char = self.reader.get_next_char()
                     counter += 1
-                self.curr_token = MyToken(TokenType.FLOAT_LITERAL, value/(10**counter))
+                self.curr_token = MyToken(
+                    TokenType.FLOAT_LITERAL, value / (10**counter)
+                )
             else:
                 raise MyTokenException("Float literal has to have a digit after dot")
         else:
@@ -136,7 +137,68 @@ class Lexer:
 
     def _parse_other(self):
         char = self.reader.char
-        
+        if char == "(":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.LEFT_BRACKET)
+        elif char == ")":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.RIGHT_BRACKET)
+        elif char == ";":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.SEMICOLON)
+        elif char == ":":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.COLON)
+        elif char == ".":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.DOT)
+        elif char == "&":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.AND)
+        elif char == "|":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.OR)
+        elif char == "+":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.PLUS)
+        elif char == "-":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.MINUS)
+        elif char == "*":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.TIMES)
+        elif char == "/":
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.DIVIDE)
+        elif char == "!":
+            char = self.reader.get_next_char()
+            if char != "=":
+                raise MyTokenException(f"Expected `=` but got `{char}`")
+            self.reader.next_char()
+            self.curr_token = MyToken(TokenType.INEQUAL)
+        elif char == "<":
+            char = self.reader.get_next_char()
+            if char == "=":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.LESS_EQUAL)
+                return
+            self.curr_token = MyToken(TokenType.LESS)
+        elif char == ">":
+            char = self.reader.get_next_char()
+            if char == "=":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.GREATER_EQUAL)
+                return
+            self.curr_token = MyToken(TokenType.GREATER)
+        elif char == "=":
+            char = self.reader.get_next_char()
+            if char == "=":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.EQUAL)
+                return
+            self.curr_token = MyToken(TokenType.ASSIGNMENT)
+        else:
+            raise MyTokenException("Can not tokenise this!")
 
     def _is_end_of_file(self):
         return self.reader.char is None
