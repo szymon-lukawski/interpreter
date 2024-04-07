@@ -513,6 +513,7 @@ def test_smallest_valid_struct():
     assert l.get_next_token() == MyToken(TokenType.END)
     assert l.get_next_token() == MyToken(TokenType.EOT)
 
+
 def test_begin_end_merged():
     """."""
     to_tokenise = """beginend"""
@@ -521,6 +522,7 @@ def test_begin_end_merged():
     assert l.curr_token is None
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "beginend")
     assert l.get_next_token() == MyToken(TokenType.EOT)
+
 
 def test_begin_end_separated_by_tab():
     """."""
@@ -556,7 +558,6 @@ end
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt2D")
     assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
 
-
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "p3d")
     assert l.get_next_token() == MyToken(TokenType.COLON)
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt3D")
@@ -564,8 +565,8 @@ end
 
     assert l.get_next_token() == MyToken(TokenType.END)
 
-
     assert l.get_next_token() == MyToken(TokenType.EOT)
+
 
 def test_visit():
     """."""
@@ -594,21 +595,21 @@ end
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt2D")
     assert l.get_next_token() == MyToken(TokenType.BEGIN)
 
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'wiadomosc')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wiadomosc")
     assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '[')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "[")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p2d')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "p2d")
     assert l.get_next_token() == MyToken(TokenType.DOT)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'x')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '; ')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "; ")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p2d')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "p2d")
     assert l.get_next_token() == MyToken(TokenType.DOT)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'y')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "y")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, ']')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "]")
     assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
 
     assert l.get_next_token() == MyToken(TokenType.END)
@@ -617,27 +618,27 @@ end
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt3D")
     assert l.get_next_token() == MyToken(TokenType.BEGIN)
 
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'wiadomosc')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wiadomosc")
     assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '[')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "[")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p3d')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "p3d")
     assert l.get_next_token() == MyToken(TokenType.DOT)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'x')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '; ')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "; ")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p3d')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "p3d")
     assert l.get_next_token() == MyToken(TokenType.DOT)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'y')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "y")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '; ')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "; ")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p3d')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "p3d")
     assert l.get_next_token() == MyToken(TokenType.DOT)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'z')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "z")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, ']')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "]")
     assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
 
     assert l.get_next_token() == MyToken(TokenType.END)
@@ -645,7 +646,6 @@ end
     assert l.get_next_token() == MyToken(TokenType.END)
 
     assert l.get_next_token() == MyToken(TokenType.EOT)
-
 
 
 def test_if():
@@ -686,20 +686,20 @@ msg = msg + '.';
     assert l.get_next_token() == MyToken(TokenType.MUT)
     assert l.get_next_token() == MyToken(TokenType.STR)
     assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, 'Ala ma ')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "Ala ma ")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'ilosc_psow')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "ilosc_psow")
     assert l.get_next_token() == MyToken(TokenType.PLUS)
-    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, ' ps')
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, " ps")
     assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
 
     assert l.get_next_token() == MyToken(TokenType.IF)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'ilosc_psow')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "ilosc_psow")
     assert l.get_next_token() == MyToken(TokenType.EQUAL)
     assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1)
 
     assert l.get_next_token() == MyToken(TokenType.BEGIN)
-    
+
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
     assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
@@ -715,9 +715,9 @@ msg = msg + '.';
     assert l.get_next_token() == MyToken(TokenType.IF)
     assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1)
     assert l.get_next_token() == MyToken(TokenType.LESS)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'ilosc_psow')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "ilosc_psow")
     assert l.get_next_token() == MyToken(TokenType.AND)
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'ilosc_psow')
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "ilosc_psow")
     assert l.get_next_token() == MyToken(TokenType.LESS)
     assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 5)
 
@@ -754,7 +754,6 @@ msg = msg + '.';
     assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
 
     assert l.get_next_token() == MyToken(TokenType.EOT)
-
 
 
 def test_function_with_subfunctions():
@@ -805,7 +804,7 @@ end
     assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
     assert l.get_next_token() == MyToken(TokenType.COLON)
     assert l.get_next_token() == MyToken(TokenType.INT)
-    
+
     assert l.get_next_token() == MyToken(TokenType.BEGIN)
 
     assert l.get_next_token() == MyToken(TokenType.RETURN)
@@ -828,7 +827,7 @@ end
     assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
     assert l.get_next_token() == MyToken(TokenType.COLON)
     assert l.get_next_token() == MyToken(TokenType.INT)
-    
+
     assert l.get_next_token() == MyToken(TokenType.BEGIN)
 
     assert l.get_next_token() == MyToken(TokenType.RETURN)
@@ -890,4 +889,136 @@ end
     assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
 
     assert l.get_next_token() == MyToken(TokenType.END)
+    assert l.get_next_token() == MyToken(TokenType.EOT)
+
+
+def test_wypisz_na_ekran_without_return():
+    """."""
+    to_tokenise = """
+wypisz_na_ekran(wiadomosc: str) : null_type 
+begin
+  print(wiadomosc);
+end
+"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wypisz_na_ekran")
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wiadomosc")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.STR)
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.NULL_TYPE)
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.PRINT)
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wiadomosc")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+    assert l.get_next_token() == MyToken(TokenType.EOT)
+
+
+def test_block():
+    """."""
+    to_tokenise = """
+x : int = 1;
+print(x); @ 1
+begin
+  x : str = 'Ala ma kota';
+  begin
+    x : float = 2.0;
+    print(x); @ 2.0000000
+  end
+  begin
+    x : float = 3.0;
+    print(x); @ 3.0000000
+  end
+  print(x); @ Ala ma kota
+end
+print(x); @ 1
+"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.PRINT)
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+    assert l.get_next_token() == MyToken(TokenType.COMMENT, " 1")
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.STR)
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "Ala ma kota")
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.FLOAT)
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.FLOAT_LITERAL, 2.0)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.PRINT)
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+    assert l.get_next_token() == MyToken(TokenType.COMMENT, " 2.0000000")
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.FLOAT)
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.FLOAT_LITERAL, 3.0)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.PRINT)
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+    assert l.get_next_token() == MyToken(TokenType.COMMENT, " 3.0000000")
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.PRINT)
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+    assert l.get_next_token() == MyToken(TokenType.COMMENT, " Ala ma kota")
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.PRINT)
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+    assert l.get_next_token() == MyToken(TokenType.COMMENT, " 1")
+
     assert l.get_next_token() == MyToken(TokenType.EOT)
