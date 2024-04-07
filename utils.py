@@ -6,7 +6,7 @@ from keywords import KEYWORDS_STRS
 
 def is_identifier_body(char: str):
     """Brutal full scan, can be improved when using built ins or using chr and ord"""
-    return char in digits or char in ascii_letters
+    return char in digits or char in ascii_letters or char == '_'
 
 
 def is_value_a_keyword(value: str):
