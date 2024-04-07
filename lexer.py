@@ -26,7 +26,7 @@ class Lexer:
         self.reader.next_char()
 
         self.curr_token = None
-        self._end_token_in_place = False
+        self._EOT_token_in_place = False
 
     def get_next_token(self):
         """Returns next my_token from reader"""
@@ -34,7 +34,7 @@ class Lexer:
         return self.curr_token
 
     def _next_token(self):
-        if self._end_token_in_place:
+        if self._EOT_token_in_place:
             return
 
         self._skip_whitespaces()
