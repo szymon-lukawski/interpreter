@@ -93,18 +93,20 @@ ilosc_psow: mut int = 1;
 msg: mut str = 'Ala ma ' + ilosc_psow + ' ps';
 if ilosc_psow == 1
 begin 
-    msg = msg + 'a'
+    msg = msg + 'a';
 end 
 else 
+begin
     if 1 < ilosc_psow & ilosc_psow < 5
     begin
         msg = msg + 'y';
     end
+end
 else
 begin
-    msg = msg + 'ów'
+    msg = msg + 'ów';
 end
-msg = msg + '.'
+msg = msg + '.';
 
 @ -----------------------------------------
 
