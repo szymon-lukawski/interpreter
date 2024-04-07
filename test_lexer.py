@@ -856,3 +856,38 @@ end
     assert l.get_next_token() == MyToken(TokenType.EOT)
 
 
+def test_wypisz_na_ekran():
+    """."""
+    to_tokenise = """
+wypisz_na_ekran(wiadomosc: str) : null_type 
+begin
+  print(wiadomosc);
+  return null;
+end
+"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wypisz_na_ekran")
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wiadomosc")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.STR)
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.NULL_TYPE)
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.PRINT)
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wiadomosc")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.RETURN)
+    assert l.get_next_token() == MyToken(TokenType.NULL)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+    assert l.get_next_token() == MyToken(TokenType.EOT)
