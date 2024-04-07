@@ -90,3 +90,54 @@ def test_string_literal_with_newline_in_and_out():
     assert r.get_next_char() == '\n'
     for _ in range(10):
         assert r.get_next_char() is None
+
+def test_get_position_basic():
+    """."""
+    s = ""
+    r = StringReader(s)
+
+    assert r.get_position() == (1, 0)
+
+def test_get_position_one_normal_char():
+    """."""
+    s = "a"
+    r = StringReader(s)
+
+    assert r.get_position() == (1, 0)
+    r.next_char()
+    assert r.get_position() == (1, 1)
+
+def test_get_position_one_newline_char():
+    """."""
+    s = "\n"
+    r = StringReader(s)
+
+    assert r.get_position() == (1, 0)
+    r.next_char()
+    assert r.get_position() == (2, 0)
+
+def test_get_position_2_newline_char():
+    """."""
+    s = "\n\n"
+    r = StringReader(s)
+
+    assert r.get_position() == (1, 0)
+    r.next_char()
+    assert r.get_position() == (2, 0)
+    r.next_char()
+    assert r.get_position() == (3, 0)
+
+def test_get_position_newline_inside_apostrophes():
+    """."""
+    s = "'\n\n'"
+    r = StringReader(s)
+
+    assert r.get_position() == (1, 0)
+    r.next_char()
+    assert r.get_position() == (1, 1)
+    r.next_char()
+    assert r.get_position() == (2, 0)
+    r.next_char()
+    assert r.get_position() == (3, 0)
+    r.next_char()
+    assert r.get_position() == (3, 1)
