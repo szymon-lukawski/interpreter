@@ -117,7 +117,7 @@ Zeby zmiana wartości pól w strukturze była mozliwa, zarówno sama zmienna mus
 cos : Cos;
 Cos : struct begin end;
 ```
-Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zatem zwróbu `UndefinedTypeError: 'Cos'`.
+Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zatem zwróci `UndefinedTypeError: 'Cos'`.
 Struktura moze nie miec zadnych pól.
 
 ```
