@@ -1022,3 +1022,59 @@ print(x); @ 1
     assert l.get_next_token() == MyToken(TokenType.COMMENT, " 1")
 
     assert l.get_next_token() == MyToken(TokenType.EOT)
+
+
+def test_operator_priority():
+    """."""
+    to_tokenise = """
+P : struct
+begin
+    x : mut int = 0;
+end
+p : P;
+p.x = 0 | 1 & 2 < 2 + 3 - 4 * - 5 / - p.x;
+"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "P")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.STRUCT)
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'x')
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.MUT)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 0)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+    assert l.get_next_token() == MyToken(TokenType.END)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p')
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'P')
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p')
+    assert l.get_next_token() == MyToken(TokenType.DOT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'x')
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 0)
+    assert l.get_next_token() == MyToken(TokenType.OR)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1)
+    assert l.get_next_token() == MyToken(TokenType.AND)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 2)
+    assert l.get_next_token() == MyToken(TokenType.LESS)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 2)
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 3)
+    assert l.get_next_token() == MyToken(TokenType.MINUS)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 4)
+    assert l.get_next_token() == MyToken(TokenType.TIMES)
+    assert l.get_next_token() == MyToken(TokenType.MINUS)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 5)
+    assert l.get_next_token() == MyToken(TokenType.DIVIDE)
+    assert l.get_next_token() == MyToken(TokenType.MINUS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p')
+    assert l.get_next_token() == MyToken(TokenType.DOT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'x')
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+    assert l.get_next_token() == MyToken(TokenType.EOT)
