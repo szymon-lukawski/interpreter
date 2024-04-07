@@ -45,3 +45,5 @@ class TokenType(Enum):
     VARIANT = 39
     VISIT = 40
     CASE = 41
+    EOT = 42
+    COMMA = 43
