@@ -135,9 +135,25 @@ class Lexer:
         else:
             self.curr_token = MyToken(TokenType.INT_LITERAL, value)
 
+    def _parse_comment(self):
+        comment_value: List[str] = []
+
+        char = self.reader.char
+
+        while char != '\n':
+            comment_value.append(char)
+            char = self.reader.get_next_char()
+
+        comment_value = "".join(comment_value)
+
+        self.curr_token = MyToken(TokenType.COMMENT, comment_value)
+
     def _parse_other(self):
         char = self.reader.char
-        if char == "(":
+        if char == "@":
+            self.reader.next_char()
+            self._parse_comment()
+        elif char == "(":
             self.reader.next_char()
             self.curr_token = MyToken(TokenType.LEFT_BRACKET)
         elif char == ")":
