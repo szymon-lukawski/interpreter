@@ -46,16 +46,77 @@ class Lexer:
         self._parse_token()
 
     def _parse_token(self):
-
         char = self.reader.char
-        if char == Lexer.STRING_LITERAL_DELIMITER:
-            self._parse_string_literal()
-        elif char in string.ascii_letters:
-            self._parse_keyword_or_identifier()
-        elif char in string.digits:
-            self._parse_number()
-        else:
-            self._parse_other()
+        match char:
+            case Lexer.STRING_LITERAL_DELIMITER:
+                self._parse_string_literal()
+            case _ if char in string.ascii_letters:
+                self._parse_keyword_or_identifier()
+            case _ if char in string.digits:
+                self._parse_number()
+            case "@":
+                self._parse_comment()
+            case ",":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.COMMA)
+            case "(":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.LEFT_BRACKET)
+            case ")":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.RIGHT_BRACKET)
+            case ";":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.SEMICOLON)
+            case ":":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.COLON)
+            case ".":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.DOT)
+            case "&":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.AND)
+            case "|":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.OR)
+            case "+":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.PLUS)
+            case "-":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.MINUS)
+            case "*":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.TIMES)
+            case "/":
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.DIVIDE)
+            case "<":
+                self._try_parse_two_char_operator(TokenType.LESS, TokenType.LESS_EQUAL)
+            case ">":
+                self._try_parse_two_char_operator(TokenType.GREATER, TokenType.GREATER_EQUAL)
+            case "=":
+                self._try_parse_two_char_operator(TokenType.ASSIGNMENT, TokenType.EQUAL)
+            case "!":
+                char = self.reader.get_next_char()
+                if char != "=":
+                    raise MyTokenException(f"Expected `=` but got `{char}`")
+                self.reader.next_char()
+                self.curr_token = MyToken(TokenType.INEQUAL)
+            case _:
+                raise MyTokenException("Can not tokenize this!")
+
+
+    def _try_parse_two_char_operator(
+        self, if_one_char: TokenType, if_two_chars: TokenType
+    ):
+        char = self.reader.get_next_char()
+        if char == "=":
+            self.reader.next_char()
+            self.curr_token = MyToken(if_two_chars)
+            return
+        self.curr_token = MyToken(if_one_char)
 
     def _parse_string_literal(self):
         string_literal_value: List[str] = []
@@ -136,88 +197,18 @@ class Lexer:
             self.curr_token = MyToken(TokenType.INT_LITERAL, value)
 
     def _parse_comment(self):
+        self.reader.next_char()
         comment_value: List[str] = []
 
         char = self.reader.char
 
-        while char != '\n':
+        while char != "\n":
             comment_value.append(char)
             char = self.reader.get_next_char()
 
         comment_value = "".join(comment_value)
 
         self.curr_token = MyToken(TokenType.COMMENT, comment_value)
-
-    def _parse_other(self):
-        char = self.reader.char
-        if char == "@":
-            self.reader.next_char()
-            self._parse_comment()
-        elif char == ",":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.COMMA)
-        elif char == "(":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.LEFT_BRACKET)
-        elif char == ")":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.RIGHT_BRACKET)
-        elif char == ";":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.SEMICOLON)
-        elif char == ":":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.COLON)
-        elif char == ".":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.DOT)
-        elif char == "&":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.AND)
-        elif char == "|":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.OR)
-        elif char == "+":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.PLUS)
-        elif char == "-":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.MINUS)
-        elif char == "*":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.TIMES)
-        elif char == "/":
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.DIVIDE)
-        elif char == "!":
-            char = self.reader.get_next_char()
-            if char != "=":
-                raise MyTokenException(f"Expected `=` but got `{char}`")
-            self.reader.next_char()
-            self.curr_token = MyToken(TokenType.INEQUAL)
-        elif char == "<":
-            char = self.reader.get_next_char()
-            if char == "=":
-                self.reader.next_char()
-                self.curr_token = MyToken(TokenType.LESS_EQUAL)
-                return
-            self.curr_token = MyToken(TokenType.LESS)
-        elif char == ">":
-            char = self.reader.get_next_char()
-            if char == "=":
-                self.reader.next_char()
-                self.curr_token = MyToken(TokenType.GREATER_EQUAL)
-                return
-            self.curr_token = MyToken(TokenType.GREATER)
-        elif char == "=":
-            char = self.reader.get_next_char()
-            if char == "=":
-                self.reader.next_char()
-                self.curr_token = MyToken(TokenType.EQUAL)
-                return
-            self.curr_token = MyToken(TokenType.ASSIGNMENT)
-        else:
-            raise MyTokenException("Can not tokenise this!")
 
     def _is_end_of_file(self):
         return self.reader.char is None
