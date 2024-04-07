@@ -645,3 +645,214 @@ end
     assert l.get_next_token() == MyToken(TokenType.END)
 
     assert l.get_next_token() == MyToken(TokenType.EOT)
+
+
+
+def test_if():
+    """."""
+    to_tokenise = """
+ilosc_psow: mut int = 1;
+msg: mut str = 'Ala ma ' + ilosc_psow + ' ps';
+if ilosc_psow == 1
+begin 
+    msg = msg + 'a';
+end 
+else 
+begin
+    if 1 < ilosc_psow & ilosc_psow < 5
+    begin
+        msg = msg + 'y';
+    end
+end
+else
+begin
+    msg = msg + 'ów';
+end
+msg = msg + '.';
+"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "ilosc_psow")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.MUT)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.MUT)
+    assert l.get_next_token() == MyToken(TokenType.STR)
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, 'Ala ma ')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'ilosc_psow')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, ' ps')
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.IF)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'ilosc_psow')
+    assert l.get_next_token() == MyToken(TokenType.EQUAL)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1)
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+    
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "a")
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.ELSE)
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IF)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1)
+    assert l.get_next_token() == MyToken(TokenType.LESS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'ilosc_psow')
+    assert l.get_next_token() == MyToken(TokenType.AND)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'ilosc_psow')
+    assert l.get_next_token() == MyToken(TokenType.LESS)
+    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 5)
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "y")
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.ELSE)
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "ów")
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "msg")
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, ".")
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.EOT)
+
+
+
+def test_function_with_subfunctions():
+    """."""
+    to_tokenise = """
+add(arg1: int, arg2: int) : int
+begin
+  add_sub_function(arg1: int, arg2: int) : int
+  begin
+    return arg1 + arg2;
+  end
+  
+  add(arg1: int, arg2: int) : int
+  begin
+    return add_sub_function(arg1, arg2);
+  end
+
+  return add(arg1, arg2);
+end
+"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "add")
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg1")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.COMMA)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg2")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "add_sub_function")
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg1")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.COMMA)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg2")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.RETURN)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg1")
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg2")
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "add")
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg1")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.COMMA)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg2")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.INT)
+    
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.RETURN)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "add_sub_function")
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg1")
+    assert l.get_next_token() == MyToken(TokenType.COMMA)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg2")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.RETURN)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "add")
+    assert l.get_next_token() == MyToken(TokenType.LEFT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg1")
+    assert l.get_next_token() == MyToken(TokenType.COMMA)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "arg2")
+    assert l.get_next_token() == MyToken(TokenType.RIGHT_BRACKET)
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.EOT)
+
+
