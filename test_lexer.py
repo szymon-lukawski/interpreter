@@ -498,3 +498,150 @@ janek.wiek = 20;
     assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
 
     assert l.get_next_token() == MyToken(TokenType.EOT)
+
+
+def test_smallest_valid_struct():
+    """."""
+    to_tokenise = """x:struct begin end"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.STRUCT)
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+    assert l.get_next_token() == MyToken(TokenType.END)
+    assert l.get_next_token() == MyToken(TokenType.EOT)
+
+def test_begin_end_merged():
+    """."""
+    to_tokenise = """beginend"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "beginend")
+    assert l.get_next_token() == MyToken(TokenType.EOT)
+
+def test_begin_end_separated_by_tab():
+    """."""
+    to_tokenise = """begin\tend"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+    assert l.get_next_token() == MyToken(TokenType.END)
+    assert l.get_next_token() == MyToken(TokenType.EOT)
+
+
+def test_variant():
+    """."""
+    to_tokenise = """
+Punkt : variant
+begin
+    p2d : Punkt2D;
+    p3d : Punkt3D;
+end
+"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.VARIANT)
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "p2d")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt2D")
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "p3d")
+    assert l.get_next_token() == MyToken(TokenType.COLON)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt3D")
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+
+    assert l.get_next_token() == MyToken(TokenType.EOT)
+
+def test_visit():
+    """."""
+    to_tokenise = """
+visit punkt
+begin
+    case Punkt2D
+    begin
+        wiadomosc = '[' + p2d.x + '; ' + p2d.y + ']';
+    end
+    case Punkt3D
+    begin
+        wiadomosc = '[' + p3d.x + '; ' + p3d.y + '; ' + p3d.z + ']';
+    end
+end
+"""
+    r = StringReader(to_tokenise)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.VISIT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "punkt")
+
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.CASE)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt2D")
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'wiadomosc')
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '[')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p2d')
+    assert l.get_next_token() == MyToken(TokenType.DOT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'x')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '; ')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p2d')
+    assert l.get_next_token() == MyToken(TokenType.DOT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'y')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, ']')
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.CASE)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt3D")
+    assert l.get_next_token() == MyToken(TokenType.BEGIN)
+
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'wiadomosc')
+    assert l.get_next_token() == MyToken(TokenType.ASSIGNMENT)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '[')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p3d')
+    assert l.get_next_token() == MyToken(TokenType.DOT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'x')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '; ')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p3d')
+    assert l.get_next_token() == MyToken(TokenType.DOT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'y')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, '; ')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'p3d')
+    assert l.get_next_token() == MyToken(TokenType.DOT)
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, 'z')
+    assert l.get_next_token() == MyToken(TokenType.PLUS)
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, ']')
+    assert l.get_next_token() == MyToken(TokenType.SEMICOLON)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.END)
+
+    assert l.get_next_token() == MyToken(TokenType.EOT)
