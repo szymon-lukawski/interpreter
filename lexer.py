@@ -95,21 +95,18 @@ class Lexer:
             case "<":
                 self._try_parse_two_char_operator(TokenType.LESS, TokenType.LESS_EQUAL)
             case ">":
-                self._try_parse_two_char_operator(
-                    TokenType.GREATER, TokenType.GREATER_EQUAL
-                )
+                self._try_parse_two_char_operator(TokenType.GREATER, TokenType.GREATER_EQUAL)
             case "=":
                 self._try_parse_two_char_operator(TokenType.ASSIGNMENT, TokenType.EQUAL)
             case "!":
                 char = self.reader.get_next_char()
                 if char != "=":
-                    raise MyTokenException(
-                        f"Expected `=` but got `{char}`", self.reader.get_position()
-                    )
+                    raise MyTokenException(f"Expected `=` but got `{char}`", self.reader.get_position())
                 self.reader.next_char()
                 self.curr_token = MyToken(TokenType.INEQUAL)
             case _:
                 raise MyTokenException(None, self.reader.get_position())
+
 
     def _try_parse_two_char_operator(
         self, if_one_char: TokenType, if_two_chars: TokenType
@@ -125,21 +122,31 @@ class Lexer:
         string_literal_value: List[str] = []
 
         char = self.reader.get_next_char()
-        if char is None:
-            raise MyTokenException(
-                "String literal not properly ended!", self.reader.get_position()
-            )
+        if char is None or char == '\n':
+            raise MyTokenException("String literal not properly ended!", self.reader.get_position())
         is_escaped = char == Lexer.STRING_ESCAPE
 
         # TODO add proper handling of other escaped characters
 
         while char != Lexer.STRING_LITERAL_DELIMITER or is_escaped:
-            string_literal_value.append(char)
-            char = self.reader.get_next_char()
-            if char is None:
-                raise MyTokenException(
-                    "String literal not properly ended!", self.reader.get_position()
-                )
+            if is_escaped:
+                char = self.reader.get_next_char()
+                if char == 't':
+                    string_literal_value.append('\t')
+                elif char == 'n':
+                    string_literal_value.append('\n')
+                elif char == Lexer.STRING_ESCAPE:
+                    string_literal_value.append(Lexer.STRING_ESCAPE)
+                elif char == Lexer.STRING_LITERAL_DELIMITER:
+                    string_literal_value.append(Lexer.STRING_LITERAL_DELIMITER)
+                else:
+                    raise MyTokenException("Escaping wrong character in string literal", self.reader.get_position())
+                char = self.reader.get_next_char()
+            else:
+                string_literal_value.append(char)
+                char = self.reader.get_next_char()
+            if char is None or char == '\n':
+                raise MyTokenException("String literal not properly ended!", self.reader.get_position())
             is_escaped = char == Lexer.STRING_ESCAPE
 
         self.reader.next_char()
@@ -165,10 +172,7 @@ class Lexer:
             buffer.append(char)
             char = self.reader.get_next_char()
         else:
-            raise MyTokenException(
-                "Identifier can not start with non ascii letter",
-                self.reader.get_position(),
-            )
+            raise MyTokenException("Identifier can not start with non ascii letter", self.reader.get_position())
         while char is not None and is_identifier_body(char):
             buffer.append(char)
             char = self.reader.get_next_char()
@@ -184,9 +188,7 @@ class Lexer:
 
         while char is not None and char.isdigit():
             if value > Lexer.INT_LIMIT:
-                raise MyTokenException(
-                    "INT LITERAL value to big", self.reader.get_position()
-                )
+                raise MyTokenException("INT LITERAL value to big", self.reader.get_position())
             value = value * 10 + int(char)
             char = self.reader.get_next_char()
 
@@ -204,10 +206,7 @@ class Lexer:
                     TokenType.FLOAT_LITERAL, value / (10**counter)
                 )
             else:
-                raise MyTokenException(
-                    "Float literal has to have a digit after dot",
-                    self.reader.get_position(),
-                )
+                raise MyTokenException("Float literal has to have a digit after dot", self.reader.get_position())
         else:
             self.curr_token = MyToken(TokenType.INT_LITERAL, value)
 

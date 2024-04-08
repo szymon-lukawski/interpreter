@@ -30,17 +30,7 @@ def test_string_literal_ala():
     assert my_token == MyToken(TokenType.STR_LITERAL, "ala")
 
 
-def test_strin_literal_ala():
-    """."""
-    text = "'ala'"
-    r = StringReader(text)
-    l = Lexer(r)
-    assert l.curr_token is None
-    my_token = l.get_next_token()
-    assert my_token == MyToken(TokenType.STR_LITERAL, "ala")
-
-
-def test_strin_literal_not_properly_ended():
+def test_string_literal_not_properly_ended():
     """."""
     text = "'ala"
     r = StringReader(text)
@@ -48,9 +38,54 @@ def test_strin_literal_not_properly_ended():
     assert l.curr_token is None
     try:
         l.get_next_token()
+        assert False
     except MyTokenException:
         pass
 
+def test_as_if_string_literal_not_properly_started():
+    """."""
+    text = "ala'"
+    r = StringReader(text)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "ala")
+    try:
+        l.get_next_token()
+        assert False
+    except MyTokenException:
+        pass
+
+def test_newline_in_str_literal():
+    """."""
+    text = "'\n'"
+    r = StringReader(text)
+    l = Lexer(r)
+    assert l.curr_token is None
+    try:
+        l.get_next_token()
+        assert False
+    except MyTokenException as e:
+        assert e.message == "String literal not properly ended!"
+
+def test_escaped_newline_in_str_literal():
+    """."""
+    text = "'\\\n'"
+    r = StringReader(text)
+    l = Lexer(r)
+    assert l.curr_token is None
+    try:
+        l.get_next_token()
+        assert False
+    except MyTokenException as e:
+        assert e.message == "Escaping wrong character in string literal"
+
+def test_valid_newline_in_str_literal():
+    """."""
+    text = "'\\n'"
+    r = StringReader(text)
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "\n")
 
 def test_keyword_null():
     """."""
