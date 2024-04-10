@@ -1,7 +1,7 @@
 """Lexer class"""
 
 import string
-from typing import List
+from typing import List, Tuple
 
 from token_type import TokenType
 from keywords import KEYWORDS_STRS, KEYWORDS_TO_TOKEN_TYPE
@@ -46,84 +46,86 @@ class Lexer:
         self._parse_token()
 
     def _parse_token(self):
+        #
         char = self.reader.char
+        pos = self.reader.get_position()
         match char:
             case Lexer.STRING_LITERAL_DELIMITER:
-                self._parse_string_literal()
+                self._parse_string_literal(pos)
             case _ if char in string.ascii_letters:
-                self._parse_keyword_or_identifier()
+                self._parse_keyword_or_identifier(pos)
             case _ if char in string.digits:
-                self._parse_number()
+                self._parse_number(pos)
             case "@":
-                self._parse_comment()
+                self._parse_comment(pos)
             case ",":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.COMMA)
+                self.curr_token = MyToken(TokenType.COMMA, position=pos)
             case "(":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.LEFT_BRACKET)
+                self.curr_token = MyToken(TokenType.LEFT_BRACKET, position=pos)
             case ")":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.RIGHT_BRACKET)
+                self.curr_token = MyToken(TokenType.RIGHT_BRACKET, position=pos)
             case ";":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.SEMICOLON)
+                self.curr_token = MyToken(TokenType.SEMICOLON, position=pos)
             case ":":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.COLON)
+                self.curr_token = MyToken(TokenType.COLON, position=pos)
             case ".":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.DOT)
+                self.curr_token = MyToken(TokenType.DOT, position=pos)
             case "&":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.AND)
+                self.curr_token = MyToken(TokenType.AND, position=pos)
             case "|":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.OR)
+                self.curr_token = MyToken(TokenType.OR, position=pos)
             case "+":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.PLUS)
+                self.curr_token = MyToken(TokenType.PLUS, position=pos)
             case "-":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.MINUS)
+                self.curr_token = MyToken(TokenType.MINUS, position=pos)
             case "*":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.TIMES)
+                self.curr_token = MyToken(TokenType.TIMES, position=pos)
             case "/":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.DIVIDE)
+                self.curr_token = MyToken(TokenType.DIVIDE, position=pos)
             case "<":
-                self._try_parse_two_char_operator(TokenType.LESS, TokenType.LESS_EQUAL)
+                self._try_parse_two_char_operator(TokenType.LESS, TokenType.LESS_EQUAL, position=pos)
             case ">":
-                self._try_parse_two_char_operator(TokenType.GREATER, TokenType.GREATER_EQUAL)
+                self._try_parse_two_char_operator(TokenType.GREATER, TokenType.GREATER_EQUAL, position=pos)
             case "=":
-                self._try_parse_two_char_operator(TokenType.ASSIGNMENT, TokenType.EQUAL)
+                self._try_parse_two_char_operator(TokenType.ASSIGNMENT, TokenType.EQUAL, position=pos)
             case "!":
                 char = self.reader.get_next_char()
                 if char != "=":
-                    raise MyTokenException(f"Expected `=` but got `{char}`", self.reader.get_position())
+                    raise MyTokenException(f"Expected `=` but got `{char}`", position=pos)
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.INEQUAL)
+                self.curr_token = MyToken(TokenType.INEQUAL, position=pos)
             case _:
-                raise MyTokenException(None, self.reader.get_position())
+                raise MyTokenException(None, position=pos)
 
 
     def _try_parse_two_char_operator(
-        self, if_one_char: TokenType, if_two_chars: TokenType
+        self, if_one_char: TokenType, if_two_chars: TokenType, position : Tuple[int,int]
     ):
         char = self.reader.get_next_char()
         if char == "=":
             self.reader.next_char()
-            self.curr_token = MyToken(if_two_chars)
+            self.curr_token = MyToken(if_two_chars, position=position)
             return
-        self.curr_token = MyToken(if_one_char)
+        self.curr_token = MyToken(if_one_char, position=position)
 
-    def _parse_string_literal(self):
+    def _parse_string_literal(self, position : Tuple[int,int]):
         string_literal_value: List[str] = []
 
         char = self.reader.get_next_char()
         if char is None or char == '\n':
-            raise MyTokenException("String literal not properly ended!", self.reader.get_position())
+            raise MyTokenException("String literal not properly ended!", position=position)
         is_escaped = char == Lexer.STRING_ESCAPE
 
         # TODO add proper handling of other escaped characters
@@ -140,31 +142,31 @@ class Lexer:
                 elif char == Lexer.STRING_LITERAL_DELIMITER:
                     string_literal_value.append(Lexer.STRING_LITERAL_DELIMITER)
                 else:
-                    raise MyTokenException("Escaping wrong character in string literal", self.reader.get_position())
+                    raise MyTokenException("Escaping wrong character in string literal", position)
                 char = self.reader.get_next_char()
             else:
                 string_literal_value.append(char)
                 char = self.reader.get_next_char()
             if char is None or char == '\n':
-                raise MyTokenException("String literal not properly ended!", self.reader.get_position())
+                raise MyTokenException("String literal not properly ended!", position)
             is_escaped = char == Lexer.STRING_ESCAPE
 
         self.reader.next_char()
         string_literal_value = "".join(string_literal_value)
 
         if string_literal_value in KEYWORDS_STRS:
-            self.curr_token = MyToken(KEYWORDS_TO_TOKEN_TYPE[string_literal_value])
+            self.curr_token = MyToken(KEYWORDS_TO_TOKEN_TYPE[string_literal_value],position)
 
-        self.curr_token = MyToken(TokenType.STR_LITERAL, string_literal_value)
+        self.curr_token = MyToken(TokenType.STR_LITERAL, string_literal_value,position)
 
-    def _parse_keyword_or_identifier(self):
-        self._parse_identifier()
+    def _parse_keyword_or_identifier(self, position: Tuple[int,int]):
+        self._parse_identifier(position)
 
         if is_value_a_keyword(self.curr_token.value):
             self.curr_token.type = KEYWORDS_TO_TOKEN_TYPE[self.curr_token.value]
             self.curr_token.value = None
 
-    def _parse_identifier(self):
+    def _parse_identifier(self, position: Tuple[int,int]):
         # TODO Add limit to identifier length
         buffer: List[str] = []
         char = self.reader.char
@@ -172,23 +174,23 @@ class Lexer:
             buffer.append(char)
             char = self.reader.get_next_char()
         else:
-            raise MyTokenException("Identifier can not start with non ascii letter", self.reader.get_position())
+            raise MyTokenException("Identifier can not start with non ascii letter", position)
         while char is not None and is_identifier_body(char):
             buffer.append(char)
             char = self.reader.get_next_char()
 
         value = "".join(buffer)
 
-        self.curr_token = MyToken(TokenType.IDENTIFIER, value)
+        self.curr_token = MyToken(TokenType.IDENTIFIER, value, position)
 
-    def _parse_number(self):
+    def _parse_number(self, position: Tuple[int,int]):
         # TODO add limit to float
         value = int(self.reader.char)
         char = self.reader.get_next_char()
 
         while char is not None and char.isdigit():
             if value > Lexer.INT_LIMIT:
-                raise MyTokenException("INT LITERAL value to big", self.reader.get_position())
+                raise MyTokenException("INT LITERAL value to big", position)
             value = value * 10 + int(char)
             char = self.reader.get_next_char()
 
@@ -203,14 +205,14 @@ class Lexer:
                     char = self.reader.get_next_char()
                     counter += 1
                 self.curr_token = MyToken(
-                    TokenType.FLOAT_LITERAL, value / (10**counter)
+                    TokenType.FLOAT_LITERAL, value / (10**counter), position
                 )
             else:
-                raise MyTokenException("Float literal has to have a digit after dot", self.reader.get_position())
+                raise MyTokenException("Float literal has to have a digit after dot", position)
         else:
-            self.curr_token = MyToken(TokenType.INT_LITERAL, value)
+            self.curr_token = MyToken(TokenType.INT_LITERAL, value,  position)
 
-    def _parse_comment(self):
+    def _parse_comment(self, position: Tuple[int, int ]):
         self.reader.next_char()
         comment_value: List[str] = []
 
@@ -222,7 +224,7 @@ class Lexer:
 
         comment_value = "".join(comment_value)
 
-        self.curr_token = MyToken(TokenType.COMMENT, comment_value)
+        self.curr_token = MyToken(TokenType.COMMENT, comment_value,position)
 
     def _is_end_of_file(self):
         return self.reader.char is None
