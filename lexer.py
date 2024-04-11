@@ -7,7 +7,7 @@ from token_type import TokenType
 from keywords import KEYWORDS_STRS, KEYWORDS_TO_TOKEN_TYPE
 from char_reader import CharReader
 from my_token import MyToken, PositionType
-from my_token_exceptions import MyTokenException
+from my_token_exceptions import *
 
 from utils import is_identifier_body, is_value_a_keyword
 
@@ -40,7 +40,7 @@ class Lexer:
         self._skip_whitespaces()
 
         if self._is_end_of_file():
-            self.curr_token = MyToken(TokenType.EOT)
+            self.curr_token = MyToken(TokenType.EOT, position=self.reader.get_position())
             return
 
         self._parse_token()
@@ -120,12 +120,12 @@ class Lexer:
             return
         self.curr_token = MyToken(if_one_char, position=position)
 
-    def _parse_string_literal(self, position : Tuple[int,int]):
+    def _parse_string_literal(self, position : PositionType):
         string_literal_value: List[str] = []
 
         char = self.reader.get_next_char()
         if char is None or char == '\n':
-            raise MyTokenException("String literal not properly ended!", position=position)
+            raise StringLiteralNotEnded(self.reader.get_position())
         is_escaped = char == Lexer.STRING_ESCAPE
 
         # TODO add proper handling of other escaped characters
@@ -142,13 +142,13 @@ class Lexer:
                 elif char == Lexer.STRING_LITERAL_DELIMITER:
                     string_literal_value.append(Lexer.STRING_LITERAL_DELIMITER)
                 else:
-                    raise MyTokenException("Escaping wrong character in string literal", position)
+                    raise EscapingWrongChar(self.reader.get_position())
                 char = self.reader.get_next_char()
             else:
                 string_literal_value.append(char)
                 char = self.reader.get_next_char()
             if char is None or char == '\n':
-                raise MyTokenException("String literal not properly ended!", position)
+                raise StringLiteralNotEnded(self.reader.get_position())
             is_escaped = char == Lexer.STRING_ESCAPE
 
         self.reader.next_char()
