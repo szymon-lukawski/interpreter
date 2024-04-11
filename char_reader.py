@@ -14,13 +14,9 @@ class CharReader:
     def next_char(self):
         """Advances to next char in source"""
         self._next_char()
-        if self.char is None:
-            return
-        if self.char == '\n':
-            self._col = 0
-            self._row +=1
-        else:
-            self._col += 1
+        self._update_position()
+
+
 
     def get_position(self):
         """Returns position of current char in source"""
@@ -28,10 +24,18 @@ class CharReader:
 
     def _next_char(self):
         return ""
+    
+    def _update_position(self):
+        if self.char == '\n':
+            self._col = 0
+            self._row +=1
+        else:
+            self._col += 1
 
     def get_next_char(self):
         """Advances one char and returns it"""
         self._next_char()
+        self._update_position()
         return self.char
 
 
