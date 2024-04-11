@@ -1,7 +1,8 @@
 """Unit tests for tokenization of keywords and operators"""
 
-import pytest
+
 from typing import Dict
+import pytest
 
 from char_reader import StringReader
 from lexer import Lexer
