@@ -34,7 +34,8 @@ class ExclamationMarkError(MyTokenException):
 class NumberError(MyTokenException):
     """Error when building number token"""
 
-
+class NumberLiteralTooBig(NumberError):
+    """Number literal has a limit"""
 class IntLiteralTooBig(NumberError):
     """Int limit is set to {Lexer.INT_LIMIT}"""
 
@@ -45,3 +46,9 @@ class InvalidCharsInNumberLiteral(NumberError):
     """When building number literal there can only be digits 0-9"""
 
 # TODO add int and float limits to doc strings...
+
+class PrecidingZerosError(NumberError):
+    """There can only be one preciding zero in number literal"""
+
+class IdentifierTooLong(MyTokenException):
+    """self explanatory"""
