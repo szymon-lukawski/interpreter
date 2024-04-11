@@ -6,7 +6,7 @@ from typing import List, Tuple
 from token_type import TokenType
 from keywords import KEYWORDS_STRS, KEYWORDS_TO_TOKEN_TYPE
 from char_reader import CharReader
-from my_token import MyToken
+from my_token import MyToken, PositionType
 from my_token_exceptions import MyTokenException
 
 from utils import is_identifier_body, is_value_a_keyword
@@ -211,6 +211,7 @@ class Lexer:
                 raise MyTokenException("Float literal has to have a digit after dot", position)
         else:
             self.curr_token = MyToken(TokenType.INT_LITERAL, value,  position)
+        
 
     def _parse_comment(self, position: Tuple[int, int ]):
         self.reader.next_char()
