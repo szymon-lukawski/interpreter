@@ -32,9 +32,7 @@ class Lexer:
     FLOAT_CHAR_LIMIT = 20
     IDENTIFIER_LEN_LIMIT = 100
 
-    def __init__(self, reader: CharReader, INT_LIMIT=10**8 - 1) -> None:
-        Lexer.INT_LIMIT = INT_LIMIT
-
+    def __init__(self, reader: CharReader) -> None:
         self.reader = reader
 
         self.curr_token = None
