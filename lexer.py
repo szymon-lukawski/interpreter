@@ -36,7 +36,6 @@ class Lexer:
         Lexer.INT_LIMIT = INT_LIMIT
 
         self.reader = reader
-        self.reader.next_char()
 
         self.curr_token = None
         self._EOT_token_in_place = False
@@ -144,7 +143,7 @@ class Lexer:
         string_literal_value: List[str] = []
 
         char = self.reader.get_next_char()
-        if char is None or char == "\n":
+        if char == '' or char == "\n":
             raise StringLiteralNotEnded(self.reader.get_position())
         is_escaped = char == Lexer.STRING_ESCAPE
 
@@ -167,7 +166,7 @@ class Lexer:
             else:
                 string_literal_value.append(char)
                 char = self.reader.get_next_char()
-            if char is None or char == "\n":
+            if char == '' or char == "\n":
                 raise StringLiteralNotEnded(self.reader.get_position())
             is_escaped = char == Lexer.STRING_ESCAPE
 
@@ -195,7 +194,7 @@ class Lexer:
         char = self.reader.get_next_char()
 
         while (
-            char is not None
+            char != ''
             and is_identifier_body(char)
             and len(buffer) <= Lexer.IDENTIFIER_LEN_LIMIT
         ):
@@ -224,7 +223,7 @@ class Lexer:
             return
 
         char = self.reader.get_next_char()
-        if char is None or not char.isdigit():
+        if char == '' or not char.isdigit():
             raise InvalidCharsInNumberLiteral(position)
 
         int_part_len = len(str(value))
@@ -243,7 +242,7 @@ class Lexer:
 
     def _try_build_number(self, value, char_counter):
         char = self.reader.char
-        while char is not None and char.isdigit():
+        while char != '' and char.isdigit():
             char_counter += 1
             value = value * 10 + int(char)
             char = self.reader.get_next_char()
@@ -264,7 +263,7 @@ class Lexer:
         self.curr_token = MyToken(TokenType.COMMENT, comment_value, position)
 
     def _is_end_of_file(self):
-        return self.reader.char is None
+        return self.reader.char == ''
 
     def _skip_whitespaces(self):
         while not self._is_end_of_file() and self.reader.char.isspace():
