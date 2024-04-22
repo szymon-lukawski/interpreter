@@ -2,6 +2,7 @@
 
 
 from typing import Dict
+from io import StringIO
 import pytest
 
 from char_reader import StringReader
@@ -44,7 +45,7 @@ for kk, tt in special_chars_to_token_type.items():
 @pytest.mark.parametrize("text,expected_token", test_examples)
 def test_just_single_token(text, expected_token):
     """Parametrised test for each keyword, operator or special character"""
-    r = StringReader(text)
+    r = StringReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == expected_token
@@ -54,7 +55,7 @@ def test_just_single_token(text, expected_token):
 @pytest.mark.parametrize("text,expected_token", test_examples)
 def test_sht_r_position(text, expected_token : MyToken):
     """keyword, operator or special character but shifted right"""
-    r = StringReader(' ' + text)
+    r = StringReader(StringIO(' ' + text))
     l = Lexer(r)
     expected_token.pos = (1, 2)
     assert l.curr_token is None
@@ -64,7 +65,7 @@ def test_sht_r_position(text, expected_token : MyToken):
 @pytest.mark.parametrize("text,expected_token", test_examples)
 def test_sht_l_position(text, expected_token : MyToken):
     """keyword, operator or special character but shifted left"""
-    r = StringReader(text + ' ')
+    r = StringReader(StringIO(text + ' '))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == expected_token
@@ -73,7 +74,7 @@ def test_sht_l_position(text, expected_token : MyToken):
 @pytest.mark.parametrize("text,expected_token", test_examples)
 def test_after_newline_position(text, expected_token : MyToken):
     """keyword, operator or special character but after newline"""
-    r = StringReader('\n' + text)
+    r = StringReader(StringIO('\n' + text))
     l = Lexer(r)
     expected_token.pos = (2, 1)
     assert l.curr_token is None
@@ -83,7 +84,7 @@ def test_after_newline_position(text, expected_token : MyToken):
 @pytest.mark.parametrize("text,expected_token", test_examples)
 def test_after_newline_sht_r_position(text, expected_token : MyToken):
     """keyword, operator or special character but after newline and shifted right"""
-    r = StringReader('\n ' + text)
+    r = StringReader(StringIO('\n ' + text))
     l = Lexer(r)
     expected_token.pos = (2, 2)
     assert l.curr_token is None
@@ -93,7 +94,7 @@ def test_after_newline_sht_r_position(text, expected_token : MyToken):
 @pytest.mark.parametrize("text,expected_token", test_examples)
 def test_after_newline_sht_r_double_position(text, expected_token : MyToken):
     """keyword, operator or special character but after newline and shifted right but doubled"""
-    r = StringReader('\n \n ' + text)
+    r = StringReader(StringIO('\n \n ' + text))
     l = Lexer(r)
     expected_token.pos = (3, 2)
     assert l.curr_token is None
@@ -104,7 +105,7 @@ def test_after_newline_sht_r_double_position(text, expected_token : MyToken):
 def test_assign_with_eqaul():
     """Have to separated by some whitespace"""
     text = "= =="
-    r = StringReader(text)
+    r = StringReader(StringIO(text))
     l = Lexer(r)
     expected_token_1 = MyToken(TokenType.ASSIGNMENT, position=(1,1))
     expected_token_2 = MyToken(TokenType.EQUAL, position=(1,3))
@@ -116,7 +117,7 @@ def test_assign_with_eqaul():
 def test_equal_with_assign():
     """Dont have to be separated with whitespace"""
     text = "==="
-    r = StringReader(text)
+    r = StringReader(StringIO(text))
     l = Lexer(r)
     expected_token_1 = MyToken(TokenType.EQUAL, position=(1,1))
     expected_token_2 = MyToken(TokenType.ASSIGNMENT, position=(1,3))
@@ -128,7 +129,7 @@ def test_equal_with_assign():
 def test_plus_with_eqaul():
     """Dont have to be separated with whitespace"""
     text = "+="
-    r = StringReader(text)
+    r = StringReader(StringIO(text))
     l = Lexer(r)
     expected_token_1 = MyToken(TokenType.PLUS, position=(1,1))
     expected_token_2 = MyToken(TokenType.ASSIGNMENT, position=(1,2))
@@ -141,7 +142,7 @@ def test_plus_with_eqaul():
 def test_minus_with_eqaul():
     """Dont have to be separated with whitespace"""
     text = "-="
-    r = StringReader(text)
+    r = StringReader(StringIO(text))
     l = Lexer(r)
     expected_token_1 = MyToken(TokenType.MINUS, position=(1,1))
     expected_token_2 = MyToken(TokenType.ASSIGNMENT, position=(1,2))

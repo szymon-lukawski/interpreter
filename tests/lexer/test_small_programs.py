@@ -1,5 +1,6 @@
 """Testing lexer tokenisation but for some small programs"""
 
+from io import StringIO
 from char_reader import StringReader
 from lexer import Lexer
 from token_type import TokenType
@@ -10,7 +11,7 @@ from my_token_exceptions import MyTokenException
 def test_print():
     """Print built in function call"""
     to_tokenise = """print('Hello');"""
-    r = StringReader(to_tokenise)
+    r = StringReader(StringIO(to_tokenise))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == MyToken(TokenType.PRINT, position=(1,1))
@@ -31,7 +32,7 @@ begin
     print('Hello');
 end
 """
-    r = StringReader(to_tokenise)
+    r = StringReader(StringIO(to_tokenise))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == MyToken(TokenType.IF, position=(2,1))
@@ -51,7 +52,7 @@ def test_int_var_assignment():
     to_tokenise = """
 calkowita        : int = 10;
 """
-    r = StringReader(to_tokenise)
+    r = StringReader(StringIO(to_tokenise))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "calkowita", position=(2,1))
@@ -70,7 +71,7 @@ calkowita            : int   = 10;
 zmiennoprzecinkowa   : float = 3.14;
 napis                : str   = 'Ala ma kota.';
 """
-    r = StringReader(to_tokenise)
+    r = StringReader(StringIO(to_tokenise))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "calkowita", position=(2,1))
@@ -104,7 +105,7 @@ napis                : str   = 'Ala ma kota.';
 #     to_tokenise = """
 #     calkowita   : int;
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "calkowita")
@@ -120,7 +121,7 @@ napis                : str   = 'Ala ma kota.';
 #     to_tokenise = """
 #     calkowita   : mut int;
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "calkowita")
@@ -137,7 +138,7 @@ napis                : str   = 'Ala ma kota.';
 #     to_tokenise = """
 #     calkowita   : mut int = 2;
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "calkowita")
@@ -160,7 +161,7 @@ napis                : str   = 'Ala ma kota.';
 #     calkowita   : int; 
 #     calkowita = 3;
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "calkowita")
@@ -179,7 +180,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_empty_string_literal():
 #     """."""
 #     to_tokenise = """''"""
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.STR_LITERAL, "")
@@ -189,7 +190,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_str_var_empty_literal_no_whitespaces():
 #     """."""
 #     to_tokenise = """x:str='';"""
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
@@ -205,7 +206,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_negative_int_var():
 #     """."""
 #     to_tokenise = """x:int=-1;"""
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
@@ -227,7 +228,7 @@ napis                : str   = 'Ala ma kota.';
 #         x : mut int = 0;
 #     end
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Point1D")
@@ -249,7 +250,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_empty_comment():
 #     """."""
 #     to_tokenise = "@\n"
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.COMMENT, "")
@@ -260,7 +261,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_space_comment():
 #     """."""
 #     to_tokenise = "@ \n"
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.COMMENT, " ")
@@ -271,7 +272,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_cos_comment_immidiete_after_at():
 #     """."""
 #     to_tokenise = "@cos\n"
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.COMMENT, "cos")
@@ -291,7 +292,7 @@ napis                : str   = 'Ala ma kota.';
 # janek.imie = 'Janek';
 # janek.wiek = 20;
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Czlowiek")
@@ -334,7 +335,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_smallest_valid_struct():
 #     """."""
 #     to_tokenise = """x:struct begin end"""
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
@@ -348,7 +349,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_begin_end_merged():
 #     """."""
 #     to_tokenise = """beginend"""
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "beginend")
@@ -358,7 +359,7 @@ napis                : str   = 'Ala ma kota.';
 # def test_begin_end_separated_by_tab():
 #     """."""
 #     to_tokenise = """begin\tend"""
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.BEGIN)
@@ -375,7 +376,7 @@ napis                : str   = 'Ala ma kota.';
 #     p3d : Punkt3D;
 # end
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "Punkt")
@@ -414,7 +415,7 @@ napis                : str   = 'Ala ma kota.';
 #     end
 # end
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.VISIT)
@@ -501,7 +502,7 @@ napis                : str   = 'Ala ma kota.';
 # end
 # msg = msg + '.';
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "ilosc_psow")
@@ -605,7 +606,7 @@ napis                : str   = 'Ala ma kota.';
 #   return add(arg1, arg2);
 # end
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "add")
@@ -695,7 +696,7 @@ napis                : str   = 'Ala ma kota.';
 #   return null;
 # end
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wypisz_na_ekran")
@@ -731,7 +732,7 @@ napis                : str   = 'Ala ma kota.';
 #   print(wiadomosc);
 # end
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "wypisz_na_ekran")
@@ -774,7 +775,7 @@ napis                : str   = 'Ala ma kota.';
 # end
 # print(x); @ 1
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "x")
@@ -865,7 +866,7 @@ napis                : str   = 'Ala ma kota.';
 # p : P;
 # p.x = 0 | 1 & 2 < 2 + 3 - 4 * - 5 / - p.x;
 # """
-#     r = StringReader(to_tokenise)
+#     r = StringReader(StringIO(to_tokenise))
 #     l = Lexer(r)
 #     assert l.curr_token is None
 #     assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "P", (2,1))
