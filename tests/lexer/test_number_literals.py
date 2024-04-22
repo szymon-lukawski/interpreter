@@ -5,7 +5,7 @@ from io import StringIO
 from char_reader import StringReader
 from lexer import Lexer
 from token_type import TokenType
-from my_token import MyToken
+from my_token import Token
 
 from my_token_exceptions import (
     FloatLiteralTooBig,
@@ -24,7 +24,7 @@ def test_only_spaces():
 
     for _ in range(10):
         my_token = l.get_next_token()
-        assert my_token == MyToken(TokenType.EOT, position=(1, 11))
+        assert my_token == Token(TokenType.EOT, position=(1, 11))
 
 
 def test_int_literal_0():
@@ -33,7 +33,7 @@ def test_int_literal_0():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 0, position=(1, 1))
+    assert l.get_next_token() == Token(TokenType.INT_LITERAL, 0, position=(1, 1))
 
 
 def test_int_literal_00():
@@ -51,7 +51,7 @@ def test_int_literal_1():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 1, position=(1, 1))
+    assert l.get_next_token() == Token(TokenType.INT_LITERAL, 1, position=(1, 1))
 
 
 def test_int_literal_2():
@@ -60,7 +60,7 @@ def test_int_literal_2():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 2, position=(1, 1))
+    assert l.get_next_token() == Token(TokenType.INT_LITERAL, 2, position=(1, 1))
 
 
 def test_int_literal_12():
@@ -69,7 +69,7 @@ def test_int_literal_12():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 12, position=(1, 1))
+    assert l.get_next_token() == Token(TokenType.INT_LITERAL, 12, position=(1, 1))
 
 
 def test_int_literal_123():
@@ -78,7 +78,7 @@ def test_int_literal_123():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == MyToken(TokenType.INT_LITERAL, 123, position=(1, 1))
+    assert l.get_next_token() == Token(TokenType.INT_LITERAL, 123, position=(1, 1))
 
 
 def test_float_literal_123_dot():
@@ -105,11 +105,11 @@ def test_float_literal_123_dot_0_some_letters():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == MyToken(
+    assert l.get_next_token() == Token(
         TokenType.FLOAT_LITERAL, 123.0, position=(1, 1)
     )
-    assert l.get_next_token() == MyToken(TokenType.IDENTIFIER, "abc", position=(1, 6))
-    assert l.get_next_token() == MyToken(TokenType.EOT, position=(1, 9))
+    assert l.get_next_token() == Token(TokenType.IDENTIFIER, "abc", position=(1, 6))
+    assert l.get_next_token() == Token(TokenType.EOT, position=(1, 9))
 
 
 def test_float_literal():
@@ -128,7 +128,7 @@ def test_big_int_literal():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == MyToken(
+    assert l.get_next_token() == Token(
         TokenType.INT_LITERAL, 99999999, position=(1, 1)
     )
 

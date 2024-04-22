@@ -6,7 +6,7 @@ from typing import List, Tuple
 from token_type import TokenType
 from keywords import KEYWORDS_STRS, KEYWORDS_TO_TOKEN_TYPE
 from char_reader import CharReader
-from my_token import MyToken, PositionType
+from my_token import Token, PositionType
 from my_token_exceptions import (
     MyTokenException,
     StringLiteralNotEnded,
@@ -52,7 +52,7 @@ class Lexer:
         self._skip_whitespaces()
 
         if self._is_end_of_file():
-            self.curr_token = MyToken(
+            self.curr_token = Token(
                 TokenType.EOT, position=self.reader.get_position()
             )
             return
@@ -74,40 +74,40 @@ class Lexer:
                 self._parse_comment(pos)
             case ",":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.COMMA, position=pos)
+                self.curr_token = Token(TokenType.COMMA, position=pos)
             case "(":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.LEFT_BRACKET, position=pos)
+                self.curr_token = Token(TokenType.LEFT_BRACKET, position=pos)
             case ")":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.RIGHT_BRACKET, position=pos)
+                self.curr_token = Token(TokenType.RIGHT_BRACKET, position=pos)
             case ";":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.SEMICOLON, position=pos)
+                self.curr_token = Token(TokenType.SEMICOLON, position=pos)
             case ":":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.COLON, position=pos)
+                self.curr_token = Token(TokenType.COLON, position=pos)
             case ".":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.DOT, position=pos)
+                self.curr_token = Token(TokenType.DOT, position=pos)
             case "&":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.AND, position=pos)
+                self.curr_token = Token(TokenType.AND, position=pos)
             case "|":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.OR, position=pos)
+                self.curr_token = Token(TokenType.OR, position=pos)
             case "+":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.PLUS, position=pos)
+                self.curr_token = Token(TokenType.PLUS, position=pos)
             case "-":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.MINUS, position=pos)
+                self.curr_token = Token(TokenType.MINUS, position=pos)
             case "*":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.TIMES, position=pos)
+                self.curr_token = Token(TokenType.TIMES, position=pos)
             case "/":
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.DIVIDE, position=pos)
+                self.curr_token = Token(TokenType.DIVIDE, position=pos)
             case "<":
                 self._try_parse_two_char_operator(
                     TokenType.LESS, TokenType.LESS_EQUAL, position=pos
@@ -125,7 +125,7 @@ class Lexer:
                 if char != "=":
                     raise ExclamationMarkError(position=pos)
                 self.reader.next_char()
-                self.curr_token = MyToken(TokenType.INEQUAL, position=pos)
+                self.curr_token = Token(TokenType.INEQUAL, position=pos)
             case _:
                 raise MyTokenException(position=pos)
 
@@ -135,9 +135,9 @@ class Lexer:
         char = self.reader.get_next_char()
         if char == "=":
             self.reader.next_char()
-            self.curr_token = MyToken(if_two_chars, position=position)
+            self.curr_token = Token(if_two_chars, position=position)
             return
-        self.curr_token = MyToken(if_one_char, position=position)
+        self.curr_token = Token(if_one_char, position=position)
 
     def _parse_string_literal(self, position: PositionType):
         string_literal_value: List[str] = []
@@ -174,11 +174,11 @@ class Lexer:
         string_literal_value = "".join(string_literal_value)
 
         if string_literal_value in KEYWORDS_STRS:
-            self.curr_token = MyToken(
+            self.curr_token = Token(
                 KEYWORDS_TO_TOKEN_TYPE[string_literal_value], position
             )
 
-        self.curr_token = MyToken(TokenType.STR_LITERAL, string_literal_value, position)
+        self.curr_token = Token(TokenType.STR_LITERAL, string_literal_value, position)
 
     def _parse_keyword_or_identifier(self, position: Tuple[int, int]):
         self._parse_identifier(position)
@@ -205,7 +205,7 @@ class Lexer:
 
         value = "".join(buffer)
 
-        self.curr_token = MyToken(TokenType.IDENTIFIER, value, position)
+        self.curr_token = Token(TokenType.IDENTIFIER, value, position)
 
     def _parse_number(self, position: PositionType):
         char_counter = 1
@@ -219,7 +219,7 @@ class Lexer:
         if char != ".":
             if value > Lexer.INT_LIMIT:
                 raise IntLiteralTooBig(position)
-            self.curr_token = MyToken(TokenType.INT_LITERAL, value, position)
+            self.curr_token = Token(TokenType.INT_LITERAL, value, position)
             return
 
         char = self.reader.get_next_char()
@@ -236,7 +236,7 @@ class Lexer:
         if total_len >= Lexer.FLOAT_CHAR_LIMIT:
             raise FloatLiteralTooBig(position=position)
         counter = total_len - int_part_len
-        self.curr_token = MyToken(
+        self.curr_token = Token(
             TokenType.FLOAT_LITERAL, value / (10**counter), position
         )
 
@@ -260,7 +260,7 @@ class Lexer:
 
         comment_value = "".join(comment_value)
 
-        self.curr_token = MyToken(TokenType.COMMENT, comment_value, position)
+        self.curr_token = Token(TokenType.COMMENT, comment_value, position)
 
     def _is_end_of_file(self):
         return self.reader.char == ''

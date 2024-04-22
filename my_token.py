@@ -8,7 +8,7 @@ ColumnType = int
 PositionType = Tuple[RowType, ColumnType]
 
 
-class MyToken:
+class Token:
     """Token has type, optional value and position in source"""
 
     def __init__(
@@ -19,7 +19,7 @@ class MyToken:
         self.pos = position
 
     def __eq__(self, __value: object) -> bool:
-        # __value should be of type MyToken
+        # __value should be of type Token
         return (
             self.type.value == __value.type.value
             and self.value == __value.value
