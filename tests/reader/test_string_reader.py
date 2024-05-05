@@ -5,6 +5,7 @@ from char_reader import StringReader
 
 
 def test_sanity():
+    '''.'''
     assert 1 == 1
 
 def test_empty_string():
