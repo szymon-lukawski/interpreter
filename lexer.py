@@ -181,9 +181,8 @@ class Lexer:
     def _parse_keyword_or_identifier(self, position: Tuple[int, int]):
         self._parse_identifier(position)
 
-        if is_value_a_keyword(self.curr_token.value):
-            self.curr_token.type = KEYWORDS_TO_TOKEN_TYPE[self.curr_token.value]
-            self.curr_token.value = None
+        if is_value_a_keyword(self.curr_token.get_value()):
+            self.curr_token.set_value_and_type(KEYWORDS_TO_TOKEN_TYPE[self.curr_token.get_value()], None)
 
     def _parse_identifier(self, position: Tuple[int, int]):
         buffer: List[str] = []

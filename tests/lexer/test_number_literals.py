@@ -118,8 +118,8 @@ def test_float_literal():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     t = l.get_next_token()
-    assert t.type == TokenType.FLOAT_LITERAL
-    assert abs(t.value - 123.123) < 10 ** (-9)
+    assert t.get_type() == TokenType.FLOAT_LITERAL
+    assert abs(t.get_value() - 123.123) < 10 ** (-9)
 
 
 def test_big_int_literal():
@@ -148,8 +148,8 @@ def test_big_float_literal():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     t = l.get_next_token()
-    assert t.type == TokenType.FLOAT_LITERAL
-    assert abs(t.value - 99999999) < 10 ** (-9)
+    assert t.get_type() == TokenType.FLOAT_LITERAL
+    assert abs(t.get_value() - 99999999) < 10 ** (-9)
 
 
 def test_float_bigger_than_int_limit():
@@ -158,8 +158,8 @@ def test_float_bigger_than_int_limit():
     r = StringReader(StringIO(text))
     l = Lexer(r)
     t = l.get_next_token()
-    assert t.type == TokenType.FLOAT_LITERAL
-    assert abs(t.value - 100000000) < 10 ** (-9)
+    assert t.get_type() == TokenType.FLOAT_LITERAL
+    assert abs(t.get_value() - 100000000) < 10 ** (-9)
 
 
 def test_to_big_float_literal_more_than_20_chars():

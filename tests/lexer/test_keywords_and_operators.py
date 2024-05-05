@@ -57,7 +57,7 @@ def test_sht_r_position(text, expected_token : Token):
     """keyword, operator or special character but shifted right"""
     r = StringReader(StringIO(' ' + text))
     l = Lexer(r)
-    expected_token.pos = (1, 2)
+    expected_token.set_pos((1, 2))
     assert l.curr_token is None
     assert l.get_next_token() == expected_token
     assert l.get_next_token() == Token(TokenType.EOT, position=(1,len(text)+2))
@@ -76,7 +76,7 @@ def test_after_newline_position(text, expected_token : Token):
     """keyword, operator or special character but after newline"""
     r = StringReader(StringIO('\n' + text))
     l = Lexer(r)
-    expected_token.pos = (2, 1)
+    expected_token.set_pos((2, 1))
     assert l.curr_token is None
     assert l.get_next_token() == expected_token
     assert l.get_next_token() == Token(TokenType.EOT, position=(2,len(text)+1))
@@ -86,7 +86,7 @@ def test_after_newline_sht_r_position(text, expected_token : Token):
     """keyword, operator or special character but after newline and shifted right"""
     r = StringReader(StringIO('\n ' + text))
     l = Lexer(r)
-    expected_token.pos = (2, 2)
+    expected_token.set_pos((2, 2))
     assert l.curr_token is None
     assert l.get_next_token() == expected_token
     assert l.get_next_token() == Token(TokenType.EOT, position=(2,len(text)+2))
@@ -96,7 +96,7 @@ def test_after_newline_sht_r_double_position(text, expected_token : Token):
     """keyword, operator or special character but after newline and shifted right but doubled"""
     r = StringReader(StringIO('\n \n ' + text))
     l = Lexer(r)
-    expected_token.pos = (3, 2)
+    expected_token.set_pos((3, 2))
     assert l.curr_token is None
     assert l.get_next_token() == expected_token
     assert l.get_next_token() == Token(TokenType.EOT, position=(3,len(text)+2))
