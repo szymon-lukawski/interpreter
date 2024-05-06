@@ -15,7 +15,7 @@ Projekt podzielony na części:
 1. Czytanie z wejścia, plik lub strumień, znak po znaku i przekazuje wszystkich znaków dalej. Jeśli koniec wejscia to wysyla specjalny znak konca wejscia. Zapytany o kojelny znak znowu specjalny znak konca wejscia, i tak do końca.
 2. Filtr Znaków, niektóre znaki nie są potrzebne lekserowi, jesli natrafi na znak do odfiltrowania do prosi o kolejny az nastrafi na znak nie do odfiltrowania, ten przekazuje dalej. 
 3. Analizator Leksykalny, generowanie tokenów, grupowanie znaków.
-4. Filtr tokenów, np. token komentarza jest odfiltrowywany
+4. Filtr tokenów, np. my_token komentarza jest odfiltrowywany
 5. Analizator Składniowy, generowanie drzewa programu na podstawie gramatyki
 6. Zmiana z duzego drzewa programu do AST
 7. Analizator Semantyczny, sprawdza zakresy zmiennych, poprawnosc typów itp korzysta z tabeli symboli.
@@ -117,7 +117,7 @@ Zeby zmiana wartości pól w strukturze była mozliwa, zarówno sama zmienna mus
 cos : Cos;
 Cos : struct begin end;
 ```
-Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zatem zwróbu `UndefinedTypeError: 'Cos'`.
+Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zatem zwróci `UndefinedTypeError: 'Cos'`.
 Struktura moze nie miec zadnych pól.
 
 ```
@@ -188,11 +188,11 @@ visit punkt
 begin
     case Punkt2D
     begin
-        wiadmosc = '[' + p2d.x + '; ' + p2d.y + ']';
+        wiadomosc = '[' + p2d.x + '; ' + p2d.y + ']';
     end
     case Punkt3D
     begin
-        wiadmosc = '[' + p3d.x + '; ' + p3d.y + '; ' + p3d.z + ']';
+        wiadomosc = '[' + p3d.x + '; ' + p3d.y + '; ' + p3d.z + ']';
     end
 end
 print(wiadomosc);
