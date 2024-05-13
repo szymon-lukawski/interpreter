@@ -13,6 +13,7 @@ class Parser:
     def __init__(self, lexer: Lexer):
         self.lexer: Lexer = lexer
         self.lexer._next_token()
+        self._buffered = None
 
     def parse_program(self):
         """Parses program :) returns Program AST"""
@@ -40,7 +41,7 @@ class Parser:
         visit_state = self._parse_visit_statement()
         if visit_state:
             return visit_state
-        starting_with_identifier = self._parse_dec_and_def_or_assign()
+        starting_with_identifier = self._parse_dec_and_def_or_assign_or_fun_call()
         if starting_with_identifier:
             return starting_with_identifier
         raise ParserException()
@@ -65,7 +66,7 @@ class Parser:
             if self._try_parse(TokenType.ELSE):
                 else_prog = self._shall(self._parse_block())
             return IfStatement(cond, prog, else_prog)
-        
+
     def _parse_visit_statement(self):
         if self._try_parse(TokenType.VISIT):
             obj = self._shall(self._parse_object_access())
@@ -110,24 +111,46 @@ class Parser:
                 return self._shall(self._parse_rest_var_dec_statement(name))
             case TokenType.LEFT_BRACKET:
                 return self._shall(self._parse_rest_func_def_or_func_call(name))
-                
-            
+
     def _parse_rest_func_def_or_func_call(self, name):
-        if self._try_parse(TokenType.LEFT_BRACKET)
-            params = self._parse_params()
-            self._must_parse(TokenType.RIGHT_BRACKET)
-            self._must_parse(TokenType.COLON)
-            t = self._parse_type()
-            p = self._parse_block()
-            return FuncDef([name, params, t, p])
-        
+        if self._try_parse(TokenType.LEFT_BRACKET):
+            buffered = self.lexer.curr_token
+            match buffered.get_type():
+                case TokenType.RIGHT_BRACKET:
+                    if self._try_parse(TokenType.COLON):
+                        t = self._shall(self._parse_type())
+                        p = self._shall(self._parse_block())
+                        return FuncDef(name, [], t, p)
+                    self._must_parse(TokenType.SEMICOLON)
+                    return FunctionCall(name, [])
+                case TokenType.IDENTIFIER:
+                    self._consume_token()
+                    if self._try_parse(TokenType.COLON):
+                        self._buffered = buffered
+                        params = self._parse_params()
+                        self._must_parse(TokenType.RIGHT_BRACKET)
+                        self._must_parse(TokenType.COLON)
+                        t = self._shall(self._parse_type())
+                        p = self._shall(self._parse_block())
+                        return FuncDef(name, params, t, p)
+                    self._buffered = buffered
+                    args = self._parse_args()
+                    self._must_parse(TokenType.RIGHT_BRACKET)
+                    self._must_parse(TokenType.SEMICOLON)
+                    return FunctionCall(name, args)
+                case _:
+                    args = self._parse_args()
+                    self._must_parse(TokenType.RIGHT_BRACKET)
+                    self._must_parse(TokenType.SEMICOLON)
+                    return FunctionCall(name, args)
+
     def _parse_rest_variant(self, name):
         if self._try_parse(TokenType.VARIANT):
             self._must_parse(TokenType.BEGIN)
             named_types = self._parse_named_types()
             self._must_parse(TokenType.END)
             return VariantDef(name, named_types)
-        
+
     def _parse_named_types(self) -> List[NamedType]:
         named_types = []
         named_type = self._parse_named_type()
@@ -135,7 +158,7 @@ class Parser:
             named_types.append(named_type)
             named_type = self._parse_named_type()
         return named_types
-        
+
     def _parse_named_type(self) -> NamedType:
         name = self._parse_identifier()
         if name:
@@ -144,8 +167,7 @@ class Parser:
             self._must_parse(TokenType.SEMICOLON)
             return NamedType(name, t)
 
-
-    def _parse_rest_struct(self,name):
+    def _parse_rest_struct(self, name):
         if self._try_parse(TokenType.STRUCT):
             self._must_parse(TokenType.BEGIN)
             var_decs = []
@@ -154,8 +176,8 @@ class Parser:
                 var_decs.append(var_dec_state)
                 var_dec_state = self._parse_var_dec_stat()
             return StructDef(name, var_decs)
-        
-    def _parse_rest_assignment(self,name):
+
+    def _parse_rest_assignment(self, name):
         attr_access = [name]
         while self._try_parse(TokenType.DOT):
             attr_access.append(self._shall(self._parse_identifier()))
@@ -386,6 +408,10 @@ class Parser:
             return True
 
     def _consume_token(self):
+        if self._buffered:
+            temp = self._buffered
+            self._buffered = None
+            return temp
         self.lexer._next_token()
 
     def _must_parse(self, token_type: TokenType):
