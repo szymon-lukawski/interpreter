@@ -76,3 +76,53 @@ class MutParam(ASTNode):
 
 class NonMutParam(ASTNode):
     pass
+
+
+class Expr(ASTNode):
+    pass
+
+class OrExpr(Expr):
+    pass
+
+class AndExpr(Expr):
+    pass
+class RelationExpr(Expr):
+    pass
+
+class AddExpr(Expr):
+    pass
+
+class SubTract(Expr):
+    pass
+
+class MultiExpr(Expr):
+    pass
+
+class TimesExpr(MultiExpr):
+    pass
+
+class DivideExpr(MultiExpr):
+    pass
+
+
+
+class UnaryExpr(Expr):
+    pass
+
+class Term(Expr):
+    pass
+
+class Literal(ASTNode):
+    pass
+
+class NullLiteral(Term):
+    pass
+
+class IntLiteral(Term):
+    pass
+
+class FloatLiteral(Term):
+    pass
+
+class StrLiteral(Term):
+    pass

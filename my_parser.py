@@ -8,7 +8,7 @@ from parser_exceptions import ParserException
 class Parser:
     """Parser class"""
     def __init__(self, lexer: Lexer):
-        self.lexer = lexer
+        self.lexer : Lexer = lexer
 
     def parse_program(self):
         """Parses program :) returns Program AST"""
@@ -19,6 +19,7 @@ class Parser:
     
     def _parse_statement(self):
         curr_token_type = self.lexer.curr_token.get_type()
+
         if curr_token_type == TokenType.COMMENT:
             return Comment([], self.lexer.curr_token.get_value())
         if curr_token_type == TokenType.BEGIN:
@@ -208,8 +209,144 @@ class Parser:
         self._must_parse(TokenType.END)
         return temp
     
+    # logical or expr
     def _parse_expr(self):
-        return 1
+        return self._parse_logical_or_expr()
+    
+    def _parse_logical_or_expr(self):
+        and_exprs = []
+        and_exprs.append(self._parse_logical_and_expr())
+        while self.lexer.curr_token.get_type() == TokenType.OR:
+            self._consume_token()
+            and_exprs.append(self._parse_logical_and_expr())
+        if len(and_exprs) == 1:
+            return and_exprs[0]
+        return OrExpr(and_exprs)
+
+
+    def _parse_logical_and_expr(self):
+        rel_exprs = []
+        rel_exprs.append(self._parse_rel_expr())
+        while self.lexer.curr_token.get_type() == TokenType.AND:
+            self._consume_token()
+            rel_exprs.append(self._parse_rel_expr())
+        if len(rel_exprs) == 1:
+            return rel_exprs[0]
+        return AndExpr(rel_exprs)
+
+    def _parse_rel_expr(self):
+        first = self._parse_add_expr()
+        rel = self._parse_rel_operator()
+        if rel:
+            return RelationExpr(first, rel, self._parse_add_expr())
+        return first
+
+    def _parse_rel_operator(self):
+        match self.lexer.curr_token.get_type():
+            case TokenType.LESS:
+                self._consume_token()
+                return TokenType.LESS
+            case TokenType.LESS_EQUAL:
+                self._consume_token()
+                return TokenType.LESS_EQUAL
+            case TokenType.GREATER:
+                self._consume_token()
+                return TokenType.GREATER
+            case TokenType.GREATER_EQUAL:
+                self._consume_token()
+                return TokenType.GREATER_EQUAL
+            case TokenType.EQUAL:
+                self._consume_token()
+                return TokenType.EQUAL
+            case TokenType.INEQUAL:
+                self._consume_token()
+                return TokenType.INEQUAL
+            
+
+    def _parse_add_expr(self):
+        multi_exprs = []
+        multi_exprs.append(self._parse_multi_expr())
+        multi_op = self._parse_multi_operator()
+        while multi_op:
+            multi_exprs.append(multi_op)
+            multi_exprs.append(self._parse_multi_expr())
+            multi_op = self._parse_multi_operator()
+        return AddExpr(multi_exprs)
+    
+    def _parse_multi_operator(self):
+        match self.lexer.curr_token.get_type():
+            case TokenType.TIMES:
+                self._consume_token()
+                return TokenType.TIMES
+            case TokenType.DIVIDE:
+                self._consume_token()
+                return TokenType.DIVIDE
+
+    def _parse_multi_expr(self):
+        unary_exprs = []
+        unary_exprs.append(self._parse_unary_expr())
+        add_op = self._parse_additive_operator()
+        while add_op:
+            unary_exprs.append(add_op)
+            unary_exprs.append(self._parse_unary_expr())
+            add_op = self._parse_additive_operator()
+        return AddExpr(unary_exprs)
+    
+
+
+
+    def _parse_additive_operator(self):
+        match self.lexer.curr_token.get_type():
+            case TokenType.PLUS:
+                self._consume_token()
+                return TokenType.PLUS
+            case TokenType.MINUS:
+                self._consume_token()
+                return TokenType.MINUS
+
+    def _parse_unary_expr(self):
+        if self.lexer.curr_token.get_type() == TokenType.MINUS:
+            self._consume_token()
+            return UnaryExpr(self._parse_term())
+        return self._parse_term()
+
+    def _parse_term(self):
+        nested_expr = self._parse_nested_expr()
+        if nested_expr:
+            return nested_expr
+        literal = self._parse_literal()
+        if literal:
+            return literal
+        object_access = self._parse_object_access()
+        if object_access:
+            return object_access
+        raise ParserException()
+    
+    def _parse_nested_expr(self):
+        if self.lexer.curr_token.get_type() == TokenType.LEFT_BRACKET:
+            self._consume_token()
+            expr = self._parse_expr()
+            self._must_parse(TokenType.RIGHT_BRACKET)
+            return expr
+
+    def _parse_literal(self):
+        literal_class = None
+        match self.lexer.curr_token.get_type():
+            case TokenType.NULL:
+                return NullLiteral([])
+            case TokenType.INT_LITERAL:
+                literal_class = IntLiteral
+            case TokenType.STR_LITERAL:
+                literal_class = StrLiteral
+            case TokenType.FLOAT_LITERAL:
+                literal_class = FloatLiteral
+            case _:
+                return None
+        return literal_class(([self.lexer.curr_token.get_value()]))
+
+
+
+
 
     def _consume_token(self):
         self.lexer._next_token()
