@@ -41,7 +41,9 @@ class Type(ASTNode):
     pass
 
 class CaseSection(ASTNode):
-    pass
+    def __init__(self, type, program) -> None:
+        self.type = type
+        self.program = program
 
 class FunctionCall(ASTNode):
     def __init__(self, name: str, args) -> None:
@@ -49,10 +51,11 @@ class FunctionCall(ASTNode):
         self.args = args
 
 class Identifier(ASTNode):
-    pass
-
-class ObjectAccess():
-    pass
+    def __init__(self, name) -> None:
+        self.name = name
+class ObjectAccess(ASTNode):
+    def __init__(self, nested_objects) -> None:
+        self.nested_objects = nested_objects
 
 class AssignmentStatement(Statement):
     def __init__(self, attr_access, expr) -> None:
@@ -75,7 +78,7 @@ class NamedType(ASTNode):
     def __init__(self, name, type) -> None:
         self.name = name
         self.type = type
-        
+
 
 class FuncDef(ASTNode):
     pass
@@ -99,13 +102,15 @@ class RelationExpr(Expr):
     pass
 
 class AddExpr(Expr):
-    pass
+    def __init__(self, children) -> None:
+        self.children = children
 
 class SubTract(Expr):
     pass
 
 class MultiExpr(Expr):
-    pass
+    def __init__(self, children) -> None:
+        self.children = children
 
 class TimesExpr(MultiExpr):
     pass
@@ -116,8 +121,8 @@ class DivideExpr(MultiExpr):
 
 
 class UnaryExpr(Expr):
-    pass
-
+    def __init__(self, negated) -> None:
+        self.negated = negated
 class Term(Expr):
     pass
 

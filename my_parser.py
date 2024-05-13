@@ -79,9 +79,9 @@ class Parser:
         css = []
         while self.lexer.curr_token() == TokenType.CASE:
             self._consume_token()
-            t = self._parse_type()
-            p = self._parse_block()
-            css.append(CaseSection([t, p]))
+            t = self._shall(self._parse_type())
+            p = self._shall(self._parse_block())
+            css.append(CaseSection(t, p))
         return css
 
     def _parse_object_access(self):
@@ -90,6 +90,8 @@ class Parser:
         while self.lexer.curr_token.get_type() == TokenType.DOT:
             self._consume_token()
             funcs_or_idents.append(self._parse_func_or_ident())
+        if len(funcs_or_idents) == 1:
+            return funcs_or_idents[0]
         return ObjectAccess(funcs_or_idents)
 
     def _parse_dec_and_def_or_assign_or_fun_call(self):
@@ -217,7 +219,7 @@ class Parser:
             self._must_parse(TokenType.RIGHT_BRACKET)
             if args:
                 return FunctionCall(name, args)
-        return Identifier([name])
+        return Identifier(name)
 
     def _parse_identifier(self):
         curr_t = self.lexer.curr_token
@@ -328,11 +330,13 @@ class Parser:
     def _parse_add_expr(self):
         multi_exprs = []
         multi_exprs.append(self._parse_multi_expr())
-        multi_op = self._parse_multi_operator()
-        while multi_op:
-            multi_exprs.append(multi_op)
+        additive_op = self._parse_additive_operator()
+        while additive_op:
+            multi_exprs.append(additive_op)
             multi_exprs.append(self._parse_multi_expr())
-            multi_op = self._parse_multi_operator()
+            additive_op = self._parse_additive_operator()
+        if len(multi_exprs) == 1:
+            return multi_exprs[0]
         return AddExpr(multi_exprs)
 
     def _parse_multi_operator(self):
@@ -347,12 +351,14 @@ class Parser:
     def _parse_multi_expr(self):
         unary_exprs = []
         unary_exprs.append(self._parse_unary_expr())
-        add_op = self._parse_additive_operator()
-        while add_op:
-            unary_exprs.append(add_op)
+        multi_op = self._parse_multi_operator()
+        while multi_op:
+            unary_exprs.append(multi_op)
             unary_exprs.append(self._parse_unary_expr())
-            add_op = self._parse_additive_operator()
-        return AddExpr(unary_exprs)
+            multi_op = self._parse_multi_operator()
+        if len(unary_exprs) == 1:
+            return unary_exprs[0]
+        return MultiExpr(unary_exprs)
 
     def _parse_additive_operator(self):
         match self.lexer.curr_token.get_type():
@@ -386,6 +392,7 @@ class Parser:
         literal_class = None
         match self.lexer.curr_token.get_type():
             case TokenType.NULL:
+                self._consume_token()
                 return NullLiteral()
             case TokenType.INT_LITERAL:
                 literal_class = IntLiteral
@@ -395,7 +402,9 @@ class Parser:
                 literal_class = FloatLiteral
             case _:
                 return None
-        return literal_class(self.lexer.curr_token.get_value())
+        temp_value = self.lexer.curr_token.get_value()
+        self._consume_token()
+        return literal_class(temp_value)
 
     def _shall(self, parsed):
         if not parsed:
