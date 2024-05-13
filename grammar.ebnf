@@ -9,8 +9,10 @@ statement           ::=  variable_declaration_statement
                        | visit_statement
                        | return_statement
 					   | block
+                       | function_call_statement
                        | comment;
 
+function_call_statement ::= function_call, ';'
 
 visit_statement ::= 'visit', object_access, 'begin', {case_section} ,'end';
 

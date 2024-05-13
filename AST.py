@@ -3,8 +3,7 @@
 
 
 class ASTNode:
-    def __init__(self, children) -> None:
-        self.children = children
+    pass
 
 class Program(ASTNode):
     pass
@@ -13,27 +12,30 @@ class Statement(ASTNode):
     pass
 
 class Comment(Statement):
-    def __init__(self, children, value) -> None:
-        super().__init__(children)
-        self.value = value
+    pass
 
 class ReturnStatement(Statement):
-    def __init__(self, children, value) -> None:
-        super().__init__(children)
-        self.value = value
+    def __init__(self, expr) -> None:
+        self.expr = expr
 
 class CondStatement(Statement):
-    def __init__(self, children) -> None:
-        super().__init__(children)
+    pass
 
 class IfStatement(CondStatement):
-    pass
+    def __init__(self, cond, prog, else_prog = None) -> None:
+        self.cond = cond
+        self.prog = prog
+        self.else_prog = else_prog
 
 class WhileStatement(CondStatement):
-    pass
-
+    def __init__(self, cond, prog) -> None:
+        self.cond = cond
+        self.prog = prog
 class VisitStatement(Statement):
-    pass
+    def __init__(self, obj, css) -> None:
+        self.obj = obj
+        self.case_sections = css
+
 
 class Type(ASTNode):
     pass
@@ -42,7 +44,9 @@ class CaseSection(ASTNode):
     pass
 
 class FunctionCall(ASTNode):
-    pass
+    def __init__(self, name: str, args) -> None:
+        self.name = name
+        self.args = args
 
 class Identifier(ASTNode):
     pass
@@ -51,7 +55,9 @@ class ObjectAccess():
     pass
 
 class AssignmentStatement(Statement):
-    pass
+    def __init__(self, attr_access, expr) -> None:
+        self.attr_access = attr_access
+        self.expr = expr
 
 class MutableVar(ASTNode):
     pass
@@ -66,7 +72,10 @@ class VariantDef(ASTNode):
     pass
 
 class NamedType(ASTNode):
-    pass
+    def __init__(self, name, type) -> None:
+        self.name = name
+        self.type = type
+        
 
 class FuncDef(ASTNode):
     pass
@@ -112,17 +121,19 @@ class UnaryExpr(Expr):
 class Term(Expr):
     pass
 
-class Literal(ASTNode):
+class Literal(Term):
+    def __init__(self, value) -> None:
+        self.value = value
+
+class NullLiteral(Literal):
+    def __init__(self, value = None) -> None:
+        super().__init__(value)
+
+class IntLiteral(Literal):
     pass
 
-class NullLiteral(Term):
+class FloatLiteral(Literal):
     pass
 
-class IntLiteral(Term):
-    pass
-
-class FloatLiteral(Term):
-    pass
-
-class StrLiteral(Term):
+class StrLiteral(Literal):
     pass
