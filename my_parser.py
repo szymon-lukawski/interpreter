@@ -303,7 +303,7 @@ class Parser:
         first = self._parse_add_expr()
         rel = self._parse_rel_operator()
         if rel:
-            return RelationExpr(first, rel, self._parse_add_expr())
+            return RelationExpr(first, self._parse_add_expr(), rel)
         return first
 
     def _parse_rel_operator(self):
@@ -329,15 +329,16 @@ class Parser:
 
     def _parse_add_expr(self):
         multi_exprs = []
+        operations =[]
         multi_exprs.append(self._parse_multi_expr())
         additive_op = self._parse_additive_operator()
         while additive_op:
-            multi_exprs.append(additive_op)
+            operations.append(additive_op)
             multi_exprs.append(self._parse_multi_expr())
             additive_op = self._parse_additive_operator()
         if len(multi_exprs) == 1:
             return multi_exprs[0]
-        return AddExpr(multi_exprs)
+        return AddExpr(multi_exprs, operations)
 
     def _parse_multi_operator(self):
         match self.lexer.curr_token.get_type():
@@ -350,15 +351,16 @@ class Parser:
 
     def _parse_multi_expr(self):
         unary_exprs = []
+        operators = []
         unary_exprs.append(self._parse_unary_expr())
         multi_op = self._parse_multi_operator()
         while multi_op:
-            unary_exprs.append(multi_op)
+            operators.append(multi_op)
             unary_exprs.append(self._parse_unary_expr())
             multi_op = self._parse_multi_operator()
         if len(unary_exprs) == 1:
             return unary_exprs[0]
-        return MultiExpr(unary_exprs)
+        return MultiExpr(unary_exprs, operators)
 
     def _parse_additive_operator(self):
         match self.lexer.curr_token.get_type():
@@ -426,4 +428,5 @@ class Parser:
     def _must_parse(self, token_type: TokenType):
         if self.lexer.curr_token.get_type() == token_type:
             self._consume_token()
+            return
         raise ParserException

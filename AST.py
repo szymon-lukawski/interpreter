@@ -1,15 +1,19 @@
 """Module defining classes for Abstract syntax tree used in parser"""
 
-
+from typing import List
 
 class ASTNode:
     pass
 
-class Program(ASTNode):
-    pass
 
 class Statement(ASTNode):
     pass
+
+class Program(ASTNode):
+    def __init__(self, children : List[Statement]) -> None:
+        self.children = children
+
+
 
 class Comment(Statement):
     pass
@@ -45,8 +49,12 @@ class CaseSection(ASTNode):
         self.type = type
         self.program = program
 
+
+class Expr(ASTNode):
+    pass
+
 class FunctionCall(ASTNode):
-    def __init__(self, name: str, args) -> None:
+    def __init__(self, name: str, args : List[Expr]) -> None:
         self.name = name
         self.args = args
 
@@ -90,33 +98,30 @@ class NonMutParam(ASTNode):
     pass
 
 
-class Expr(ASTNode):
-    pass
+
 
 class OrExpr(Expr):
-    pass
+    def __init__(self, children) -> None:
+        self.children = children
 
 class AndExpr(Expr):
-    pass
+    def __init__(self, children) -> None:
+        self.children = children
 class RelationExpr(Expr):
-    pass
+    def __init__(self, left, right, operator) -> None:
+        self.left = left
+        self.right = right
+        self.operator = operator
 
 class AddExpr(Expr):
-    def __init__(self, children) -> None:
+    def __init__(self, children, operations) -> None:
         self.children = children
-
-class SubTract(Expr):
-    pass
+        self.operations = operations
 
 class MultiExpr(Expr):
-    def __init__(self, children) -> None:
+    def __init__(self, children, operations) -> None:
         self.children = children
-
-class TimesExpr(MultiExpr):
-    pass
-
-class DivideExpr(MultiExpr):
-    pass
+        self.operations = operations
 
 
 
