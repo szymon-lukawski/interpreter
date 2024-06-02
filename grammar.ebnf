@@ -6,10 +6,13 @@ statement           ::=  variable_declaration_statement
                        | while_statement
                        | function_definition_statement
                        | type_definition_statement
+                       | visit_statement
                        | return_statement
 					   | block
+                       | function_call_statement
                        | comment;
 
+function_call_statement ::= function_call, ';'
 
 visit_statement ::= 'visit', object_access, 'begin', {case_section} ,'end';
 
@@ -53,7 +56,7 @@ object_access           ::=  func_or_ident, {('.', func_or_ident)};
 func_or_ident           ::= function_call | identifier;
 
 
-function_call ::= identifier, '(', [expression , (',', expression)], ')';
+function_call ::= identifier, '(', [expression , {',', expression}], ')';
 
 param         ::= identifier, ':', ['mut'], type;
 params        ::= param , {',', param};
