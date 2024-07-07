@@ -16,11 +16,10 @@ from my_token_exceptions import (
     FloatLiteralTooBig,
     InvalidCharsInNumberLiteral,
     PrecidingZerosError,
-    NumberLiteralTooBig,
     IdentifierTooLong,
 )
 
-from utils import is_identifier_body, is_value_a_keyword
+from utils import is_identifier_body, is_str_a_keyword
 
 
 class Lexer:
@@ -36,6 +35,7 @@ class Lexer:
         self.reader = reader
 
         self.curr_token = None
+        # pylint: disable=C0103:invalid-name
         self._EOT_token_in_place = False
 
     def get_next_token(self):
@@ -145,8 +145,6 @@ class Lexer:
             raise StringLiteralNotEnded(self.reader.get_position())
         is_escaped = char == Lexer.STRING_ESCAPE
 
-        # TODO add proper handling of other escaped characters
-
         while char != Lexer.STRING_LITERAL_DELIMITER or is_escaped:
             if is_escaped:
                 char = self.reader.get_next_char()
@@ -180,9 +178,9 @@ class Lexer:
 
     def _parse_keyword_or_identifier(self, position: Tuple[int, int]):
         self._parse_identifier(position)
-
-        if is_value_a_keyword(self.curr_token.get_value()):
-            self.curr_token.set_value_and_type(KEYWORDS_TO_TOKEN_TYPE[self.curr_token.get_value()], None)
+        token_value = self.curr_token.get_value()
+        if is_str_a_keyword(token_value):
+            self.curr_token.set_value_and_type(KEYWORDS_TO_TOKEN_TYPE[token_value], None)
 
     def _parse_identifier(self, position: Tuple[int, int]):
         buffer: List[str] = []
