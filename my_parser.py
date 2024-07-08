@@ -5,6 +5,7 @@ from lexer import Lexer
 from AST import *
 from token_type import TokenType
 from parser_exceptions import ParserException
+from utils import get_type_name
 
 
 class Parser:
@@ -18,11 +19,8 @@ class Parser:
     def parse_program(self):
         """Parses program :) returns Program AST"""
         statements: List = []
-        while (
-            self.lexer.curr_token.get_type() != TokenType.EOT
-            and self.lexer.curr_token.get_type() != TokenType.END
-        ):
-            statements.append(self._parse_statement())
+        while statement := self._parse_statement():
+            statements.append(statement)
         return Program(statements)
 
     def _parse_statement(self):
@@ -44,7 +42,7 @@ class Parser:
         starting_with_identifier = self._parse_dec_and_def_or_assign_or_fun_call()
         if starting_with_identifier:
             return starting_with_identifier
-        raise ParserException()
+        # raise ParserException()
 
     def _parse_return_statement(self):
         if self._try_parse(TokenType.RETURN):
@@ -86,19 +84,19 @@ class Parser:
 
     def _parse_object_access(self):
         funcs_or_idents = []
-        funcs_or_idents.append(self._parse_func_or_ident())
+        funcs_or_idents.append(self._parse_func_or_name())
         while self.lexer.curr_token.get_type() == TokenType.DOT:
             self._consume_token()
-            funcs_or_idents.append(self._parse_func_or_ident())
-        if len(funcs_or_idents) == 1:
-            return funcs_or_idents[0]
+            funcs_or_idents.append(self._parse_func_or_name())
         return ObjectAccess(funcs_or_idents)
 
     def _parse_dec_and_def_or_assign_or_fun_call(self):
         name = self._parse_identifier()
         match self.lexer.curr_token.get_type():
             case TokenType.DOT:
-                # assignment
+                # assignment with dot
+                return self._shall(self._parse_rest_assignment(name))
+            case  TokenType.ASSIGNMENT:
                 return self._shall(self._parse_rest_assignment(name))
             case TokenType.COLON:
                 # variable declaration or type def
@@ -113,6 +111,8 @@ class Parser:
                 return self._shall(self._parse_rest_var_dec_statement(name))
             case TokenType.LEFT_BRACKET:
                 return self._shall(self._parse_rest_func_def_or_func_call(name))
+
+            
 
     def _parse_rest_func_def_or_func_call(self, name):
         if self._try_parse(TokenType.LEFT_BRACKET):
@@ -177,6 +177,7 @@ class Parser:
             while var_dec_state:
                 var_decs.append(var_dec_state)
                 var_dec_state = self._parse_var_dec_stat()
+            self._must_parse(TokenType.END)
             return StructDef(name, var_decs)
 
     def _parse_rest_assignment(self, name):
@@ -186,40 +187,40 @@ class Parser:
         self._must_parse(TokenType.ASSIGNMENT)
         expr = self._shall(self._parse_expr())
         self._must_parse(TokenType.SEMICOLON)
+        if len(attr_access) == 1:
+            return AssignmentStatement(attr_access[0], expr)
         return AssignmentStatement(attr_access, expr)
 
     # identifier, ':', ['mut'], type, ['=', expression]
     def _parse_var_dec_stat(self):
-        name = self.lexer.curr_token.get_value()
-        self._must_parse(TokenType.IDENTIFIER)
-        self._must_parse(TokenType.COLON)
-        return self._parse_rest_var_dec_statement(name)
+        name = self._parse_identifier()
+        if name:
+            self._must_parse(TokenType.COLON)
+            return self._parse_rest_var_dec_statement(name)
+
 
     #  ['mut'], type, ['=', expression]
     def _parse_rest_var_dec_statement(self, name):
-        if self.lexer.curr_token.get_type() == TokenType.MUT:
-            var_class = MutableVar
-            self._consume_token()
-        else:
-            var_class = UnmutableVar
-
-        t = self._parse_type()
-        if self.lexer.curr_token.get_type() == TokenType.SEMICOLON:
-            self._consume_token()
-            return var_class([name, t])
-        self._must_parse(TokenType.ASSIGNMENT)
-        expr = self._parse_expr()
-        self._must_parse(TokenType.SEMICOLON)
-        return var_class([name, t, expr])
-
-    def _parse_func_or_ident(self):
+        expr = None
+        is_mutable =  self._try_parse(TokenType.MUT)
+        var_type = self._parse_type()
+        is_no_expr = self._try_parse(TokenType.SEMICOLON)
+        if not is_no_expr:
+            self._must_parse(TokenType.ASSIGNMENT)
+            expr = self._parse_expr()
+            self._must_parse(TokenType.SEMICOLON)
+            return Fork([VariableDeclaration(name, var_type, is_mutable), AssignmentStatement(name, expr)])
+        return VariableDeclaration(name, var_type, is_mutable)
+    
+    def _parse_func_or_name(self):
         name = self._shall(self._parse_identifier())
         if self._try_parse(TokenType.LEFT_BRACKET):
             args = self._parse_args()
             self._must_parse(TokenType.RIGHT_BRACKET)
+            # TODO ?
             if args:
                 return FunctionCall(name, args)
-        return Identifier(name)
+        return name
 
     def _parse_identifier(self):
         curr_t = self.lexer.curr_token
@@ -258,7 +259,7 @@ class Parser:
         return param_class([name, t])
 
     def _parse_type(self):
-        tt = self.lexer.curr_token()
+        tt = self.lexer.curr_token.get_type()
         if (
             tt == TokenType.INT
             or tt == TokenType.FLOAT
@@ -266,8 +267,9 @@ class Parser:
             or tt == TokenType.NULL_TYPE
             or tt == TokenType.IDENTIFIER
         ):
+            name = get_type_name(self.lexer.curr_token)
             self._consume_token()
-            return Type(tt)
+            return Type(name)
 
     def _parse_block(self):
         if self._try_parse(TokenType.BEGIN):
