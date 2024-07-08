@@ -3,7 +3,8 @@
 from typing import List
 
 class ASTNode:
-    pass
+    def accept(self, visitor):
+        visitor.visit(self)
 
 
 class Statement(ASTNode):
@@ -12,6 +13,10 @@ class Statement(ASTNode):
 class Program(ASTNode):
     def __init__(self, children : List[Statement]) -> None:
         self.children = children
+    
+
+    def accept(self, visitor):
+        visitor.visit_program(self)
 
 
 
@@ -22,6 +27,9 @@ class ReturnStatement(Statement):
     def __init__(self, expr) -> None:
         self.expr = expr
 
+    def accept(self, visitor):
+        visitor.visit_return(self)
+
 class CondStatement(Statement):
     pass
 
@@ -31,6 +39,8 @@ class IfStatement(CondStatement):
         self.prog = prog
         self.else_prog = else_prog
 
+    def accept(self, visitor):
+        visitor.visit_if(self)
 class WhileStatement(CondStatement):
     def __init__(self, cond, prog) -> None:
         self.cond = cond
@@ -42,12 +52,19 @@ class VisitStatement(Statement):
 
 
 class Type(ASTNode):
-    pass
+    def __init__(self, name) -> None:
+        self.name = name
+
+    def accept(self, visitor):
+        visitor.visit_type(self)
 
 class CaseSection(ASTNode):
     def __init__(self, type, program) -> None:
         self.type = type
         self.program = program
+
+    def accept(self, visitor):
+        visitor.visit_case_section(self)
 
 
 class Expr(ASTNode):
@@ -58,38 +75,66 @@ class FunctionCall(ASTNode):
         self.name = name
         self.args = args
 
-class Identifier(ASTNode):
-    def __init__(self, name) -> None:
-        self.name = name
+    def accept(self, visitor):
+        visitor.visit_func_call(self)
+
 class ObjectAccess(ASTNode):
-    def __init__(self, nested_objects) -> None:
-        self.nested_objects = nested_objects
+    def __init__(self, name_chain: List) -> None:
+        self.name_chain = name_chain
+
+    def accept(self, visitor):
+        visitor.visit_obj_access(self)
 
 class AssignmentStatement(Statement):
-    def __init__(self, attr_access, expr) -> None:
-        self.attr_access = attr_access
+    def __init__(self, obj_access, expr) -> None:
+        self.obj_access = obj_access
         self.expr = expr
 
-class MutableVar(ASTNode):
-    pass
+    def accept(self, visitor):
+        visitor.visit_assignment(self)
 
-class UnmutableVar(ASTNode):
-    pass
+class Fork(ASTNode):
+    def __init__(self, statements) -> None:
+        self.statements = statements
+    
+    def accept(self, visitor):
+        visitor.visit_fork(self)
+class VariableDeclaration(ASTNode):
+    def __init__(self, name, var_type, is_mutable) -> None:
+        self.name = name
+        self.type = var_type
+        self.is_mutable = is_mutable
+
+    def accept(self, visitor):
+        visitor.visit_var_dec(self)
 
 class StructDef(ASTNode):
-    pass
+    def __init__(self, name, attributes) -> None:
+        self.name = name
+        self.attributes = attributes
+    
+    def accept(self, visitor):
+        visitor.visit_struct_def(self)
 
 class VariantDef(ASTNode):
     pass
 
+    def accept(self, visitor):
+        visitor.visit_variant_def(self)
 class NamedType(ASTNode):
     def __init__(self, name, type) -> None:
         self.name = name
         self.type = type
 
+    def accept(self, visitor):
+        visitor.visit_named_type(self)
+
 
 class FuncDef(ASTNode):
     pass
+
+    def accept(self, visitor):
+        visitor.visit_func_def(self)
 
 class MutParam(ASTNode):
     pass
@@ -104,30 +149,48 @@ class OrExpr(Expr):
     def __init__(self, children) -> None:
         self.children = children
 
+    def accept(self, visitor):
+        visitor.visit_or(self)
+
 class AndExpr(Expr):
     def __init__(self, children) -> None:
         self.children = children
+
+    def accept(self, visitor):
+        visitor.visit_and(self)
 class RelationExpr(Expr):
     def __init__(self, left, right, operator) -> None:
         self.left = left
         self.right = right
         self.operator = operator
 
+    def accept(self, visitor):
+        visitor.visit_rel(self)
+
 class AddExpr(Expr):
     def __init__(self, children, operations) -> None:
         self.children = children
         self.operations = operations
+
+    def accept(self, visitor):
+        visitor.visit_add(self)
 
 class MultiExpr(Expr):
     def __init__(self, children, operations) -> None:
         self.children = children
         self.operations = operations
 
+    def accept(self, visitor):
+        visitor.visit_multi(self)
+
 
 
 class UnaryExpr(Expr):
     def __init__(self, negated) -> None:
         self.negated = negated
+
+    def accept(self, visitor):
+        visitor.visit_unary(self)
 class Term(Expr):
     pass
 
@@ -135,15 +198,22 @@ class Literal(Term):
     def __init__(self, value) -> None:
         self.value = value
 
+
+
 class NullLiteral(Literal):
     def __init__(self, value = None) -> None:
         super().__init__(value)
 
-class IntLiteral(Literal):
-    pass
+    def accept(self, visitor):
+        visitor.visit_null_literal(self)
 
+class IntLiteral(Literal):
+    def accept(self, visitor):
+        visitor.visit_int_literal(self)
 class FloatLiteral(Literal):
-    pass
+    def accept(self, visitor):
+        visitor.visit_float_literal(self)
 
 class StrLiteral(Literal):
-    pass
+    def accept(self, visitor):
+        visitor.visit_str_literal(self)
