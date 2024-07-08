@@ -34,11 +34,11 @@ class ExpectedBuiltInTypeTokenTypeError(Exception):
 
 
 def get_type_name(token: Token):
-    """Returns name of built in types"""
+    """Returns name of built in types or value of identifier """
     tt = token.get_type()
     name = token_to_token_type_name_dict.get(tt)
     if name:
         return name
-    # if tt == TokenType.IDENTIFIER:
-    #     return token.get_value()
+    if tt == TokenType.IDENTIFIER:
+        return token.get_value()
     raise ExpectedBuiltInTypeTokenTypeError
