@@ -24,4 +24,4 @@ KEYWORDS_TO_TOKEN_TYPE: Dict[str, TokenType] = {
     "case": TokenType.CASE,
 }
 
-KEYWORDS_STRS = list(KEYWORDS_TO_TOKEN_TYPE.keys())
+KEYWORDS_STRS = KEYWORDS_TO_TOKEN_TYPE.keys()
