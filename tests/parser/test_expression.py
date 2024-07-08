@@ -119,14 +119,7 @@ def test_object_access_only_identifiers():
     parser = Parser(lexer)
     result = parser._parse_object_access()
     assert type(result) == ObjectAccess
-    assert type(result.nested_objects[0]) == Identifier
-    assert result.nested_objects[0].name == "czlowiek"
-    assert type(result.nested_objects[1]) == Identifier
-    assert result.nested_objects[1].name == "adres"
-    assert type(result.nested_objects[2]) == Identifier
-    assert result.nested_objects[2].name == "kod"
-
-    assert len(result.nested_objects) == 3
+    assert result.name_chain == ["czlowiek", "adres", "kod"]
 
 
 def test_nested_expression():
@@ -157,14 +150,7 @@ def test_parse_term_obj_access():
     parser = Parser(lexer)
     result = parser._parse_term()
     assert type(result) == ObjectAccess
-    assert type(result.nested_objects[0]) == Identifier
-    assert result.nested_objects[0].name == "czlowiek"
-    assert type(result.nested_objects[1]) == Identifier
-    assert result.nested_objects[1].name == "adres"
-    assert type(result.nested_objects[2]) == Identifier
-    assert result.nested_objects[2].name == "kod"
-
-    assert len(result.nested_objects) == 3
+    assert result.name_chain == ["czlowiek", "adres", "kod"]
 
 
 def test_unary_expression():
@@ -215,8 +201,8 @@ def test_multi_expression():
     assert len(result.children) == 2
     assert len(result.operations) == 1
     assert result.operations[0] == TokenType.DIVIDE
-    assert type(result.children[0]) == Identifier
-    assert result.children[0].name == "suma"
+    assert type(result.children[0]) == ObjectAccess
+    assert result.children[0].name_chain == ["suma"]
     assert type(result.children[1]) == IntLiteral
     assert result.children[1].value == 2
 
@@ -243,11 +229,11 @@ def test_bigger_multi_expression_with_times_and_divide():
     assert result.operations[1] == TokenType.TIMES
     assert result.operations[2] == TokenType.DIVIDE
     assert type(result.children[0]) == FloatLiteral
-    assert type(result.children[1]) == Identifier
-    assert type(result.children[2]) == Identifier
+    assert type(result.children[1]) == ObjectAccess
+    assert type(result.children[2]) == ObjectAccess
     assert type(result.children[3]) == IntLiteral
-    assert result.children[1].name == "r"
-    assert result.children[2].name == "r"
+    assert result.children[1].name_chain == ["r"]
+    assert result.children[2].name_chain == ["r"]
     assert result.children[3].value == 4
 
 
@@ -269,8 +255,8 @@ def test_bigger_multi_expression_with_unary_expression():
     assert result.operations[0] == TokenType.TIMES
     assert type(result.children[0]) == FloatLiteral
     assert type(result.children[1]) == UnaryExpr
-    assert type(result.children[1].negated) == Identifier
-    assert result.children[1].negated.name == "r"
+    assert type(result.children[1].negated) == ObjectAccess
+    assert result.children[1].negated.name_chain == ["r"]
 
 
 def test_add_expr_minus():
@@ -299,15 +285,15 @@ def test_add_expr_minus():
     assert result.children[0].children[0].negated.value == 3.14
 
     assert type(result.children[0].children[1]) == UnaryExpr
-    assert type(result.children[0].children[1].negated) == Identifier
-    assert result.children[0].children[1].negated.name == "r"
+    assert type(result.children[0].children[1].negated) == ObjectAccess
+    assert result.children[0].children[1].negated.name_chain == ["r"]
 
     assert len(result.operations) == 1
     assert result.operations[0] == TokenType.MINUS
 
     assert type(result.children[1]) == UnaryExpr
-    assert type(result.children[1].negated) == Identifier
-    assert result.children[1].negated.name == "q"
+    assert type(result.children[1].negated) == ObjectAccess
+    assert result.children[1].negated.name_chain == ["q"]
 
 
 def test_add_expr_plus():
@@ -336,15 +322,15 @@ def test_add_expr_plus():
     assert result.children[0].children[0].negated.value == 3.14
 
     assert type(result.children[0].children[1]) == UnaryExpr
-    assert type(result.children[0].children[1].negated) == Identifier
-    assert result.children[0].children[1].negated.name == "r"
+    assert type(result.children[0].children[1].negated) == ObjectAccess
+    assert result.children[0].children[1].negated.name_chain == ["r"]
 
     assert len(result.operations) == 1
     assert result.operations[0] == TokenType.PLUS
 
     assert type(result.children[1]) == UnaryExpr
-    assert type(result.children[1].negated) == Identifier
-    assert result.children[1].negated.name == "q"
+    assert type(result.children[1].negated) == ObjectAccess
+    assert result.children[1].negated.name_chain == ["q"]
 
 
 rel_operators = [
@@ -373,8 +359,8 @@ def test_rel_expr(operator):
     assert type(result.left) == FloatLiteral
     assert result.left.value == 3.14
     assert result.operator == operator
-    assert type(result.right) == Identifier
-    assert result.right.name == "r"
+    assert type(result.right) == ObjectAccess
+    assert result.right.name_chain == ["r"]
 
 
 def test_and_expr_one_arg():
@@ -741,6 +727,7 @@ parse__expr_funcs = [
     Parser._parse_expr,
 ]
 
+
 @pytest.mark.parametrize("parse_func", parse__expr_funcs)
 def test_bracket_parse_funcs_hierarchy(parse_func):
     """(1)"""
@@ -756,6 +743,7 @@ def test_bracket_parse_funcs_hierarchy(parse_func):
     assert type(result) == IntLiteral
     assert result.value == 1
 
+
 @pytest.mark.parametrize("parse_func", parse__expr_funcs)
 def test_bracket_parse_funcs_hierarchy_minus_1(parse_func):
     """(-1)"""
@@ -770,7 +758,7 @@ def test_bracket_parse_funcs_hierarchy_minus_1(parse_func):
     parser = Parser(lexer)
     result = parse_func(parser)
     assert type(result) == UnaryExpr
-    assert type(result.negated)==IntLiteral
+    assert type(result.negated) == IntLiteral
     assert result.negated.value == 1
 
 
@@ -783,6 +771,7 @@ unary_up_funcs = [
     Parser._parse_logical_or_expr,
     Parser._parse_expr,
 ]
+
 
 @pytest.mark.parametrize("parse_func", unary_up_funcs)
 def test_bracket_minus_minus_1(parse_func):
@@ -799,9 +788,10 @@ def test_bracket_minus_minus_1(parse_func):
     parser = Parser(lexer)
     result = parse_func(parser)
     assert type(result) == UnaryExpr
-    assert type(result.negated)==UnaryExpr
+    assert type(result.negated) == UnaryExpr
     assert type(result.negated.negated) == IntLiteral
     assert result.negated.negated.value == 1
+
 
 @pytest.mark.parametrize("parse_func", unary_up_funcs)
 def test_bracket_minus_minus_minus_1(parse_func):
@@ -821,7 +811,7 @@ def test_bracket_minus_minus_minus_1(parse_func):
     parser = Parser(lexer)
     result = parse_func(parser)
     assert type(result) == UnaryExpr
-    assert type(result.negated)==UnaryExpr
+    assert type(result.negated) == UnaryExpr
     assert type(result.negated.negated) == UnaryExpr
     assert type(result.negated.negated.negated) == IntLiteral
     assert result.negated.negated.negated.value == 1
@@ -843,14 +833,12 @@ def test_bracket_multiply_before_unary(parse_func):
     parser = Parser(lexer)
     result = parse_func(parser)
     assert type(result) == UnaryExpr
-    assert type(result.negated)==MultiExpr
+    assert type(result.negated) == MultiExpr
     assert len(result.negated.children) == 2
     assert type(result.negated.children[0]) == IntLiteral
     assert result.negated.children[0].value == 1
     assert type(result.negated.children[1]) == IntLiteral
     assert result.negated.children[1].value == 2
-
-
 
 
 @pytest.mark.parametrize("parse_func", unary_up_funcs)
@@ -877,7 +865,7 @@ def test_bracket_plus_before_multiply(parse_func):
     parser = Parser(lexer)
     result = parse_func(parser)
     assert type(result) == UnaryExpr
-    assert type(result.negated)==MultiExpr
+    assert type(result.negated) == MultiExpr
     assert len(result.negated.children) == 2
     assert type(result.negated.children[0]) == AddExpr
     assert len(result.negated.children[0].children) == 2
@@ -891,6 +879,7 @@ def test_bracket_plus_before_multiply(parse_func):
     assert type(result.negated.children[1].children[1]) == IntLiteral
     assert result.negated.children[1].children[0].value == 3
     assert result.negated.children[1].children[1].value == 4
+
 
 def test_bracket_rel_before_plus():
     """(1 < 2)+3"""
@@ -917,6 +906,7 @@ def test_bracket_rel_before_plus():
     assert type(result.children[1]) == IntLiteral
     assert result.children[1].value == 3
 
+
 def test_bracket_and_before_rel():
     """(1 & 0) < 3"""
     tokens = [
@@ -936,11 +926,12 @@ def test_bracket_and_before_rel():
     assert type(result.left) == AndExpr
     assert len(result.left.children) == 2
     assert type(result.left.children[0]) == IntLiteral
-    assert result.left.children[0].value == 1 
+    assert result.left.children[0].value == 1
     assert type(result.left.children[1]) == IntLiteral
     assert result.left.children[1].value == 0
     assert type(result.right) == IntLiteral
     assert result.right.value == 3
+
 
 def test_bracket_or_before_and():
     """(1 or 0) & 3"""
@@ -960,11 +951,10 @@ def test_bracket_or_before_and():
     assert type(result) == AndExpr
     assert len(result.children) == 2
     assert type(result.children[0]) == OrExpr
-    assert len(result.children[0].children) == 2   
+    assert len(result.children[0].children) == 2
     assert type(result.children[0].children[0]) == IntLiteral
     assert result.children[0].children[0].value == 1
     assert type(result.children[0].children[1]) == IntLiteral
     assert result.children[0].children[1].value == 0
     assert type(result.children[1]) == IntLiteral
     assert result.children[1].value == 3
-
