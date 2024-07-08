@@ -38,6 +38,15 @@ def test_string_literal_not_properly_ended():
     assert l.curr_token is None
     with pytest.raises(StringLiteralNotEnded):
         l.get_next_token()
+    
+def test_string_literal_not_properly_ended_end_backslash():
+    """String literal should be ended with apostrophe"""
+    text = "'ala\\"
+    r = StringReader(StringIO(text))
+    l = Lexer(r)
+    assert l.curr_token is None
+    with pytest.raises(EscapingWrongChar):
+        l.get_next_token()
 
 
 def test_as_if_string_literal_not_properly_started():
