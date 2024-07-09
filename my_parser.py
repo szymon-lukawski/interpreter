@@ -368,10 +368,10 @@ class Parser:
         match self.lexer.curr_token.get_type():
             case TokenType.PLUS:
                 self._consume_token()
-                return TokenType.PLUS
+                return '+'
             case TokenType.MINUS:
                 self._consume_token()
-                return TokenType.MINUS
+                return '-'
 
     def _parse_unary_expr(self):
         if self._try_parse(TokenType.MINUS):
