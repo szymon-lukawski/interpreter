@@ -289,7 +289,7 @@ def test_add_expr_minus():
     assert result.children[0].children[1].negated.name_chain == ["r"]
 
     assert len(result.operations) == 1
-    assert result.operations[0] == TokenType.MINUS
+    assert result.operations[0] == '-'
 
     assert type(result.children[1]) == UnaryExpr
     assert type(result.children[1].negated) == ObjectAccess
@@ -326,7 +326,7 @@ def test_add_expr_plus():
     assert result.children[0].children[1].negated.name_chain == ["r"]
 
     assert len(result.operations) == 1
-    assert result.operations[0] == TokenType.PLUS
+    assert result.operations[0] == '+'
 
     assert type(result.children[1]) == UnaryExpr
     assert type(result.children[1].negated) == ObjectAccess
