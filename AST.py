@@ -168,7 +168,7 @@ class RelationExpr(Expr):
         return visitor.visit_rel(self)
 
 class AddExpr(Expr):
-    def __init__(self, children, operations) -> None:
+    def __init__(self, children : ASTNode, operations : str) -> None:
         self.children = children
         self.operations = operations
 
