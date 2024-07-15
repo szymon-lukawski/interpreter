@@ -312,22 +312,22 @@ class Parser:
         match self.lexer.curr_token.get_type():
             case TokenType.LESS:
                 self._consume_token()
-                return TokenType.LESS
+                return '<'
             case TokenType.LESS_EQUAL:
                 self._consume_token()
-                return TokenType.LESS_EQUAL
+                return '<='
             case TokenType.GREATER:
                 self._consume_token()
-                return TokenType.GREATER
+                return '>'
             case TokenType.GREATER_EQUAL:
                 self._consume_token()
-                return TokenType.GREATER_EQUAL
+                return '>='
             case TokenType.EQUAL:
                 self._consume_token()
-                return TokenType.EQUAL
+                return '=='
             case TokenType.INEQUAL:
                 self._consume_token()
-                return TokenType.INEQUAL
+                return '!='
 
     def _parse_add_expr(self):
         multi_exprs = []
@@ -346,10 +346,10 @@ class Parser:
         match self.lexer.curr_token.get_type():
             case TokenType.TIMES:
                 self._consume_token()
-                return TokenType.TIMES
+                return '*'
             case TokenType.DIVIDE:
                 self._consume_token()
-                return TokenType.DIVIDE
+                return '/'
 
     def _parse_multi_expr(self):
         unary_exprs = []
