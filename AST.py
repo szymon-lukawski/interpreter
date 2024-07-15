@@ -159,7 +159,7 @@ class AndExpr(Expr):
     def accept(self, visitor):
         return visitor.visit_and(self)
 class RelationExpr(Expr):
-    def __init__(self, left, right, operator) -> None:
+    def __init__(self, left, right, operator : str) -> None:
         self.left = left
         self.right = right
         self.operator = operator
