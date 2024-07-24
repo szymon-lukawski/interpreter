@@ -200,7 +200,7 @@ def test_multi_expression():
     assert type(result) == MultiExpr
     assert len(result.children) == 2
     assert len(result.operations) == 1
-    assert result.operations[0] == TokenType.DIVIDE
+    assert result.operations[0] == '/'
     assert type(result.children[0]) == ObjectAccess
     assert result.children[0].name_chain == ["suma"]
     assert type(result.children[1]) == IntLiteral
@@ -225,9 +225,9 @@ def test_bigger_multi_expression_with_times_and_divide():
     assert type(result) == MultiExpr
     assert len(result.children) == 4
     assert len(result.operations) == 3
-    assert result.operations[0] == TokenType.TIMES
-    assert result.operations[1] == TokenType.TIMES
-    assert result.operations[2] == TokenType.DIVIDE
+    assert result.operations[0] == '*'
+    assert result.operations[1] == '*'
+    assert result.operations[2] == '/'
     assert type(result.children[0]) == FloatLiteral
     assert type(result.children[1]) == ObjectAccess
     assert type(result.children[2]) == ObjectAccess
@@ -252,7 +252,7 @@ def test_bigger_multi_expression_with_unary_expression():
     assert type(result) == MultiExpr
     assert len(result.children) == 2
     assert len(result.operations) == 1
-    assert result.operations[0] == TokenType.TIMES
+    assert result.operations[0] == '*'
     assert type(result.children[0]) == FloatLiteral
     assert type(result.children[1]) == UnaryExpr
     assert type(result.children[1].negated) == ObjectAccess
@@ -279,7 +279,7 @@ def test_add_expr_minus():
     assert len(result.children) == 2
     assert type(result.children[0]) == MultiExpr
     assert len(result.children[0].operations) == 1
-    assert result.children[0].operations[0] == TokenType.TIMES
+    assert result.children[0].operations[0] == '*'
     assert type(result.children[0].children[0]) == UnaryExpr
     assert type(result.children[0].children[0].negated) == FloatLiteral
     assert result.children[0].children[0].negated.value == 3.14
@@ -316,7 +316,7 @@ def test_add_expr_plus():
     assert len(result.children) == 2
     assert type(result.children[0]) == MultiExpr
     assert len(result.children[0].operations) == 1
-    assert result.children[0].operations[0] == TokenType.TIMES
+    assert result.children[0].operations[0] == '*'
     assert type(result.children[0].children[0]) == UnaryExpr
     assert type(result.children[0].children[0].negated) == FloatLiteral
     assert result.children[0].children[0].negated.value == 3.14
@@ -334,21 +334,21 @@ def test_add_expr_plus():
 
 
 rel_operators = [
-    TokenType.LESS,
-    TokenType.LESS_EQUAL,
-    TokenType.EQUAL,
-    TokenType.INEQUAL,
-    TokenType.GREATER,
-    TokenType.GREATER_EQUAL,
+    (TokenType.LESS, '<'),
+    (TokenType.LESS_EQUAL, '<='),
+    (TokenType.EQUAL, '=='),
+    (TokenType.INEQUAL, '!='),
+    (TokenType.GREATER, '>'),
+    (TokenType.GREATER_EQUAL, '>='),
 ]
 
 
-@pytest.mark.parametrize("operator", rel_operators)
-def test_rel_expr(operator):
+@pytest.mark.parametrize("operator_pair", rel_operators)
+def test_rel_expr(operator_pair):
     """3.14 {operator} r"""
     tokens = [
         Token(TokenType.FLOAT_LITERAL, 3.14),
-        Token(operator),
+        Token(operator_pair[0]),
         Token(TokenType.IDENTIFIER, "r"),
     ]
 
@@ -358,7 +358,7 @@ def test_rel_expr(operator):
     assert type(result) == RelationExpr
     assert type(result.left) == FloatLiteral
     assert result.left.value == 3.14
-    assert result.operator == operator
+    assert result.operator == operator_pair[1]
     assert type(result.right) == ObjectAccess
     assert result.right.name_chain == ["r"]
 

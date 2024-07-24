@@ -420,7 +420,7 @@ def test_if_if_else():
         # Check if condition
     assert type(result.children[2]) == IfStatement
     assert type(result.children[2].cond) == RelationExpr
-    assert result.children[2].cond.operator == TokenType.EQUAL
+    assert result.children[2].cond.operator == '=='
     assert type(result.children[2].cond.left) == ObjectAccess
     assert result.children[2].cond.left.name_chain == ["ilosc_psow"]
     assert type(result.children[2].cond.right) == IntLiteral
@@ -446,7 +446,7 @@ def test_if_if_else():
     
 
 
-    assert result.children[3].cond.children[0].operator == TokenType.LESS
+    assert result.children[3].cond.children[0].operator == '<'
     
 
 
@@ -456,7 +456,7 @@ def test_if_if_else():
     assert result.children[3].cond.children[0].right.name_chain == ['ilosc_psow']
         # & 
     assert type(result.children[3].cond.children[1]) == RelationExpr
-    assert result.children[3].cond.children[1].operator == TokenType.LESS
+    assert result.children[3].cond.children[1].operator == '<'
     assert type(result.children[3].cond.children[1].left) == ObjectAccess
     assert result.children[3].cond.children[1].left.name_chain == ['ilosc_psow']
     assert type(result.children[3].cond.children[1].right) == IntLiteral
