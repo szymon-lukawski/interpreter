@@ -397,3 +397,84 @@ def test_assignment_more_complicated_expr():
     printer = Printer()
     result = printer.print(ast)
     assert result == expected
+
+def test_empty_program():
+    # TODO can empty program even exist?
+    """<Empty>"""
+    ast =  Program([])
+    expected = "Program([])"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_program_with_assignment():
+    """a=1;"""
+    ast =  Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(1))])
+    expected = "Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(1))])"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_variable_declaration():
+    """a: int;"""
+    ast =  VariableDeclaration('a', 'int', False)
+    expected = "VariableDeclaration('a', 'int', False)"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_mutable_variable_declaration():
+    """a: mut int;"""
+    ast =  VariableDeclaration('a', 'int', True)
+    expected = "VariableDeclaration('a', 'int', True)"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_mutable_variable_declaration_float():
+    """a: mut float;"""
+    ast =  VariableDeclaration('a', 'float', True)
+    expected = "VariableDeclaration('a', 'float', True)"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_mutable_variable_declaration_MyType():
+    """a: mut MyType;"""
+    ast =  VariableDeclaration('a', 'MyType', True)
+    expected = "VariableDeclaration('a', 'MyType', True)"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_fork():
+    """a : mut int = 12;"""
+    ast =  Fork([VariableDeclaration('a', 'int', True), AssignmentStatement(ObjectAccess(['a']), IntLiteral(12))])
+    expected = "Fork([VariableDeclaration('a', 'int', True), AssignmentStatement(ObjectAccess(['a']), IntLiteral(12))])"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_simple_if_empty_program():
+    """if 1 begin end"""
+    ast =  IfStatement(IntLiteral(1), Program([]))
+    expected = "IfStatement(IntLiteral(1), Program([]))"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_simple_if_assignment():
+    """if 1 begin a = 12; end"""
+    ast =  IfStatement(IntLiteral(1), Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(12))]))
+    expected = "IfStatement(IntLiteral(1), Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(12))]))"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_if_assignment_else_assignment():
+    """if 1 begin a = 12; end else begin a = 123; end"""
+    ast =  IfStatement(IntLiteral(1), Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(12))]), Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(123))]))
+    expected = "IfStatement(IntLiteral(1), Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(12))]), Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(123))]))"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
