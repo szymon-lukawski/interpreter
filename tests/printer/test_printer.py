@@ -749,3 +749,49 @@ def test_struct_example_Punkt2D():
     result = printer.print(ast)
     assert result == expected
 
+def test_empty_struct():
+    """Cos : struct begin end"""
+    ast = StructDef('Cos', [])
+    expected = "StructDef('Cos', [])"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_empty_func_def_no_params():
+    """nothing_func() : null_type begin end"""
+    ast = FuncDef('nothing_func', [], 'null_type', Program([]))
+    expected = "FuncDef('nothing_func', [], 'null_type', Program([]))"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_empty_func_def_one_int_param():
+    """nothing_func(arg1 : int) : null_type begin end"""
+    ast = FuncDef('nothing_func', [VariableDeclaration('arg1', 'int', False)], 'null_type', Program([]))
+    expected = "FuncDef('nothing_func', [VariableDeclaration('arg1', 'int', False)], 'null_type', Program([]))"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+def test_func_def_example_nested_function():
+    """
+    add(arg1: int, arg2: int) : int
+    begin
+        add_sub_function(arg1: int, arg2: int) : int
+        begin
+            return arg1 + arg2;
+        end
+        
+        add(arg1: int, arg2: int) : int
+        begin
+            return add_sub_function(arg1, arg2);
+        end
+
+        return add(arg1, arg2);
+    end
+    """
+    ast = FuncDef('add', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([FuncDef('add_sub_function', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([ReturnStatement(AddExpr([ObjectAccess(['arg1']), ObjectAccess(['arg2'])], ['+']))])), FuncDef('add', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([ReturnStatement(FunctionCall('add_sub_function', [ObjectAccess(['arg1']), ObjectAccess(['arg2'])]))])), ReturnStatement(AddExpr([ObjectAccess(['arg1']), ObjectAccess(['arg2'])], ['+']))]))
+    expected = "FuncDef('add', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([FuncDef('add_sub_function', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([ReturnStatement(AddExpr([ObjectAccess(['arg1']), ObjectAccess(['arg2'])], ['+']))])), FuncDef('add', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([ReturnStatement(FunctionCall('add_sub_function', [ObjectAccess(['arg1']), ObjectAccess(['arg2'])]))])), ReturnStatement(AddExpr([ObjectAccess(['arg1']), ObjectAccess(['arg2'])], ['+']))]))"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
