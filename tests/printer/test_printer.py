@@ -722,7 +722,7 @@ def test_visit_punkt_example():
     result = printer.print(ast)
     assert result == expected
 
-def test_struct_example():
+def test_struct_example_Punkt1D():
     """
     Point1D : struct
     begin
@@ -734,3 +734,18 @@ def test_struct_example():
     printer = Printer()
     result = printer.print(ast)
     assert result == expected
+
+def test_struct_example_Punkt2D():
+    """
+    Point2D : struct
+    begin
+    x : mut int = 0; @ wartość domyślna wynosi 0
+    y : mut int = 0; @ wartość domyślna wynosi 0
+    end
+    """
+    ast = StructDef('Point2D', [VariableDeclaration('x', 'int', True, IntLiteral(0)), VariableDeclaration('y', 'int', True, IntLiteral(0))])
+    expected = "StructDef('Point2D', [VariableDeclaration('x', 'int', True, IntLiteral(0)), VariableDeclaration('y', 'int', True, IntLiteral(0))])"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
