@@ -112,12 +112,7 @@ class Comment(Statement):
     pass
 
 
-class ReturnStatement(Statement):
-    def __init__(self, expr: Expr) -> None:
-        self.expr = expr
 
-    def accept(self, visitor):
-        return visitor.visit_return(self)
 
 
 class CondStatement(Statement):
@@ -168,13 +163,6 @@ class VisitStatement(Statement):
     def accept(self, visitor):
         return visitor.visit_visit(self)
 
-class FunctionCall(ASTNode):
-    def __init__(self, name: str, args: List[Expr]) -> None:
-        self.name = name
-        self.args = args
-
-    def accept(self, visitor):
-        return visitor.visit_func_call(self)
 
 
 
@@ -226,16 +214,28 @@ class VariantDef(ASTNode):
         return visitor.visit_variant_def(self)
 
 
+class ReturnStatement(Statement):
+    def __init__(self, expr: Expr) -> None:
+        self.expr = expr
+
+    def accept(self, visitor):
+        return visitor.visit_return(self)
+
 class FuncDef(ASTNode):
-    pass
+    def __init__(self, name : str, params : List[VariableDeclaration], type_ : str, prog : Program) -> None:
+        self.name = name
+        self.params = params
+        self.type = type_
+        self.prog = prog
 
     def accept(self, visitor):
         return visitor.visit_func_def(self)
 
 
-class MutParam(ASTNode):
-    pass
+class FunctionCall(ASTNode):
+    def __init__(self, name: str, args: List[Expr]) -> None:
+        self.name = name
+        self.args = args
 
-
-class NonMutParam(ASTNode):
-    pass
+    def accept(self, visitor):
+        return visitor.visit_func_call(self)
