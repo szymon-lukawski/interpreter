@@ -25,7 +25,7 @@ class Expr(ASTNode):
 
 
 class OrExpr(Expr):
-    def __init__(self, children : List[Expr]) -> None:
+    def __init__(self, children: List[Expr]) -> None:
         self.children = children
 
     def accept(self, visitor):
@@ -33,7 +33,7 @@ class OrExpr(Expr):
 
 
 class AndExpr(Expr):
-    def __init__(self, children : List[Expr]) -> None:
+    def __init__(self, children: List[Expr]) -> None:
         self.children = children
 
     def accept(self, visitor):
@@ -41,7 +41,7 @@ class AndExpr(Expr):
 
 
 class RelationExpr(Expr):
-    def __init__(self, left : Expr, right: Expr, operator: str) -> None:
+    def __init__(self, left: Expr, right: Expr, operator: str) -> None:
         self.left = left
         self.right = right
         self.operator = operator
@@ -60,7 +60,7 @@ class AddExpr(Expr):
 
 
 class MultiExpr(Expr):
-    def __init__(self, children : List[Expr], operations: List[str]) -> None:
+    def __init__(self, children: List[Expr], operations: List[str]) -> None:
         self.children = children
         self.operations = operations
 
@@ -81,7 +81,7 @@ class Term(Expr):
 
 
 class Literal(Term):
-    def __init__(self, value : int | float | str | None) -> None:
+    def __init__(self, value: int | float | str | None) -> None:
         self.value = value
 
 
@@ -139,8 +139,11 @@ class WhileStatement(CondStatement):
         self.cond = cond
         self.prog = prog
 
+    def accept(self, visitor):
+        return visitor.visit_while(self)
 
 ######################
+
 
 class Type(ASTNode):
     def __init__(self, name) -> None:
@@ -149,15 +152,29 @@ class Type(ASTNode):
     def accept(self, visitor):
         return visitor.visit_type(self)
 
+class ObjectAccess(ASTNode):
+    def __init__(self, name_chain: List[str]) -> None:
+        self.name_chain = name_chain
+
+    def accept(self, visitor):
+        return visitor.visit_obj_access(self)
+
 
 class CaseSection(ASTNode):
-    def __init__(self, type: str, program: Program) -> None:
-        self.type = type
+    def __init__(self, type_: str, program: Program) -> None:
+        self.type = type_
         self.program = program
 
     def accept(self, visitor):
         return visitor.visit_case_section(self)
 
+class VisitStatement(Statement):
+    def __init__(self, obj : ObjectAccess, css: List[CaseSection]) -> None:
+        self.obj = obj
+        self.case_sections = css
+
+    def accept(self, visitor):
+        return visitor.visit_visit(self)
 
 class FunctionCall(ASTNode):
     def __init__(self, name: str, args: List[Expr]) -> None:
@@ -168,12 +185,6 @@ class FunctionCall(ASTNode):
         return visitor.visit_func_call(self)
 
 
-class ObjectAccess(ASTNode):
-    def __init__(self, name_chain: List) -> None:
-        self.name_chain = name_chain
-
-    def accept(self, visitor):
-        return visitor.visit_obj_access(self)
 
 
 class AssignmentStatement(Statement):
@@ -185,32 +196,19 @@ class AssignmentStatement(Statement):
         return visitor.visit_assignment(self)
 
 
-class Fork(ASTNode):
-    def __init__(self, statements) -> None:
-        self.statements = statements
-
-    def accept(self, visitor):
-        return visitor.visit_fork(self)
-
-
 class VariableDeclaration(ASTNode):
-    def __init__(self, name, var_type, is_mutable) -> None:
+    def __init__(self, name : str, var_type : str, is_mutable : bool, default_value : Expr = None) -> None:
         self.name = name
         self.type = var_type
         self.is_mutable = is_mutable
+        self.default_value = default_value
 
     def accept(self, visitor):
         return visitor.visit_var_dec(self)
 
 
-class VisitStatement(Statement):
-    def __init__(self, obj, css) -> None:
-        self.obj = obj
-        self.case_sections = css
-
-
 class StructDef(ASTNode):
-    def __init__(self, name, attributes) -> None:
+    def __init__(self, name: str, attributes : List[VariableDeclaration]) -> None:
         self.name = name
         self.attributes = attributes
 
@@ -218,20 +216,22 @@ class StructDef(ASTNode):
         return visitor.visit_struct_def(self)
 
 
-class VariantDef(ASTNode):
-    pass
-
-    def accept(self, visitor):
-        return visitor.visit_variant_def(self)
-
-
 class NamedType(ASTNode):
-    def __init__(self, name, type) -> None:
+    def __init__(self, name: str, type_: str) -> None:
         self.name = name
-        self.type = type
+        self.type = type_
 
     def accept(self, visitor):
         return visitor.visit_named_type(self)
+
+
+class VariantDef(ASTNode):
+    def __init__(self, name: str, named_types: List[NamedType]) -> None:
+        self.name = name
+        self.named_types = named_types
+
+    def accept(self, visitor):
+        return visitor.visit_variant_def(self)
 
 
 class FuncDef(ASTNode):
