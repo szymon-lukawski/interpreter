@@ -202,14 +202,14 @@ class Parser:
     #  ['mut'], type, ['=', expression]
     def _parse_rest_var_dec_statement(self, name):
         expr = None
-        is_mutable =  self._try_parse(TokenType.MUT)
+        is_mutable = bool(self._try_parse(TokenType.MUT))
         var_type = self._parse_type()
         is_no_expr = self._try_parse(TokenType.SEMICOLON)
         if not is_no_expr:
             self._must_parse(TokenType.ASSIGNMENT)
             expr = self._parse_expr()
             self._must_parse(TokenType.SEMICOLON)
-            return Fork([VariableDeclaration(name, var_type, is_mutable), AssignmentStatement(name, expr)])
+            return VariableDeclaration(name, var_type, is_mutable, expr)
         return VariableDeclaration(name, var_type, is_mutable)
     
     def _parse_func_or_name(self):
