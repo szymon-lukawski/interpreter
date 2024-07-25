@@ -154,15 +154,25 @@ class Printer(Visitor):
         self._visit_list(visit_statement.case_sections)
         self.parts.append(")")
     
-    def visit_func_call(self, func_call):
-        return super().visit_func_call(func_call)
+    def visit_func_call(self, func_call: FunctionCall):
+        self.parts.append(f"FunctionCall('{func_call.name}', ")
+        self._visit_list(func_call.args)
+        self.parts.append(")")
     
-    def visit_func_def(self, func_def):
-        return super().visit_func_def(func_def)
+    def visit_func_def(self, func_def : FuncDef):
+        self.parts.append(f"FuncDef('{func_def.name}', ")
+        self._visit_list(func_def.params)
+        self.parts.append(f", '{func_def.type}', ")
+        func_def.prog.accept(self)
+        self.parts.append(")")
+    
 
     
-    def visit_return(self, return_stmt):
-        return super().visit_return(return_stmt)
+    def visit_return(self, return_stmt: ReturnStatement):
+        self.parts.append("ReturnStatement(")
+        return_stmt.expr.accept(self)
+        self.parts.append(")")
+
     
     
     def visit_struct_def(self, struct_def: StructDef):
