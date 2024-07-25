@@ -1,3 +1,4 @@
+from AST import VisitStatement, WhileStatement
 from visitor import Visitor
 
 class Interpreter(Visitor):
@@ -129,6 +130,12 @@ class Interpreter(Visitor):
         value = assignment.expr.accept(self)
         # porównaj typy. Jesli sa zgodne lub kompatybilne to przypisz wartość
         self.environment[assignment.obj_access.nested_objects[0].name] = value
+
+    def visit_visit(self, visit_statement: VisitStatement):
+        return super().visit_visit(visit_statement)
+    
+    def visit_while(self, while_stmt: WhileStatement):
+        return super().visit_while(while_stmt)
 
     def visit_if(self, if_stmt):
         evaled_condition = if_stmt.cond.accept(self)
