@@ -121,15 +121,12 @@ def test_int_var_assignment():
     result = parser.parse_program()
     assert type(result) == Program
     assert len(result.children) == 1
-    assert type(result.children[0]) == Fork
-    assert len(result.children[0].statements) == 2
-    assert type(result.children[0].statements[0]) == VariableDeclaration
-    assert result.children[0].statements[0].name == "calkowita"
-    assert type(result.children[0].statements[0].type) == Type
-    assert result.children[0].statements[0].type.name == "int"
-    assert type(result.children[0].statements[1]) == AssignmentStatement
-    assert type(result.children[0].statements[1].expr) == IntLiteral
-    assert result.children[0].statements[1].expr.value == 10
+    assert type(result.children[0]) == VariableDeclaration
+    assert result.children[0].name == "calkowita"
+    assert type(result.children[0].type) == Type
+    assert result.children[0].type.name == "int"
+    assert type(result.children[0].default_value) == IntLiteral
+    assert result.children[0].default_value.value == 10
 
 
 def test_builtin_types_vars_assignment():
@@ -165,33 +162,26 @@ def test_builtin_types_vars_assignment():
     result = parser.parse_program()
     assert type(result) == Program
     assert len(result.children) == 3
-    assert type(result.children[0]) == Fork
-    assert len(result.children[0].statements) == 2
-    assert type(result.children[0].statements[0]) == VariableDeclaration
-    assert result.children[0].statements[0].name == "calkowita"
-    assert type(result.children[0].statements[0].type) == Type
-    assert result.children[0].statements[0].type.name == "int"
-    assert type(result.children[0].statements[1]) == AssignmentStatement
-    assert type(result.children[0].statements[1].expr) == IntLiteral
-    assert result.children[0].statements[1].expr.value == 10
+    assert type(result.children[0]) == VariableDeclaration
+    assert result.children[0].name == "calkowita"
+    assert type(result.children[0].type) == Type
+    assert result.children[0].type.name == "int"
+    assert type(result.children[0].default_value) == IntLiteral
+    assert result.children[0].default_value.value == 10
 
-    assert len(result.children[1].statements) == 2
-    assert type(result.children[1].statements[0]) == VariableDeclaration
-    assert result.children[1].statements[0].name == "zmiennoprzecinkowa"
-    assert type(result.children[1].statements[0].type) == Type
-    assert result.children[1].statements[0].type.name == "float"
-    assert type(result.children[1].statements[1]) == AssignmentStatement
-    assert type(result.children[1].statements[1].expr) == FloatLiteral
-    assert result.children[1].statements[1].expr.value == 3.14
+    assert type(result.children[1]) == VariableDeclaration
+    assert result.children[1].name == "zmiennoprzecinkowa"
+    assert type(result.children[1].type) == Type
+    assert result.children[1].type.name == "float"
+    assert type(result.children[1].default_value) == FloatLiteral
+    assert result.children[1].default_value.value == 3.14
 
-    assert len(result.children[2].statements) == 2
-    assert type(result.children[2].statements[0]) == VariableDeclaration
-    assert result.children[2].statements[0].name == "napis"
-    assert type(result.children[2].statements[0].type) == Type
-    assert result.children[2].statements[0].type.name == "str"
-    assert type(result.children[2].statements[1]) == AssignmentStatement
-    assert type(result.children[2].statements[1].expr) == StrLiteral
-    assert result.children[2].statements[1].expr.value == "Ala ma kota."
+    assert type(result.children[2]) == VariableDeclaration
+    assert result.children[2].name == "napis"
+    assert type(result.children[2].type) == Type
+    assert result.children[2].type.name == "str"
+    assert type(result.children[2].default_value) == StrLiteral
+    assert result.children[2].default_value.value == "Ala ma kota."
 
 
 def test_non_mutable_var_without_init():
@@ -386,35 +376,25 @@ def test_if_if_else():
     assert len(result.children) == 5
 
     # Check the first statement: ilosc_psow: mut int = 1;
-    assert type(result.children[0]) == Fork
-    assert len(result.children[0].statements) == 2
-    assert type(result.children[0].statements[0]) == VariableDeclaration
-    assert result.children[0].statements[0].name == "ilosc_psow"
-    assert result.children[0].statements[0].is_mutable
-    assert result.children[0].statements[0].type.name == "int"
-
-    assert type(result.children[0].statements[1]) == AssignmentStatement
-    assert result.children[0].statements[1].obj_access == "ilosc_psow"
-    assert type(result.children[0].statements[1].expr) == IntLiteral
-    assert result.children[0].statements[1].expr.value == 1
-
-    assert type(result.children[1]) == Fork
-    assert len(result.children[1].statements) == 2
+    assert type(result.children[0]) == VariableDeclaration
+    assert result.children[0].name == "ilosc_psow"
+    assert result.children[0].is_mutable
+    assert result.children[0].type.name == "int"
+    assert type(result.children[0].default_value) == IntLiteral
+    assert result.children[0].default_value.value == 1
 
     # Check the second statement: msg: mut str = 'Ala ma ' + ilosc_psow + ' ps';
-    assert type(result.children[1].statements[0]) == VariableDeclaration
-    assert result.children[1].statements[0].name == "msg"
-    assert result.children[1].statements[0].is_mutable
-    assert result.children[1].statements[0].type.name == "str"
-    assert type(result.children[1].statements[1]) == AssignmentStatement
-    assert result.children[1].statements[1].obj_access == "msg"
-    assert type(result.children[1].statements[1].expr) == AddExpr
-    assert type(result.children[1].statements[1].expr.children[0]) == StrLiteral
-    assert result.children[1].statements[1].expr.children[0].value == "Ala ma "
-    assert type(result.children[1].statements[1].expr.children[1]) == ObjectAccess
-    assert result.children[1].statements[1].expr.children[1].name_chain == ["ilosc_psow"]
-    assert type(result.children[1].statements[1].expr.children[2]) == StrLiteral
-    assert result.children[1].statements[1].expr.children[2].value == " ps"
+    assert type(result.children[1]) == VariableDeclaration
+    assert result.children[1].name == "msg"
+    assert result.children[1].is_mutable
+    assert result.children[1].type.name == "str"
+    assert type(result.children[1].default_value) == AddExpr
+    assert type(result.children[1].default_value.children[0]) == StrLiteral
+    assert result.children[1].default_value.children[0].value == "Ala ma "
+    assert type(result.children[1].default_value.children[1]) == ObjectAccess
+    assert result.children[1].default_value.children[1].name_chain == ["ilosc_psow"]
+    assert type(result.children[1].default_value.children[2]) == StrLiteral
+    assert result.children[1].default_value.children[2].value == " ps"
 
     # Check the if statement
         # Check if condition
