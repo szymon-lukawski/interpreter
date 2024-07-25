@@ -10,18 +10,18 @@ class Visitor(ABC):
     """Base Visitor class for traversing AST"""
 
     @abstractmethod
-    def visit_program(self, program : Program):
+    def visit_program(self, program: Program):
         pass
 
     @abstractmethod
-    def visit_assignment(self, assignment : AssignmentStatement):
+    def visit_assignment(self, assignment: AssignmentStatement):
         pass
 
     @abstractmethod
-    def visit_if(self, if_stmt : IfStatement):
+    def visit_if(self, if_stmt: IfStatement):
         pass
 
-        @abstractmethod
+    @abstractmethod
     def visit_while(self, while_stmt: WhileStatement):
         pass
 
@@ -41,18 +41,15 @@ class Visitor(ABC):
     def visit_func_call(self, func_call: FunctionCall):
         pass
 
-
     @abstractmethod
     def visit_obj_access(self, obj_access: ObjectAccess):
         pass
 
-    @abstractmethod
-    def visit_fork(self, fork: Fork):
-        pass
 
     @abstractmethod
     def visit_var_dec(self, var_dec: VariableDeclaration):
         pass
+
 
     @abstractmethod
     def visit_struct_def(self, struct_def: StructDef):
@@ -64,6 +61,10 @@ class Visitor(ABC):
 
     @abstractmethod
     def visit_named_type(self, named_type: NamedType):
+        pass
+
+    @abstractmethod
+    def visit_visit(self, visit_statement: VisitStatement):
         pass
 
     @abstractmethod
