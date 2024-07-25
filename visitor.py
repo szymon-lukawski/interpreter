@@ -29,9 +29,6 @@ class Visitor(ABC):
     def visit_return(self, return_stmt: ReturnStatement):
         pass
 
-    @abstractmethod
-    def visit_type(self, type_node: Type):
-        pass
 
     @abstractmethod
     def visit_case_section(self, case_section: CaseSection):

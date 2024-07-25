@@ -170,10 +170,6 @@ class Printer(Visitor):
         self._visit_list(struct_def.attributes)
         self.parts.append(")")
     
-    def visit_type(self, type_node):
-        return super().visit_type(type_node)
-    
-
     
 
     

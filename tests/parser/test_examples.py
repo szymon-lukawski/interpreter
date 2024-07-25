@@ -123,8 +123,8 @@ def test_int_var_assignment():
     assert len(result.children) == 1
     assert type(result.children[0]) == VariableDeclaration
     assert result.children[0].name == "calkowita"
-    assert type(result.children[0].type) == Type
-    assert result.children[0].type.name == "int"
+    assert type(result.children[0].type) == str
+    assert result.children[0].type == "int"
     assert type(result.children[0].default_value) == IntLiteral
     assert result.children[0].default_value.value == 10
 
@@ -164,22 +164,22 @@ def test_builtin_types_vars_assignment():
     assert len(result.children) == 3
     assert type(result.children[0]) == VariableDeclaration
     assert result.children[0].name == "calkowita"
-    assert type(result.children[0].type) == Type
-    assert result.children[0].type.name == "int"
+    assert type(result.children[0].type) == str
+    assert result.children[0].type == "int"
     assert type(result.children[0].default_value) == IntLiteral
     assert result.children[0].default_value.value == 10
 
     assert type(result.children[1]) == VariableDeclaration
     assert result.children[1].name == "zmiennoprzecinkowa"
-    assert type(result.children[1].type) == Type
-    assert result.children[1].type.name == "float"
+    assert type(result.children[1].type) == str
+    assert result.children[1].type == "float"
     assert type(result.children[1].default_value) == FloatLiteral
     assert result.children[1].default_value.value == 3.14
 
     assert type(result.children[2]) == VariableDeclaration
     assert result.children[2].name == "napis"
-    assert type(result.children[2].type) == Type
-    assert result.children[2].type.name == "str"
+    assert type(result.children[2].type) == str
+    assert result.children[2].type == "str"
     assert type(result.children[2].default_value) == StrLiteral
     assert result.children[2].default_value.value == "Ala ma kota."
 
@@ -201,8 +201,8 @@ def test_non_mutable_var_without_init():
     assert len(result.children) == 1
     assert type(result.children[0]) == VariableDeclaration
     assert result.children[0].name == "calkowita"
-    assert type(result.children[0].type) == Type
-    assert result.children[0].type.name == "int"
+    assert type(result.children[0].type) == str
+    assert result.children[0].type == "int"
     assert not result.children[0].is_mutable
 
 
@@ -264,18 +264,18 @@ def test_czlowiek_struct_example():
     assert len(result.children[0].attributes) == 2
     assert type(result.children[0].attributes[0]) == VariableDeclaration
     assert result.children[0].attributes[0].name == "imie"
-    assert type(result.children[0].attributes[0].type) == Type
-    assert result.children[0].attributes[0].type.name == "str"
+    assert type(result.children[0].attributes[0].type) == str
+    assert result.children[0].attributes[0].type == "str"
     assert not result.children[0].attributes[0].is_mutable
 
     assert type(result.children[0].attributes[1]) == VariableDeclaration
     assert result.children[0].attributes[1].name == "wiek"
-    assert type(result.children[0].attributes[1].type) == Type
-    assert result.children[0].attributes[1].type.name == "int"
+    assert type(result.children[0].attributes[1].type) == str
+    assert result.children[0].attributes[1].type == "int"
     assert result.children[0].attributes[1].is_mutable
 
     assert result.children[1].name == "janek"
-    assert result.children[1].type.name == "Czlowiek"
+    assert result.children[1].type == "Czlowiek"
     assert not result.children[1].is_mutable
 
     assert result.children[2].obj_access == ["janek", "imie"]
@@ -379,7 +379,7 @@ def test_if_if_else():
     assert type(result.children[0]) == VariableDeclaration
     assert result.children[0].name == "ilosc_psow"
     assert result.children[0].is_mutable
-    assert result.children[0].type.name == "int"
+    assert result.children[0].type == "int"
     assert type(result.children[0].default_value) == IntLiteral
     assert result.children[0].default_value.value == 1
 
@@ -387,7 +387,7 @@ def test_if_if_else():
     assert type(result.children[1]) == VariableDeclaration
     assert result.children[1].name == "msg"
     assert result.children[1].is_mutable
-    assert result.children[1].type.name == "str"
+    assert result.children[1].type == "str"
     assert type(result.children[1].default_value) == AddExpr
     assert type(result.children[1].default_value.children[0]) == StrLiteral
     assert result.children[1].default_value.children[0].value == "Ala ma "

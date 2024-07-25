@@ -269,7 +269,7 @@ class Parser:
         ):
             name = get_type_name(self.lexer.curr_token)
             self._consume_token()
-            return Type(name)
+            return name
 
     def _parse_block(self):
         if self._try_parse(TokenType.BEGIN):

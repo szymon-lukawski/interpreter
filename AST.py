@@ -144,14 +144,6 @@ class WhileStatement(CondStatement):
 
 ######################
 
-
-class Type(ASTNode):
-    def __init__(self, name) -> None:
-        self.name = name
-
-    def accept(self, visitor):
-        return visitor.visit_type(self)
-
 class ObjectAccess(ASTNode):
     def __init__(self, name_chain: List[str]) -> None:
         self.name_chain = name_chain
