@@ -82,7 +82,12 @@ class Printer(Visitor):
 
 
     def visit_var_dec(self, var_dec: VariableDeclaration):
-        self.parts.append(f"VariableDeclaration('{var_dec.name}', '{var_dec.type}', {var_dec.is_mutable})")
+        self.parts.append(f"VariableDeclaration('{var_dec.name}', '{var_dec.type}', {var_dec.is_mutable}")
+        if var_dec.default_value:
+            self.parts.append(", ")
+            var_dec.default_value.accept(self)
+        self.parts.append(")")
+
 
     def visit_assignment(self, assignment: AssignmentStatement):
         self.parts.append("AssignmentStatement(")
@@ -109,30 +114,45 @@ class Printer(Visitor):
         while_stmt.prog.accept(self)
         self.parts.append(")")
 
-    
-
-
-
-    def visit_fork(self, fork: Fork):
-        self._visit_list("Fork", fork.statements)
-    
     def visit_program(self, program: Program):
-        self._visit_list("Program", program.children)
+        self._visit_titled_list("Program", program.children)
 
-    def _visit_list(self, title, list_: List[Statement]):
-        self.parts.append(f"{title}([")
+    def _visit_titled_list(self, title : str, list_: List[Statement]):
+        self.parts.append(f"{title}(")
+        self._visit_list(list_)
+        self.parts.append(")")
+
+    def _visit_list(self, list_: List[Statement]):
+        self.parts.append("[")
         for i, element in enumerate(list_, start=1):
             element.accept(self)
-            if i != len(list):
+            if i != len(list_):
                 self.parts.append(", ")
-        self.parts.append("])")
+        self.parts.append("]")
+
+
+    def visit_variant_def(self, variant_def : VariantDef):
+        self.parts.append(f"VariantDef('{variant_def.name}', ")
+        self._visit_list(variant_def.named_types)
+        self.parts.append(")")
+
         
-    def visit_named_type(self, named_type):
-        return super().visit_named_type(named_type)
+    def visit_named_type(self, named_type : NamedType):
+        self.parts.append(f"NamedType('{named_type.name}', '{named_type.type}')")
     
 
-    def visit_case_section(self, case_section):
-        return super().visit_case_section(case_section)
+
+    def visit_case_section(self, case_section : CaseSection):
+        self.parts.append(f"CaseSection('{case_section.type}', ")
+        case_section.program.accept(self)
+        self.parts.append(")")
+    
+    def visit_visit(self, visit_statement: VisitStatement):
+        self.parts.append("VisitStatement(")
+        visit_statement.obj.accept(self)
+        self.parts.append(", ")
+        self._visit_list(visit_statement.case_sections)
+        self.parts.append(")")
     
     def visit_func_call(self, func_call):
         return super().visit_func_call(func_call)
@@ -144,15 +164,17 @@ class Printer(Visitor):
     def visit_return(self, return_stmt):
         return super().visit_return(return_stmt)
     
-    def visit_struct_def(self, struct_def):
-        return super().visit_struct_def(struct_def)
+    
+    def visit_struct_def(self, struct_def: StructDef):
+        self.parts.append(f"StructDef('{struct_def.name}', ")
+        self._visit_list(struct_def.attributes)
+        self.parts.append(")")
     
     def visit_type(self, type_node):
         return super().visit_type(type_node)
     
 
     
-    def visit_variant_def(self, variant_def):
-        return super().visit_variant_def(variant_def)
+
     
         
