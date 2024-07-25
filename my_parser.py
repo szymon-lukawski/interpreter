@@ -96,7 +96,7 @@ class Parser:
             case TokenType.DOT:
                 # assignment with dot
                 return self._shall(self._parse_rest_assignment(name))
-            case  TokenType.ASSIGNMENT:
+            case TokenType.ASSIGNMENT:
                 return self._shall(self._parse_rest_assignment(name))
             case TokenType.COLON:
                 # variable declaration or type def
@@ -111,8 +111,6 @@ class Parser:
                 return self._shall(self._parse_rest_var_dec_statement(name))
             case TokenType.LEFT_BRACKET:
                 return self._shall(self._parse_rest_func_def_or_func_call(name))
-
-            
 
     def _parse_rest_func_def_or_func_call(self, name):
         if self._try_parse(TokenType.LEFT_BRACKET):
@@ -198,7 +196,6 @@ class Parser:
             self._must_parse(TokenType.COLON)
             return self._parse_rest_var_dec_statement(name)
 
-
     #  ['mut'], type, ['=', expression]
     def _parse_rest_var_dec_statement(self, name):
         expr = None
@@ -211,7 +208,7 @@ class Parser:
             self._must_parse(TokenType.SEMICOLON)
             return VariableDeclaration(name, var_type, is_mutable, expr)
         return VariableDeclaration(name, var_type, is_mutable)
-    
+
     def _parse_func_or_name(self):
         name = self._shall(self._parse_identifier())
         if self._try_parse(TokenType.LEFT_BRACKET):
@@ -240,9 +237,9 @@ class Parser:
 
     def _parse_params(self):
         params = []
-        if self.lexer.curr_token() != TokenType.RIGHT_BRACKET:
+        if self.lexer.curr_token.get_type() != TokenType.RIGHT_BRACKET:
             params.append(self._parse_param())
-            while self.lexer.curr_token() == TokenType.COMMA:
+            while self.lexer.curr_token.get_type() == TokenType.COMMA:
                 self._consume_token()
                 params.append(self._parse_param())
         return params
@@ -251,12 +248,16 @@ class Parser:
         name = self.lexer.curr_token.get_value()
         self._must_parse(TokenType.IDENTIFIER)
         self._must_parse(TokenType.COLON)
-        if self._try_parse(TokenType.MUT):
-            param_class = MutParam
-        else:
-            param_class = NonMutParam
-        t = self._shall(self._parse_type())
-        return param_class([name, t])
+        is_mutable = bool(self._try_parse(TokenType.MUT))
+        type_ = self._shall(self._parse_type())
+        is_no_expr = bool(self._try_parse(TokenType.COMMA)) or bool(
+            self._try_parse(TokenType.RIGHT_BRACKET)
+        )
+        if not is_no_expr:
+            self._must_parse(TokenType.ASSIGNMENT)
+            expr = self._parse_expr()
+            return VariableDeclaration(name, type_, is_mutable, expr)
+        return VariableDeclaration(name, type_, is_mutable)
 
     def _parse_type(self):
         tt = self.lexer.curr_token.get_type()
@@ -312,26 +313,26 @@ class Parser:
         match self.lexer.curr_token.get_type():
             case TokenType.LESS:
                 self._consume_token()
-                return '<'
+                return "<"
             case TokenType.LESS_EQUAL:
                 self._consume_token()
-                return '<='
+                return "<="
             case TokenType.GREATER:
                 self._consume_token()
-                return '>'
+                return ">"
             case TokenType.GREATER_EQUAL:
                 self._consume_token()
-                return '>='
+                return ">="
             case TokenType.EQUAL:
                 self._consume_token()
-                return '=='
+                return "=="
             case TokenType.INEQUAL:
                 self._consume_token()
-                return '!='
+                return "!="
 
     def _parse_add_expr(self):
         multi_exprs = []
-        operations =[]
+        operations = []
         multi_exprs.append(self._parse_multi_expr())
         additive_op = self._parse_additive_operator()
         while additive_op:
@@ -346,10 +347,10 @@ class Parser:
         match self.lexer.curr_token.get_type():
             case TokenType.TIMES:
                 self._consume_token()
-                return '*'
+                return "*"
             case TokenType.DIVIDE:
                 self._consume_token()
-                return '/'
+                return "/"
 
     def _parse_multi_expr(self):
         unary_exprs = []
@@ -368,10 +369,10 @@ class Parser:
         match self.lexer.curr_token.get_type():
             case TokenType.PLUS:
                 self._consume_token()
-                return '+'
+                return "+"
             case TokenType.MINUS:
                 self._consume_token()
-                return '-'
+                return "-"
 
     def _parse_unary_expr(self):
         if self._try_parse(TokenType.MINUS):
