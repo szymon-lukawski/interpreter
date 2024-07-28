@@ -12,8 +12,32 @@ class PrettyPrinter(Visitor):
         self.space_multiplier = 1
         self.curr_alligment = 0
         self.curr_indentation = 0
+        self.precedence = {
+            'OrExpr' : 1,
+            'AndExpr' : 2,
+            'RelationExpr' : 3,
+            'AddExpr': 4,
+            'MultiExpr': 5,
+            'UnaryExpr' : 6,
+            'ObjectAccess' : 7,
+            'IntLiteral' : 7,
+            'FloatLiteral' : 7,
+            'StrLiteral' : 7,
+            'NullLiteral' : 7,
+        }
 
-    def print(self, ast : ASTNode):
+    def _needs_brackets(self, child : Expr, parent : Expr) -> bool:
+        parent_prec = self.precedence[type(parent).__name__]
+        child_prec = self.precedence[type(child).__name__]
+        return child_prec < parent_prec
+    
+    def _needs_brackets(self, child : Expr, parent : Expr) -> bool:
+        parent_prec = self.precedence[type(parent).__name__]
+        child_prec = self.precedence[type(child).__name__]
+        return child_prec < parent_prec
+
+    def print(self, ast : ASTNode) -> str:
+        """Returns a formatted code representation of AST"""
         self.parts = []
         ast.accept(self)
         return ''.join(self.parts)
@@ -32,18 +56,26 @@ class PrettyPrinter(Visitor):
     
     def visit_unary(self, unary_expr: UnaryExpr):
         self._add("-")
-        unary_expr.negated.accept(self)
+        self._enclose_if_necesary(unary_expr.negated, unary_expr)
 
     def visit_add(self, add_expr : AddExpr):
         self._visit_additive_or_multiplicative(add_expr)
 
     def visit_multi(self, multi_expr: MultiExpr):
         self._visit_additive_or_multiplicative(multi_expr)
+
+    def _enclose_if_necesary(self, child : Expr, parent: Expr):
+        needs_brackets = self._needs_brackets(child, parent)
+        if needs_brackets:
+            self._add('(')
+        child.accept(self)
+        if needs_brackets:
+            self._add(')')
+
         
     def _visit_additive_or_multiplicative(self, expr: MultiExpr | AddExpr):
-        # TODO add brackets when needed
         for i, child in enumerate(expr.children):
-            child.accept(self)
+            self._enclose_if_necesary(child, expr)
             if i != len(expr.children)-1:
                 self._add(f"{self.space_multiplier*" "}{expr.operations[i]}{self.space_multiplier*" "}")
 
@@ -55,14 +87,14 @@ class PrettyPrinter(Visitor):
 
     def _visit_logical(self, expr: AndExpr | OrExpr, is_and: bool):
         for i, child in enumerate(expr.children):
-            child.accept(self)
+            self._enclose_if_necesary(child, expr)
             if i != len(expr.children) - 1:
                 self._add(f"{self.space_multiplier*" "}{'&' if is_and else '|'}{self.space_multiplier*" "}")
 
     def visit_rel(self, rel_expr: RelationExpr):
-        rel_expr.left.accept(self)
+        self._enclose_if_necesary(rel_expr.left, rel_expr)
         self._add(f"{self.space_multiplier*' '}{rel_expr.operator}{self.space_multiplier*' '}")
-        rel_expr.right.accept(self)
+        self._enclose_if_necesary(rel_expr.right, rel_expr)
         
 
         
