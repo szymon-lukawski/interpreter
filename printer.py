@@ -1,5 +1,6 @@
 """Module for printing AST using visitor base class"""
 
+from AST import Param
 from visitor import Visitor
 from AST import *
 
@@ -80,6 +81,9 @@ class Printer(Visitor):
     def visit_obj_access(self, obj_access: ObjectAccess):
         self.parts.append(f"ObjectAccess([{", ".join([f"'{name}'" for name in obj_access.name_chain])}])")
 
+
+    def visit_param(self, param: Param):
+        pass
 
     def visit_var_dec(self, var_dec: VariableDeclaration):
         self.parts.append(f"VariableDeclaration('{var_dec.name}', '{var_dec.type}', {var_dec.is_mutable}")
