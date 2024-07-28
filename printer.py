@@ -83,13 +83,16 @@ class Printer(Visitor):
 
 
     def visit_param(self, param: Param):
-        pass
+        self._visit_var_dec_or_param(param, True)
 
     def visit_var_dec(self, var_dec: VariableDeclaration):
-        self.parts.append(f"VariableDeclaration('{var_dec.name}', '{var_dec.type}', {var_dec.is_mutable}")
-        if var_dec.default_value:
+        self._visit_var_dec_or_param(var_dec, False)
+
+    def _visit_var_dec_or_param(self, var_dec_or_param: VariableDeclaration | Param, is_param : bool):
+        self.parts.append(f"{"Param" if is_param else "VariableDeclaration"}('{var_dec_or_param.name}', '{var_dec_or_param.type}', {var_dec_or_param.is_mutable}")
+        if var_dec_or_param.default_value:
             self.parts.append(", ")
-            var_dec.default_value.accept(self)
+            var_dec_or_param.default_value.accept(self)
         self.parts.append(")")
 
 
