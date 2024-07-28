@@ -1,4 +1,4 @@
-from pretty_printer import Printer
+from printer import Printer
 from AST import *
 
 
@@ -309,11 +309,11 @@ def test_and_or_and():
     ast = OrExpr(
         [
             AndExpr([IntLiteral(0), IntLiteral(1)]),
-            AndExpr([IntLiteral(0), IntLiteral(1)]),
+            AndExpr([IntLiteral(2), IntLiteral(3)]),
         ]
     )
     printer = Printer()
-    expected = "OrExpr([AndExpr([IntLiteral(0), IntLiteral(1)]), AndExpr([IntLiteral(0), IntLiteral(1)])])"
+    expected = "OrExpr([AndExpr([IntLiteral(0), IntLiteral(1)]), AndExpr([IntLiteral(2), IntLiteral(3)])])"
     result = printer.print(ast)
     assert expected == result
 
@@ -792,6 +792,15 @@ def test_func_def_example_nested_function():
     """
     ast = FuncDef('add', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([FuncDef('add_sub_function', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([ReturnStatement(AddExpr([ObjectAccess(['arg1']), ObjectAccess(['arg2'])], ['+']))])), FuncDef('add', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([ReturnStatement(FunctionCall('add_sub_function', [ObjectAccess(['arg1']), ObjectAccess(['arg2'])]))])), ReturnStatement(AddExpr([ObjectAccess(['arg1']), ObjectAccess(['arg2'])], ['+']))]))
     expected = "FuncDef('add', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([FuncDef('add_sub_function', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([ReturnStatement(AddExpr([ObjectAccess(['arg1']), ObjectAccess(['arg2'])], ['+']))])), FuncDef('add', [VariableDeclaration('arg1', 'int', False), VariableDeclaration('arg2', 'int', False)], 'int', Program([ReturnStatement(FunctionCall('add_sub_function', [ObjectAccess(['arg1']), ObjectAccess(['arg2'])]))])), ReturnStatement(AddExpr([ObjectAccess(['arg1']), ObjectAccess(['arg2'])], ['+']))]))"
+    printer = Printer()
+    result = printer.print(ast)
+    assert result == expected
+
+
+def test_simple_return():
+    """return 0;"""
+    ast = ReturnStatement(IntLiteral(0))
+    expected = "ReturnStatement(IntLiteral(0))"
     printer = Printer()
     result = printer.print(ast)
     assert result == expected
