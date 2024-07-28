@@ -1,4 +1,4 @@
-from AST import VisitStatement, WhileStatement
+from AST import Param, VisitStatement, WhileStatement
 from visitor import Visitor
 
 class Interpreter(Visitor):
@@ -131,6 +131,9 @@ class Interpreter(Visitor):
         # porównaj typy. Jesli sa zgodne lub kompatybilne to przypisz wartość
         self.environment[assignment.obj_access.nested_objects[0].name] = value
 
+    def visit_param(self, param: Param):
+        return super().visit_param(param)
+    
     def visit_visit(self, visit_statement: VisitStatement):
         return super().visit_visit(visit_statement)
     
@@ -226,17 +229,17 @@ class Interpreter(Visitor):
         # TODO dodaj sprawdzenie typów kompatybilnych do kazdej z tych operacji porównania
         match rel_expr.operator:
             case '==':
-                return left == right
+                return bool(left == right)
             case '!=':
-                return left != right
+                return bool(left != right)
             case '<':
-                return left < right
+                return bool(left < right)
             case '>':
-                return left > right
+                return bool(left > right)
             case '<=':
-                return left <= right
+                return bool(left <= right)
             case '>=':
-                return left >= right
+                return bool(left >= right)
             
 
 
@@ -263,6 +266,8 @@ class Interpreter(Visitor):
 
     def visit_unary(self, unary_expr):
         value = unary_expr.negated.accept(self)
+        if isinstance(value, bool):
+            return not value
         return -value
 
     def visit_null_literal(self, null_literal):
