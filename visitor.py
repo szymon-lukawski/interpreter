@@ -65,6 +65,10 @@ class Visitor(ABC):
         pass
 
     @abstractmethod
+    def visit_param(self, param : Param):
+        pass
+
+    @abstractmethod
     def visit_func_def(self, func_def: FuncDef):
         pass
 
