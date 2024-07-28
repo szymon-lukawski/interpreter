@@ -51,7 +51,7 @@ class RelationExpr(Expr):
 
 
 class AddExpr(Expr):
-    def __init__(self, children: Expr, operations: List[str]) -> None:
+    def __init__(self, children: List[Expr], operations: List[str]) -> None:
         self.children = children
         self.operations = operations
 
@@ -221,8 +221,18 @@ class ReturnStatement(Statement):
     def accept(self, visitor):
         return visitor.visit_return(self)
 
+class Param(ASTNode):
+    def __init__(self, name : str, var_type : str, is_mutable : bool, default_value : Expr = None) -> None:
+        self.name = name
+        self.type = var_type
+        self.is_mutable = is_mutable
+        self.default_value = default_value
+
+    def accept(self, visitor):
+        return visitor.visit_param(self)
+
 class FuncDef(ASTNode):
-    def __init__(self, name : str, params : List[VariableDeclaration], type_ : str, prog : Program) -> None:
+    def __init__(self, name : str, params : List[Param], type_ : str, prog : Program) -> None:
         self.name = name
         self.params = params
         self.type = type_
