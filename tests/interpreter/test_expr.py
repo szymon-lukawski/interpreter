@@ -305,5 +305,52 @@ def test_unary_of_zero():
     i = Interpreter()
     assert ast.accept(i) == 0
 
+numbers = [-2,-1,0,1,2]
 
+@pytest.mark.parametrize("x", numbers)
+@pytest.mark.parametrize("y", numbers)
+def test_x_less_than_y(x, y):
+    """x < y"""
+    ast = RelationExpr(IntLiteral(x), IntLiteral(y), '<')
+    i = Interpreter()
+    assert ast.accept(i) == (x < y)
 
+@pytest.mark.parametrize("x", numbers)
+@pytest.mark.parametrize("y", numbers)
+def test_x_less__or_equal_than_y(x, y):
+    """x <= y"""
+    ast = RelationExpr(IntLiteral(x), IntLiteral(y), '<=')
+    i = Interpreter()
+    assert ast.accept(i) == (x <= y)
+
+@pytest.mark.parametrize("x", numbers)
+@pytest.mark.parametrize("y", numbers)
+def test_x_equal_y(x, y):
+    """x == y"""
+    ast = RelationExpr(IntLiteral(x), IntLiteral(y), '==')
+    i = Interpreter()
+    assert ast.accept(i) == (x == y)
+
+@pytest.mark.parametrize("x", numbers)
+@pytest.mark.parametrize("y", numbers)
+def test_x_not_equal_y(x, y):
+    """x != y"""
+    ast = RelationExpr(IntLiteral(x), IntLiteral(y), '!=')
+    i = Interpreter()
+    assert ast.accept(i) == (x != y)
+
+@pytest.mark.parametrize("x", numbers)
+@pytest.mark.parametrize("y", numbers)
+def test_x_greater_or_equal_than_y(x, y):
+    """x >= y"""
+    ast = RelationExpr(IntLiteral(x), IntLiteral(y), '>=')
+    i = Interpreter()
+    assert ast.accept(i) == (x >= y)
+
+@pytest.mark.parametrize("x", numbers)
+@pytest.mark.parametrize("y", numbers)
+def test_x_greater_than_y(x, y):
+    """x > y"""
+    ast = RelationExpr(IntLiteral(x), IntLiteral(y), '>')
+    i = Interpreter()
+    assert ast.accept(i) == (x > y)
