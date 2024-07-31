@@ -85,10 +85,11 @@ class Parser:
     def _parse_object_access(self):
         funcs_or_idents = []
         funcs_or_idents.append(self._parse_func_or_name())
-        while self.lexer.curr_token.get_type() == TokenType.DOT:
-            self._consume_token()
-            funcs_or_idents.append(self._parse_func_or_name())
-        return ObjectAccess(funcs_or_idents)
+        if funcs_or_idents[0]:
+            while self.lexer.curr_token.get_type() == TokenType.DOT:
+                self._consume_token()
+                funcs_or_idents.append(self._parse_func_or_name())
+            return ObjectAccess(funcs_or_idents)
 
     def _parse_dec_and_def_or_assign_or_fun_call(self):
         name = self._parse_identifier()
@@ -210,7 +211,7 @@ class Parser:
         return VariableDeclaration(name, var_type, is_mutable)
 
     def _parse_func_or_name(self):
-        name = self._shall(self._parse_identifier())
+        name = self._parse_identifier()
         if self._try_parse(TokenType.LEFT_BRACKET):
             args = self._parse_args()
             self._must_parse(TokenType.RIGHT_BRACKET)
@@ -377,7 +378,7 @@ class Parser:
     def _parse_unary_expr(self):
         if self._try_parse(TokenType.MINUS):
             return UnaryExpr(self._shall(self._parse_term()))
-        return self._shall(self._parse_term())
+        return self._parse_term()
 
     def _parse_term(self):
         if (
