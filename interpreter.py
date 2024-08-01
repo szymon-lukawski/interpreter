@@ -1,22 +1,167 @@
-from AST import Param, VisitStatement, WhileStatement
+from typing import Dict, Callable
+from AST import *
 from visitor import Visitor
 
-class Interpreter(Visitor):
+RelativeOperator = str
+BuiltInType = str
+DIGITS = set(list("0123456789"))
+INT_FRACTION_SEPARATOR = '.'
 
+class Converter:
+    def __init__(self) -> None:
+        self.supported_types = ["null_type", "int", "float", "str"]
+        self.supported_conversions: Dict[tuple[BuiltInType, BuiltInType], Callable] ={
+            ("nulltype", "str") : self._null_to_str,
+            ("str", "int") : None,
+            ("str", "float") : None,
+            ("int", "str") : self._int_to_str,
+            ("int", "float"): self._int_to_float,
+            ("float", "int") : self._float_to_int,
+            ("float", "str"): self._float_to_str,
+        }
+
+    def _null_to_str(self, _ : NullLiteral = None) -> StrLiteral:
+        return StrLiteral('null')
+    
+    def _int_to_str(self, int_expr : IntLiteral) -> StrLiteral:
+        return StrLiteral(str(int_expr.value))
+    
+    def _float_to_str(self, float_expr : FloatLiteral) -> StrLiteral:
+        return StrLiteral(f"{float_expr:.7f}")
+    
+    def _int_to_float(self, int_expr : IntLiteral) -> FloatLiteral:
+        return FloatLiteral(float(int_expr.value))
+    
+    def _float_to_int(self, float_expr : FloatLiteral) -> IntLiteral:
+        # TODO if in int limits
+        return IntLiteral(int(float_expr.value))
+    
+    def _str_to_int(self, str_expr : StrLiteral) -> IntLiteral:
+        # all chars are digits, unless it has one comma. 
+        # if it has one comma then convert to float and then convert to int
+        # TODO check length, Add special Error classes. Imporve errors, display what con not be converted
+        # if len(str_expr.value) == 0:
+        #     raise TypeError("Can not convert empty string to int")
+        # is_float = False
+        # for char in str_expr.value:
+        #     if not char in DIGITS:
+        #         if is_float:
+        #             raise TypeError("Can not convert to int")
+        #         if char == INT_FRACTION_SEPARATOR:
+        #             is_float = True
+        #         else:
+        #             raise TypeError("Can not convert to int")
+        # if is_float:
+        #     return self._float_to_int(self._str_to_float(str_expr))
+        # int_value = 0
+        # for digit in str_expr.value:
+        #     int_value = int_value * 10 + int(digit)
+        return IntLiteral(int(float(str_expr.value)))
+
+
+
+    def _str_to_float(self, str_expr: StrLiteral) -> FloatLiteral:
+        # all chars are digits, unless it has one comma. 
+        # TODO check length, Add special Error classes. Imporve errors, display what con not be converted
+        # if len(str_expr.value) == 0:
+        #     raise TypeError("Can not convert empty string to float")
+        # for char in str_expr.value:
+        #     if not char in DIGITS:
+        #         if is_float:
+        #             raise TypeError("Can not convert to int")
+        #         if char == INT_FRACTION_SEPARATOR:
+        #             is_float = True
+        #         else:
+        #             raise TypeError("Can not convert to int")
+        # fractional_digits = 0
+        # int_value = 0
+        # fraction_part = 0
+        # pos = 0
+        # char = str_expr.value[pos]
+        
+        # while char != INT_FRACTION_SEPARATOR and pos < len(str_expr.value):
+
+            
+        # return IntLiteral(int_value)
+        return IntLiteral(int(str_expr.value))
+            
+
+class Comparator:
+    """Class for comparing"""
+
+    def __init__(self) -> None:
+        self.supported_relation_operators = ["<", "<=", "==", "!=", ">=", ">"]
+        self.supported_types = ["int", "float", "str", "null_type"]
+        self.handling_dict: Dict[RelativeOperator, Dict[BuiltInType, Callable]] = {
+            rel_op: {
+                (type1, type2): None
+                for type1, type2 in zip(self.supported_types, self.supported_types)
+            }
+            for rel_op in self.supported_relation_operators
+        }
+        self._populate_handling_dict_less_than()
+
+    def _populate_handling_dict_less_than(self):
+        self.handling_dict["<"]["null_type", "null_type"] = Comparator._return_false
+        self.handling_dict["<"][
+            "null_type", "int"
+        ] = Comparator._comparing_null_type_and_non_null_type
+        self.handling_dict["<"][
+            "null_type", "float"
+        ] = Comparator._comparing_null_type_and_non_null_type
+        self.handling_dict["<"][
+            "null_type", "string"
+        ] = Comparator._comparing_null_type_and_non_null_type
+        self.handling_dict["<"][
+            "int", "null_type"
+        ] = Comparator._comparing_non_null_type_and_null_type
+        self.handling_dict["<"]["int", "int"] = Comparator._compare_less_than_int_int
+        self.handling_dict["<"][
+            "int", "float"
+        ] = Comparator._compare_less_than_int_float
+        self.handling_dict["<"]["int", "str"] = Comparator._compare_less_than_int_str
+
+    def _compare_less_than_int_str(self, left, right):
+        pass
+
+    def _compare_less_than_int_float(self, left, right):
+        return self._compare_numbers(left, right)
+
+    def _compare_less_than_int_int(self, left, right):
+        return self._compare_numbers(left, right)
+
+    def _compare_numbers(self, left, right):
+        return bool(left < right)
+
+    def _return_false(self, _, __):
+        return False
+
+    def _return_True(self, _, __):
+        return True
+
+    @staticmethod
+    def _comparing_null_type_and_non_null_type(_, __):
+        raise TypeError("Can not compare nulltype with non nulltype")
+
+    @staticmethod
+    def _comparing_non_null_type_and_null_type(_, __):
+        raise TypeError("Can not compare non null type with null type")
+
+
+class Interpreter(Visitor):
 
     class Struct:
         def __init__(self, attributes) -> None:
             self.attr_dict = {}
             for k in attributes:
                 self.attr_dict[k] = None
-            
 
     class Scopes:
         def __init__(self):
             self.variable_stack = []
             self.function_stack = []
             self.type_stack = []
-            self.variant_stack = [] # ?
+            self.variant_stack = []  # ?
 
         def push_scope(self):
             self.variable_stack.append({})
@@ -35,8 +180,10 @@ class Interpreter(Visitor):
 
         def add_variable(self, name, var_type, value=None):
             if name in self.variable_stack[-1]:
-                raise RuntimeError(f"Variable '{name}' already declared in the current scope")
-            self.variable_stack[-1][name] = {'type': var_type, 'value': value}
+                raise RuntimeError(
+                    f"Variable '{name}' already declared in the current scope"
+                )
+            self.variable_stack[-1][name] = {"type": var_type, "value": value}
 
         def variable_exists_in_current_scope(self, name):
             return name in self.variable_stack[-1]
@@ -47,7 +194,7 @@ class Interpreter(Visitor):
         def get_variable_value(self, name):
             for scope in reversed(self.variable_stack):
                 if name in scope:
-                    value = scope[name]['value']
+                    value = scope[name]["value"]
                     if value is None:
                         raise RuntimeError(f"Variable '{name}' has no value")
                     return value
@@ -56,13 +203,15 @@ class Interpreter(Visitor):
         def set_variable_value(self, name, value):
             for scope in reversed(self.variable_stack):
                 if name in scope:
-                    scope[name]['value'] = value
+                    scope[name]["value"] = value
                     return
             raise RuntimeError(f"Variable '{name}' not found in any scope")
 
         def add_function(self, name, definition):
             if name in self.function_stack[-1]:
-                raise RuntimeError(f"Function '{name}' already declared in the current scope")
+                raise RuntimeError(
+                    f"Function '{name}' already declared in the current scope"
+                )
             self.function_stack[-1][name] = definition
 
         def function_exists_in_current_scope(self, name):
@@ -79,7 +228,9 @@ class Interpreter(Visitor):
 
         def add_type(self, name, definition):
             if name in self.type_stack[-1]:
-                raise RuntimeError(f"Type '{name}' already declared in the current scope")
+                raise RuntimeError(
+                    f"Type '{name}' already declared in the current scope"
+                )
             self.type_stack[-1][name] = definition
 
         def type_exists_in_current_scope(self, name):
@@ -96,7 +247,9 @@ class Interpreter(Visitor):
 
         def add_variant(self, name, definition):
             if name in self.variant_stack[-1]:
-                raise RuntimeError(f"Variant '{name}' already declared in the current scope")
+                raise RuntimeError(
+                    f"Variant '{name}' already declared in the current scope"
+                )
             self.variant_stack[-1][name] = definition
 
         def variant_exists_in_current_scope(self, name):
@@ -111,11 +264,8 @@ class Interpreter(Visitor):
                     return scope[name]
             raise RuntimeError(f"Variant '{name}' not found in any scope")
 
-
-
     def __init__(self):
         self.scopes = self.Scopes()
-
 
     def visit_program(self, program):
         for statement in program.children:
@@ -125,7 +275,7 @@ class Interpreter(Visitor):
         # 1 bez .
         # sprawdz czy jest i ew zwróć referencję do struktury opisującej tą nazwę.
         # sprawdz czy reszta dostępu (reszta object_accessu) pasuje do zwróconej struktury i zwróć referencję do pola które nalezy przypisać.
-        # 
+        #
         # sprawdz czy zmienna jest niemutowalna i nie ma wartości.
         value = assignment.expr.accept(self)
         # porównaj typy. Jesli sa zgodne lub kompatybilne to przypisz wartość
@@ -133,16 +283,16 @@ class Interpreter(Visitor):
 
     def visit_param(self, param: Param):
         return super().visit_param(param)
-    
+
     def visit_visit(self, visit_statement: VisitStatement):
         return super().visit_visit(visit_statement)
-    
+
     def visit_while(self, while_stmt: WhileStatement):
         return super().visit_while(while_stmt)
 
     def visit_if(self, if_stmt):
         evaled_condition = if_stmt.cond.accept(self)
-        # sprawdz czy wynik condition da się zamienić na wartość 
+        # sprawdz czy wynik condition da się zamienić na wartość
         if evaled_condition:
             if_stmt.prog.accept(self)
         elif if_stmt.else_prog:
@@ -158,7 +308,7 @@ class Interpreter(Visitor):
     def visit_case_section(self, case_section):
         return {
             "type": self.visit(case_section.type),
-            "program": self.visit(case_section.program)
+            "program": self.visit(case_section.program),
         }
 
     def visit_func_call(self, func_call):
@@ -191,23 +341,17 @@ class Interpreter(Visitor):
 
     def visit_struct_def(self, struct_def):
         # TODO dodaj strukturę do tego scopa
-        return {
-            "name": struct_def.name,
-            "attributes": struct_def.attributes
-        }
+        return {"name": struct_def.name, "attributes": struct_def.attributes}
 
     def visit_variant_def(self, variant_def):
         # TODO dodaj variant do tego scopa
         pass  # Implement as needed
 
     def visit_named_type(self, named_type):
-        return {
-            "name": named_type.name,
-            "type": self.visit(named_type.type)
-        }
+        return {"name": named_type.name, "type": self.visit(named_type.type)}
 
     def visit_func_def(self, func_def):
-        
+
         # TODO dodaj funckję do tego scopa
         pass  # Implement as needed
 
@@ -228,20 +372,18 @@ class Interpreter(Visitor):
         right = rel_expr.right.accept(self)
         # TODO dodaj sprawdzenie typów kompatybilnych do kazdej z tych operacji porównania
         match rel_expr.operator:
-            case '==':
+            case "==":
                 return bool(left == right)
-            case '!=':
+            case "!=":
                 return bool(left != right)
-            case '<':
+            case "<":
                 return bool(left < right)
-            case '>':
+            case ">":
                 return bool(left > right)
-            case '<=':
+            case "<=":
                 return bool(left <= right)
-            case '>=':
+            case ">=":
                 return bool(left >= right)
-            
-
 
     def visit_add(self, add_expr):
         result = add_expr.children[0].accept(self)
@@ -281,4 +423,3 @@ class Interpreter(Visitor):
 
     def visit_str_literal(self, str_literal):
         return str_literal.value
-
