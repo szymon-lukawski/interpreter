@@ -61,7 +61,7 @@ class Parser:
     def _parse_return_statement(self):
         """return_statement ::== 'return', [expression], ';';"""
         if self._try_parse(TokenType.RETURN):
-            expr = self._shall(self._parse_expr)
+            expr = self._shall(self._parse_expr()) # TODO is expr really necessary always?
             self._must_parse(TokenType.SEMICOLON)
             return ReturnStatement(expr)
 
