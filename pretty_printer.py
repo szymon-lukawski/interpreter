@@ -30,11 +30,7 @@ class PrettyPrinter(Visitor):
         parent_prec = self.precedence[type(parent).__name__]
         child_prec = self.precedence[type(child).__name__]
         return child_prec < parent_prec
-    
-    def _needs_brackets(self, child : Expr, parent : Expr) -> bool:
-        parent_prec = self.precedence[type(parent).__name__]
-        child_prec = self.precedence[type(child).__name__]
-        return child_prec < parent_prec
+
 
     def print(self, ast : ASTNode) -> str:
         """Returns a formatted code representation of AST"""
