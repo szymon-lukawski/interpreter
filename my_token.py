@@ -34,7 +34,9 @@ class Token:
         self.set_token_attrs(token_type, token_value, position)
 
     def __str__(self) -> str:
-        return f'Token({self.__type}{f', {self.__value}' if self.__value is not None else ""}{f', position={self.__pos}' if self.__pos is not None else ""})'
+        # TODO if token is identifier then add ' on the left and right side of identifier value
+        add_quotation = self.__type == TokenType.STR_LITERAL or self.__type == TokenType.IDENTIFIER
+        return f'Token({self.__type}{f', {"'" if add_quotation else ""}{self.__value}{"'" if add_quotation else ""}' if self.__value is not None else ""}{f', position={self.__pos}' if self.__pos is not None else ""})'
 
     def _check_definite_none_value(self):
         if self.__type in tokentypes_should_none_value and not self.__value is None:
