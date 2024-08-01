@@ -222,10 +222,6 @@ class Lexer:
             raise InvalidCharsInNumberLiteral(position)
 
         int_part_len = len(str(value))
-        value = value * 10 + int(char)
-        char = self.reader.get_next_char()
-        counter = 1
-        char_counter += 1
         value = self._try_build_number(value, char_counter)
         total_len = len(str(value))
         if total_len >= Lexer.FLOAT_CHAR_LIMIT:
@@ -235,8 +231,10 @@ class Lexer:
             TokenType.FLOAT_LITERAL, value / (10**counter), position
         )
 
-    def _try_build_number(self, value, char_counter):
+    def _try_build_number(self, value : int, char_counter : int):
         char = self.reader.char
+        # TODO '²'.isdigit() yields True. Replace isdigit
+        # TODO Put char number limit inside this function, NumberLiteralTooBigError
         while char != '' and char.isdigit():
             char_counter += 1
             value = value * 10 + int(char)
