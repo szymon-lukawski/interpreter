@@ -94,17 +94,20 @@ class Parser:
     def _parse_case_sections(self):
         """{case_section ::= 'case', type, 'begin', program,'end';}"""
         css = []
-        while self.lexer.curr_token() == TokenType.CASE:
+        while self.lexer.curr_token.get_type() == TokenType.CASE:
             self._consume_token()
             t = self._shall(self._parse_type())
             p = self._shall(self._parse_block())
             css.append(CaseSection(t, p))
         return css
 
-    def _parse_object_access(self):
+    def _parse_object_access(self, initial_name : str = None):
         """object_access ::=  func_or_ident, {('.', func_or_ident)};"""
         funcs_or_idents = []
-        funcs_or_idents.append(self._parse_func_or_name())
+        if not initial_name:
+            funcs_or_idents.append(self._parse_func_or_name())
+        else:
+            funcs_or_idents.append(self._parse_func_or_name(initial_name))
         if funcs_or_idents[0]:
             while self.lexer.curr_token.get_type() == TokenType.DOT:
                 self._consume_token()
@@ -134,37 +137,44 @@ class Parser:
             case TokenType.LEFT_BRACKET:
                 return self._shall(self._parse_rest_func_def_or_func_call(name))
 
+    def _parse_no_arg_or_no_param_function_def_or_call(self, name):
+        if self._try_parse(TokenType.RIGHT_BRACKET):
+            if self._try_parse(TokenType.COLON):
+                return self._parse_type_and_block(name, [])
+            self._must_parse(TokenType.SEMICOLON)
+            return FunctionCall(name, [])
+        
+    def _parse_type_and_block(self, name, params = None):
+        type_ = self._shall(self._parse_type())
+        program = self._shall(self._parse_block())
+        return FuncDef(name, params, type_, program)
+        
+    def _parse_start_with_identifier_func_def_or_call(self, name):
+        ident = self._parse_identifier()
+        if ident:
+            if self._try_parse(TokenType.COLON):
+                params = self._parse_params([self._parse_param(ident)])
+                self._must_parse(TokenType.COLON)
+                return self._parse_type_and_block(name, params)
+            first_arg = self._parse_object_access(name)
+            args =[first_arg] + self._parse_args() 
+            return self._parse_ending_of_function_call_statement(name, args)
+        
+    def _parse_ending_of_function_call_statement(self, name, args):
+        self._must_parse(TokenType.RIGHT_BRACKET)
+        self._must_parse(TokenType.SEMICOLON)
+        return FunctionCall(name, args)
+
     def _parse_rest_func_def_or_func_call(self, name):
         if self._try_parse(TokenType.LEFT_BRACKET):
-            buffered = self.lexer.curr_token
-            match buffered.get_type():
-                case TokenType.RIGHT_BRACKET:
-                    if self._try_parse(TokenType.COLON):
-                        t = self._shall(self._parse_type())
-                        p = self._shall(self._parse_block())
-                        return FuncDef(name, [], t, p)
-                    self._must_parse(TokenType.SEMICOLON)
-                    return FunctionCall(name, [])
-                case TokenType.IDENTIFIER:
-                    self._consume_token()
-                    if self._try_parse(TokenType.COLON):
-                        self._buffered = buffered
-                        params = self._parse_params()
-                        self._must_parse(TokenType.RIGHT_BRACKET)
-                        self._must_parse(TokenType.COLON)
-                        t = self._shall(self._parse_type())
-                        p = self._shall(self._parse_block())
-                        return FuncDef(name, params, t, p)
-                    self._buffered = buffered
-                    args = self._parse_args()
-                    self._must_parse(TokenType.RIGHT_BRACKET)
-                    self._must_parse(TokenType.SEMICOLON)
-                    return FunctionCall(name, args)
-                case _:
-                    args = self._parse_args()
-                    self._must_parse(TokenType.RIGHT_BRACKET)
-                    self._must_parse(TokenType.SEMICOLON)
-                    return FunctionCall(name, args)
+            empty_brackets_func_call_or_def = self._parse_no_arg_or_no_param_function_def_or_call(name)
+            if empty_brackets_func_call_or_def:
+                return empty_brackets_func_call_or_def
+            start_with_identifier = self._parse_start_with_identifier_func_def_or_call(name)
+            if start_with_identifier:
+                return start_with_identifier
+            args = self._parse_args()
+            return self._parse_ending_of_function_call_statement(name, args)
 
     def _parse_rest_variant(self, name):
         if self._try_parse(TokenType.VARIANT):
@@ -235,9 +245,11 @@ class Parser:
             return VariableDeclaration(name, var_type, is_mutable, expr)
         return VariableDeclaration(name, var_type, is_mutable)
 
-    def _parse_func_or_name(self):
+    def _parse_func_or_name(self, name = None):
         """identifier ['(', args, ')']"""
-        name = self._parse_identifier()
+        
+        if not name:
+            name = self._parse_identifier()
         if not name:
             return 
         if self._try_parse(TokenType.LEFT_BRACKET):
@@ -255,9 +267,12 @@ class Parser:
             self._consume_token()
             return name
 
-    def _parse_args(self):
+    def _parse_args(self, initial_args = None):
         """args ::= [expression , {',', expression}]"""
-        args = []
+        if not initial_args:
+            args = []
+        else:
+            args = [] + initial_args
         expr = self._parse_expr()
         if expr:
             args.append(expr)
@@ -265,9 +280,13 @@ class Parser:
                 args.append(self._shall(self._parse_expr()))
         return args
 
-    def _parse_params(self):
+    def _parse_params(self, initial_params : List[Param]):
         """params ::= param , {',', param};"""
-        params = []
+        if initial_params  == []:
+            params = []
+        else:
+            params = [] + initial_params
+            # self._try_parse(TokenType.COMMA)
         if self.lexer.curr_token.get_type() != TokenType.RIGHT_BRACKET:
             params.append(self._parse_param())
             while self.lexer.curr_token.get_type() == TokenType.COMMA:
@@ -275,11 +294,11 @@ class Parser:
                 params.append(self._parse_param())
         return params
 
-    def _parse_param(self):
+    def _parse_param(self, name : str = None):
         """param ::= identifier, ':', ['mut'], type;"""
-        name = self.lexer.curr_token.get_value()
-        self._must_parse(TokenType.IDENTIFIER)
-        self._must_parse(TokenType.COLON)
+        if not name:
+            name = self._shall(self._parse_identifier())
+            self._must_parse(TokenType.COLON)
         is_mutable = bool(self._try_parse(TokenType.MUT))
         type_ = self._shall(self._parse_type())
         is_no_expr = bool(self._try_parse(TokenType.COMMA)) or bool(
