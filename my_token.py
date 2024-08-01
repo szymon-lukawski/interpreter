@@ -33,6 +33,9 @@ class Token:
         self.__pos = None
         self.set_token_attrs(token_type, token_value, position)
 
+    def __str__(self) -> str:
+        return f'Token({self.__type}{f', {self.__value}' if self.__value is not None else ""}{f', position={self.__pos}' if self.__pos is not None else ""})'
+
     def _check_definite_none_value(self):
         if self.__type in tokentypes_should_none_value and not self.__value is None:
             raise ValueShouldBeNoneError
