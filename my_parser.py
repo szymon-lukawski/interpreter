@@ -314,7 +314,7 @@ class Parser:
         """type ::=  'int'
         		| 'float'
         		| 'str'
-        		| 'null'
+        		| 'null_type'
         		| identifier;"""
         tt = self.lexer.curr_token.get_type()
         if (
