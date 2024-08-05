@@ -17,6 +17,9 @@ from my_token_exceptions import (
     InvalidCharsInNumberLiteral,
     PrecidingZerosError,
     IdentifierTooLong,
+    IdentifierCanNotStartWithUnderscore,
+    NumberLiteralTooManyChars,
+    EscapingEOT
 )
 
 from utils import is_identifier_body, is_str_a_keyword
@@ -38,6 +41,8 @@ class Lexer:
         # pylint: disable=C0103:invalid-name
         self._EOT_token_in_place = False
 
+        self.NUMBER_CHAR_LIMIT = 30
+
     def get_next_token(self):
         """Returns next my_token from reader"""
         self._next_token()
@@ -58,8 +63,7 @@ class Lexer:
         self._parse_token()
 
     def _parse_token(self):
-        #
-        char = self.reader.char
+        char = self.reader.get_curr_char()
         pos = self.reader.get_position()
         match char:
             case Lexer.STRING_LITERAL_DELIMITER:
@@ -68,6 +72,8 @@ class Lexer:
                 self._parse_keyword_or_identifier(pos)
             case _ if char in string.digits:
                 self._parse_number(pos)
+            case "_":
+                raise IdentifierCanNotStartWithUnderscore(position=pos)
             case "@":
                 self._parse_comment(pos)
             case ",":
@@ -138,37 +144,14 @@ class Lexer:
         self.curr_token = Token(if_one_char, position=position)
 
     def _parse_string_literal(self, position: PositionType):
-        string_literal_value: List[str] = []
-
         char = self.reader.get_next_char()
         if char == '' or char == "\n":
             raise StringLiteralNotEnded(self.reader.get_position())
-        is_escaped = char == Lexer.STRING_ESCAPE
 
-        while char != Lexer.STRING_LITERAL_DELIMITER or is_escaped:
-            if is_escaped:
-                char = self.reader.get_next_char()
-                if char == "t":
-                    string_literal_value.append("\t")
-                elif char == "n":
-                    string_literal_value.append("\n")
-                elif char == Lexer.STRING_ESCAPE:
-                    string_literal_value.append(Lexer.STRING_ESCAPE)
-                elif char == Lexer.STRING_LITERAL_DELIMITER:
-                    string_literal_value.append(Lexer.STRING_LITERAL_DELIMITER)
-                else:
-                    raise EscapingWrongChar(self.reader.get_position())
-                char = self.reader.get_next_char()
-            else:
-                string_literal_value.append(char)
-                char = self.reader.get_next_char()
-            if char == '' or char == "\n":
-                raise StringLiteralNotEnded(self.reader.get_position())
-            is_escaped = char == Lexer.STRING_ESCAPE
 
-        self.reader.next_char()
-        string_literal_value = "".join(string_literal_value)
-
+        
+        
+        string_literal_value = self._parse_str_literal_value()
         if string_literal_value in KEYWORDS_STRS:
             self.curr_token = Token(
                 KEYWORDS_TO_TOKEN_TYPE[string_literal_value], position
@@ -176,18 +159,53 @@ class Lexer:
 
         self.curr_token = Token(TokenType.STR_LITERAL, string_literal_value, position)
 
-    def _parse_keyword_or_identifier(self, position: Tuple[int, int]):
+    def _parse_str_literal_value(self):
+        string_literal_value: List[str] = []
+        char = self.reader.get_curr_char()
+        is_escaped = char == Lexer.STRING_ESCAPE
+        while char != Lexer.STRING_LITERAL_DELIMITER or is_escaped:
+            if is_escaped:
+                self._parse_escaped_char(string_literal_value)
+            else:
+                string_literal_value.append(char)
+            char = self.reader.get_next_char()
+            if char == '' or char == "\n":
+                raise StringLiteralNotEnded(self.reader.get_position())
+            is_escaped = char == Lexer.STRING_ESCAPE
+        self.reader.next_char()
+        return "".join(string_literal_value)
+    
+    def _parse_escaped_char(self, string_literal_buffer : List[str]):
+        match self.reader.get_next_char():
+            case "t":
+                string_literal_buffer.append("\t")
+            case "n":
+                string_literal_buffer.append("\n")
+            case Lexer.STRING_ESCAPE:
+                string_literal_buffer.append(Lexer.STRING_ESCAPE)
+            case Lexer.STRING_LITERAL_DELIMITER:
+                string_literal_buffer.append(Lexer.STRING_LITERAL_DELIMITER)
+            case "":
+                raise EscapingEOT(self.reader.get_position())
+            case _:
+                raise EscapingWrongChar(self.reader.get_position())
+        
+
+    def _parse_keyword_or_identifier(self, position: PositionType):
         self._parse_identifier(position)
         token_value = self.curr_token.get_value()
         if is_str_a_keyword(token_value):
             self.curr_token.set_value_and_type(KEYWORDS_TO_TOKEN_TYPE[token_value], None)
 
-    def _parse_identifier(self, position: Tuple[int, int]):
+    def _parse_identifier(self, position: PositionType):
         buffer: List[str] = []
-        char = self.reader.char
-        buffer.append(char)
-        char = self.reader.get_next_char()
+        buffer.append(self.reader.get_curr_char())
+        value = self._parse_identifier_body(buffer, position)
+        self.curr_token = Token(TokenType.IDENTIFIER, value, position)
 
+
+    def _parse_identifier_body(self, buffer : List[str], pos : PositionType):
+        char = self.reader.get_next_char()
         while (
             char != ''
             and is_identifier_body(char)
@@ -196,56 +214,47 @@ class Lexer:
             buffer.append(char)
             char = self.reader.get_next_char()
         if len(buffer) > Lexer.IDENTIFIER_LEN_LIMIT:
-            raise IdentifierTooLong(position=position)
+            raise IdentifierTooLong(position=pos)
+        return "".join(buffer)
 
-        value = "".join(buffer)
-
-        self.curr_token = Token(TokenType.IDENTIFIER, value, position)
 
     def _parse_number(self, position: PositionType):
+        first_digit_value = int(self.reader.get_curr_char())
+        self._check_for_preciding_zeros(first_digit_value, position)
         char_counter = 1
-        value = int(self.reader.char)
-        char = self.reader.get_next_char()
-        if value == 0 and char == "0":
-            raise PrecidingZerosError(position=position)
-
-        value = self._try_build_number(value, char_counter)
-        char = self.reader.char
-        if char != ".":
-            if value > Lexer.INT_LIMIT:
-                raise IntLiteralTooBig(position)
+        value, char_counter = self._try_build_number(first_digit_value, char_counter, position)
+        if self.reader.get_curr_char() != ".":
             self.curr_token = Token(TokenType.INT_LITERAL, value, position)
             return
-
         char = self.reader.get_next_char()
-        if char == '' or not char.isdigit():
+        if char == '' or not char in string.digits:
             raise InvalidCharsInNumberLiteral(position)
-
-        int_part_len = len(str(value))
-        value = self._try_build_number(value, char_counter)
-        total_len = len(str(value))
-        if total_len >= Lexer.FLOAT_CHAR_LIMIT:
-            raise FloatLiteralTooBig(position=position)
-        counter = total_len - int_part_len
+        int_part_len = char_counter + 0
+        value, char_counter = self._try_build_number(value, char_counter, position)
         self.curr_token = Token(
-            TokenType.FLOAT_LITERAL, value / (10**counter), position
+            TokenType.FLOAT_LITERAL, value / (10**(char_counter - int_part_len)), position
         )
 
-    def _try_build_number(self, value : int, char_counter : int):
-        char = self.reader.char
-        # TODO '²'.isdigit() yields True. Replace isdigit
-        # TODO Put char number limit inside this function, NumberLiteralTooBigError
-        while char != '' and char.isdigit():
+    def _check_for_preciding_zeros(self, first_digit_value, pos):
+        char = self.reader.get_next_char()
+        if first_digit_value == 0 and char == "0":
+            raise PrecidingZerosError(position=pos)
+
+    def _try_build_number(self, value : int, char_counter : int, pos : PositionType):
+        char = self.reader.get_curr_char()
+        while char != '' and char in string.digits and char_counter <= self.NUMBER_CHAR_LIMIT:
             char_counter += 1
             value = value * 10 + int(char)
             char = self.reader.get_next_char()
-        return value
+        if char_counter > self.NUMBER_CHAR_LIMIT:
+            raise NumberLiteralTooManyChars(pos, self.NUMBER_CHAR_LIMIT)
+        return value, char_counter
 
     def _parse_comment(self, position: Tuple[int, int]):
         self.reader.next_char()
         comment_value: List[str] = []
 
-        char = self.reader.char
+        char = self.reader.get_curr_char()
 
         while char != "\n":
             comment_value.append(char)
@@ -256,8 +265,8 @@ class Lexer:
         self.curr_token = Token(TokenType.COMMENT, comment_value, position)
 
     def _is_end_of_file(self):
-        return self.reader.char == ''
+        return self.reader.get_curr_char() == ''
 
     def _skip_whitespaces(self):
-        while not self._is_end_of_file() and self.reader.char.isspace():
+        while not self._is_end_of_file() and self.reader.get_curr_char().isspace():
             self.reader.next_char()
