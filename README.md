@@ -481,6 +481,8 @@ print(x); @ 1
 Testy jednostkowe do kadej funkcji.
 Testy integracyjne do sprawdzenia współpracy między modułami projektu.
 Testy na całych złozonych programach.
+terminal:
+```PYTHONPATH="$(pwd)" pytest tests/ -q```
 
 ### Więcej przykładów:
 W pliku `first.mc`
