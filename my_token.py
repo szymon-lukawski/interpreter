@@ -33,8 +33,12 @@ class Token:
         self.__pos = None
         self.set_token_attrs(token_type, token_value, position)
 
+
+    def copy(self):
+        """Returns a copy of an instance of a Token object"""
+        return Token(self.__type, self.__value, self.__pos)
+
     def __str__(self) -> str:
-        # TODO if token is identifier then add ' on the left and right side of identifier value
         add_quotation = self.__type == TokenType.STR_LITERAL or self.__type == TokenType.IDENTIFIER
         return f'Token({self.__type}{f', {"'" if add_quotation else ""}{self.__value}{"'" if add_quotation else ""}' if self.__value is not None else ""}{f', position={self.__pos}' if self.__pos is not None else ""})'
 
