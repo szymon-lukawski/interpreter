@@ -2,7 +2,7 @@
 
 import pytest
 from io import StringIO
-from char_reader import StringReader
+from char_reader import TextIOReader
 from lexer import Lexer
 from token_type import TokenType
 from my_token import Token
@@ -18,7 +18,7 @@ from my_token_exceptions import (
 def test_only_spaces():
     """EOT token does not change position after char source is dry"""
     text = 10 * " "
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
 
@@ -30,7 +30,7 @@ def test_only_spaces():
 def test_int_literal_0():
     """."""
     text = "0"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == Token(TokenType.INT_LITERAL, 0, position=(1, 1))
@@ -39,7 +39,7 @@ def test_int_literal_0():
 def test_int_literal_00():
     """."""
     text = "00"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     with pytest.raises(PrecidingZerosError):
         l.get_next_token()
@@ -48,7 +48,7 @@ def test_int_literal_00():
 def test_int_literal_1():
     """."""
     text = "1"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == Token(TokenType.INT_LITERAL, 1, position=(1, 1))
@@ -57,7 +57,7 @@ def test_int_literal_1():
 def test_int_literal_2():
     """."""
     text = "2"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == Token(TokenType.INT_LITERAL, 2, position=(1, 1))
@@ -66,7 +66,7 @@ def test_int_literal_2():
 def test_int_literal_12():
     """."""
     text = "12"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == Token(TokenType.INT_LITERAL, 12, position=(1, 1))
@@ -75,7 +75,7 @@ def test_int_literal_12():
 def test_int_literal_123():
     """."""
     text = "123"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == Token(TokenType.INT_LITERAL, 123, position=(1, 1))
@@ -84,7 +84,7 @@ def test_int_literal_123():
 def test_float_literal_123_dot():
     """."""
     text = "123."
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     with pytest.raises(InvalidCharsInNumberLiteral):
         l.get_next_token()
@@ -93,7 +93,7 @@ def test_float_literal_123_dot():
 def test_float_literal_123_dot_some_letters():
     """."""
     text = "123.abc"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     with pytest.raises(InvalidCharsInNumberLiteral):
         l.get_next_token()
@@ -102,7 +102,7 @@ def test_float_literal_123_dot_some_letters():
 def test_float_literal_123_dot_0_some_letters():
     """."""
     text = "123.0abc"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == Token(
@@ -115,7 +115,7 @@ def test_float_literal_123_dot_0_some_letters():
 def test_float_literal():
     """."""
     text = "123.123"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     t = l.get_next_token()
     assert t.get_type() == TokenType.FLOAT_LITERAL
@@ -125,7 +125,7 @@ def test_float_literal():
 def test_big_int_literal():
     """."""
     text = "99999999"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
     assert l.get_next_token() == Token(
@@ -136,7 +136,7 @@ def test_big_int_literal():
 def test_to_big_int_literal():
     """."""
     text = "100000000"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     with pytest.raises(IntLiteralTooBig):
         l.get_next_token()
@@ -145,7 +145,7 @@ def test_to_big_int_literal():
 def test_big_float_literal():
     """."""
     text = "99999999.0"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     t = l.get_next_token()
     assert t.get_type() == TokenType.FLOAT_LITERAL
@@ -155,7 +155,7 @@ def test_big_float_literal():
 def test_float_bigger_than_int_limit():
     """."""
     text = "100000000.0"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     t = l.get_next_token()
     assert t.get_type() == TokenType.FLOAT_LITERAL
@@ -165,7 +165,7 @@ def test_float_bigger_than_int_limit():
 def test_to_big_float_literal_more_than_20_chars():
     """."""
     text = "1" + "0"*19 + ".0"
-    r = StringReader(StringIO(text))
+    r = TextIOReader(StringIO(text))
     l = Lexer(r)
     with pytest.raises(FloatLiteralTooBig):
         l.get_next_token()
