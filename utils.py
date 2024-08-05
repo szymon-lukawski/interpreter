@@ -11,7 +11,7 @@ def is_identifier_body(char: str):
     o = ord(char)
     return (
         (48 <= o and o <= 57)
-        or (65 <= o and 0 <= o)
+        or (65 <= o and o <= 90)
         or (97 <= o and o <= 122)
         or o == 95
     )
@@ -26,6 +26,7 @@ token_to_token_type_name_dict: Dict[Token, str] = {
     TokenType.INT: "int",
     TokenType.FLOAT: "float",
     TokenType.STR: "str",
+    TokenType.NULL_TYPE: 'null_type'
 }
 
 
