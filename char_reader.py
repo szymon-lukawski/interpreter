@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from io import StringIO
+from io import TextIOBase
 
 class CharReader(ABC):
     """
@@ -8,7 +8,7 @@ class CharReader(ABC):
     """
 
     def __init__(self):
-        self.char: str
+        self._char: str
         self._row: int = 1
         self._col: int = 1
 
@@ -20,16 +20,20 @@ class CharReader(ABC):
 
     def get_position(self):
         """Returns position of current char in source"""
-        return self._row, self._col
+        return self._row+0, self._col+0
+    
+    def get_curr_char(self):
+        """Returns current char"""
+        return self._char
 
     @abstractmethod
     def _next_char(self):
         pass
     
     def _update_position(self):
-        if self.char == '':
+        if self._char == '':
             return
-        if self.char == '\n':
+        if self._char == '\n':
             self._col = 1
             self._row += 1
         else:
@@ -38,17 +42,16 @@ class CharReader(ABC):
     def get_next_char(self):
         """Advances one char and returns it"""
         self.next_char()
-        return self.char
+        return self._char
 
 
-class StringReader(CharReader):
+class TextIOReader(CharReader):
     """CharReader that source is text python's string literal"""
 
-    def __init__(self, string_literal: StringIO):
+    def __init__(self, text_io: TextIOBase):
         super().__init__()
-        self.string_io = string_literal
-        self.string_io.seek(0)
+        self.text_io = text_io
         self._next_char()
 
     def _next_char(self):
-        self.char = self.string_io.read(1)
+        self._char = self.text_io.read(1)
