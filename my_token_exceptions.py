@@ -52,19 +52,22 @@ class NumberLiteralTooManyChars(NumberError):
 
     def __str__(self):
         return f"{self.__class__.__name__}: row: {self.row}, column: {self.col}, {self.__doc__}: {self.limit}"
-class IntLiteralTooBig(NumberError):
-    """Int limit is set to {Lexer.INT_LIMIT}"""
+class IntLiteralTooBig(NumberLiteralTooManyChars):
+    """Int char limit is"""
 
-class FloatLiteralTooBig(NumberError):
-    """Float char limit is set to {Lexer.FLOAT_LIMIT}"""
+class FloatLiteralTooBig(NumberLiteralTooManyChars):
+    """Float char limit is"""
 
-class InvalidCharsInNumberLiteral(NumberError):
-    """When building number literal there can only be digits 0-9"""
+class DigitRequiredAfterDot(NumberError):
+    """When building float literal, there has to be at least one digit after a dot"""
+
+class InvalidCharInIdentifier(MyTokenException):
+    """Identifier body can only consist of letterz a-z, A-Z, digits and _. """
 
 # TODO add int and float limits to doc strings...
 
 class PrecidingZerosError(NumberError):
-    """There can only be one preciding zero in number literal"""
+    """Putting additional zeros to the left of number literal is not allowed. 0 is ok, so is 0.1 so is 0.0001. 01 is  not. 00.1 is not"""
 
 class IdentifierTooLong(MyTokenException):
     """self explanatory"""

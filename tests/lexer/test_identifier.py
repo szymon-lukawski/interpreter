@@ -141,17 +141,15 @@ def test_valid_separators_of_identifiers():
     assert l.get_next_token() == Token(TokenType.IDENTIFIER, 'x', position=(3, 46))
     assert l.get_next_token() == Token(TokenType.EOT, position=(3, 47))
 
-def test_a_a_identifiers():
-    """Separated by space"""
-    text = "a a"
+def test_escape_char_can_not_be_in_body_of_identifier():
+    """a\\n"""
+    text = "a\\n"
     text_io = StringIO(text)
     r = TextIOReader(text_io)
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == Token(TokenType.IDENTIFIER, "a", (1, 1))
-    assert l.get_next_token() == Token(TokenType.IDENTIFIER, "a", (1, 3))
-    assert l.get_next_token() == Token(TokenType.EOT, position=(1, 4))
-
+    with pytest.raises(InvalidCharInIdentifier):
+        l.get_next_token()
 
 def test_max_long_identifiers():
     """100 char long identifier is max allowed by default"""

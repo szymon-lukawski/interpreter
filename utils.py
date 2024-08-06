@@ -16,6 +16,10 @@ def is_identifier_body(char: str):
         or o == 95
     )
 
+def is_separator(char : str):
+    """Returs true if char is one of: !&*()-+=,<.>/| \n@';:"""
+    return char in "!&*()-+=,<.>/| \n@';:"
+
 
 def is_str_a_keyword(value: str):
     """."""

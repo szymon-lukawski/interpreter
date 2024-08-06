@@ -14,15 +14,16 @@ from my_token_exceptions import (
     ExclamationMarkError,
     IntLiteralTooBig,
     FloatLiteralTooBig,
-    InvalidCharsInNumberLiteral,
+    DigitRequiredAfterDot,
     PrecidingZerosError,
     IdentifierTooLong,
     IdentifierCanNotStartWithUnderscore,
     NumberLiteralTooManyChars,
-    EscapingEOT
+    EscapingEOT,
+    InvalidCharInIdentifier
 )
 
-from utils import is_identifier_body, is_str_a_keyword
+from utils import is_identifier_body, is_str_a_keyword, is_separator
 
 
 class Lexer:
@@ -30,7 +31,7 @@ class Lexer:
 
     STRING_LITERAL_DELIMITER = "'"
     STRING_ESCAPE = "\\"
-    INT_LIMIT = 10**8 - 1
+    INT_CHAR_LIMIT = 8
     FLOAT_CHAR_LIMIT = 20
     IDENTIFIER_LEN_LIMIT = 100
 
@@ -208,7 +209,7 @@ class Lexer:
         char = self.reader.get_next_char()
         while (
             char != ''
-            and is_identifier_body(char)
+            and self._is_identifier_body_or_sep(pos)
             and len(buffer) <= Lexer.IDENTIFIER_LEN_LIMIT
         ):
             buffer.append(char)
@@ -217,38 +218,59 @@ class Lexer:
             raise IdentifierTooLong(position=pos)
         return "".join(buffer)
 
+    def _is_identifier_body_or_sep(self, pos : PositionType):
+        char = self.reader.get_curr_char()
+        if is_identifier_body(char):
+            return True
+        if is_separator(char):
+            return False
+        raise InvalidCharInIdentifier(position=pos)
+            
+
 
     def _parse_number(self, position: PositionType):
         first_digit_value = int(self.reader.get_curr_char())
         self._check_for_preciding_zeros(first_digit_value, position)
         char_counter = 1
-        value, char_counter = self._try_build_number(first_digit_value, char_counter, position)
+        value, char_counter = self._try_build_int_part(first_digit_value, char_counter, position)
         if self.reader.get_curr_char() != ".":
             self.curr_token = Token(TokenType.INT_LITERAL, value, position)
             return
         char = self.reader.get_next_char()
         if char == '' or not char in string.digits:
-            raise InvalidCharsInNumberLiteral(position)
+            raise DigitRequiredAfterDot(position)
         int_part_len = char_counter + 0
-        value, char_counter = self._try_build_number(value, char_counter, position)
+        value, char_counter = self._try_build_float(value, char_counter, position)
         self.curr_token = Token(
             TokenType.FLOAT_LITERAL, value / (10**(char_counter - int_part_len)), position
         )
 
     def _check_for_preciding_zeros(self, first_digit_value, pos):
         char = self.reader.get_next_char()
-        if first_digit_value == 0 and char == "0":
+        if first_digit_value == 0 and (char != "." and char != "" and char in string.digits):
             raise PrecidingZerosError(position=pos)
 
-    def _try_build_number(self, value : int, char_counter : int, pos : PositionType):
+    def _try_build_number(self, value : int, char_counter : int):
         char = self.reader.get_curr_char()
         while char != '' and char in string.digits and char_counter <= self.NUMBER_CHAR_LIMIT:
             char_counter += 1
             value = value * 10 + int(char)
             char = self.reader.get_next_char()
-        if char_counter > self.NUMBER_CHAR_LIMIT:
-            raise NumberLiteralTooManyChars(pos, self.NUMBER_CHAR_LIMIT)
         return value, char_counter
+    
+    def _try_build_int_part(self, value : int, char_counter : int, pos: PositionType):
+        value, char_counter = self._try_build_number(value, char_counter)
+        if self.reader.get_curr_char() != '.' and char_counter > self.INT_CHAR_LIMIT:
+            raise IntLiteralTooBig(pos, self.INT_CHAR_LIMIT)
+        return value, char_counter
+    
+    def _try_build_float(self, value : int, char_counter : int, pos: PositionType):
+        value, char_counter = self._try_build_number(value, char_counter)
+        if char_counter > self.FLOAT_CHAR_LIMIT:
+            raise FloatLiteralTooBig(pos, self.FLOAT_CHAR_LIMIT)
+        return value, char_counter
+
+
 
     def _parse_comment(self, position: Tuple[int, int]):
         self.reader.next_char()
