@@ -1,13 +1,19 @@
 """Module for testing Lexer's string literal"""
 
 from io import StringIO
+from typing import List, Tuple
 import pytest
 from char_reader import TextIOReader
 from lexer import Lexer
 from token_type import TokenType
 from my_token import Token
 
-from my_token_exceptions import StringLiteralNotEnded, EscapingWrongChar, EscapingEOT
+from my_token_exceptions import (
+    StringLiteralNotEnded,
+    EscapingWrongChar,
+    EscapingEOT,
+    UseOfQuotationMarksIsInvalid,
+)
 
 
 def test_string_literal_ala():
@@ -20,8 +26,26 @@ def test_string_literal_ala():
     assert my_token == Token(TokenType.STR_LITERAL, "ala", (1, 1))
 
 
-def test_string_literal_ala_in_newline():
-    """Basic string literal"""
+def test_quotation_marks_do_not_mark_limits_of_a_str_literal():
+    """Use of quotation marks instead of apostrophe in str literal"""
+    text = '"ala"'
+    r = TextIOReader(StringIO(text))
+    l = Lexer(r)
+    assert l.curr_token is None
+    with pytest.raises(UseOfQuotationMarksIsInvalid):
+        l.get_next_token()
+
+
+def test_quotation_marks_inside_str_literal():
+    """'She said "I like cats.".'"""
+    text = "'She said \"I like cats.\".'"
+    r = TextIOReader(StringIO(text))
+    l = Lexer(r)
+    assert l.curr_token is None
+    assert l.get_next_token() == Token(TokenType.STR_LITERAL, 'She said "I like cats.".', (1, 1))
+
+def test_pos_of_str_literal_is_of_its_initial_apostrophe():
+    """\n'ala'"""
     text = "\n'ala'"
     r = TextIOReader(StringIO(text))
     l = Lexer(r)
@@ -38,7 +62,8 @@ def test_string_literal_not_properly_ended():
     assert l.curr_token is None
     with pytest.raises(StringLiteralNotEnded):
         l.get_next_token()
-    
+
+
 def test_string_literal_not_properly_ended_end_backslash():
     """String literal should be ended with apostrophe"""
     text = "'ala\\"
@@ -49,8 +74,8 @@ def test_string_literal_not_properly_ended_end_backslash():
         l.get_next_token()
 
 
-def test_as_if_string_literal_not_properly_started():
-    """."""
+def test_missing_innitial_apostrophe():
+    """ala'"""
     text = "ala'"
     r = TextIOReader(StringIO(text))
     l = Lexer(r)
@@ -61,7 +86,7 @@ def test_as_if_string_literal_not_properly_started():
     assert "row: 1, column: 5" in str(exinfo.value)
 
 
-def test_newline_in_str_literal():
+def test_str_literal_has_to_be_in_one_line():
     """Newline is two chars: `\\` and `n` but not \n"""
     text = "'\n'"
     r = TextIOReader(StringIO(text))
@@ -72,7 +97,7 @@ def test_newline_in_str_literal():
     assert "row: 1, column: 2" in str(exinfo.value)
 
 
-def test_escaped_newline_in_str_literal():
+def test_escaping_newline_is_not_allowed():
     """Escaping newline is not allowed"""
     text = "'\\\n'"
     r = TextIOReader(StringIO(text))
@@ -83,10 +108,19 @@ def test_escaped_newline_in_str_literal():
     assert "row: 1, column: 3" in str(exinfo.value)
 
 
-def test_valid_newline_in_str_literal():
+escape_chars_chars_pair: List[Tuple[str, str]] = [
+    ("\\n", "\n"),
+    ("\\\\", "\\"),
+    ("\\t", "\t"),
+    ("\\'", "'"),
+]
+
+
+@pytest.mark.parametrize("text,literal_value", escape_chars_chars_pair)
+def test_valid_escape_chars(text, literal_value):
     """This is valid newline in string literal"""
-    text = "'\\n'"
+    text = f"'{text}'"
     r = TextIOReader(StringIO(text))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == Token(TokenType.STR_LITERAL, "\n", (1, 1))
+    assert l.get_next_token() == Token(TokenType.STR_LITERAL, literal_value, (1, 1))
