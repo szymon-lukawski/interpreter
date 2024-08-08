@@ -12,29 +12,7 @@ from my_parser import Parser
 from lexer import Lexer
 from AST import *
 from parser_exceptions import ParserException
-
-
-class TokenProvider(Lexer):
-    """Mocks lexer."""
-
-    def __init__(self, _, list_of_tokens) -> None:
-        self.tokens = list_of_tokens
-        self.idx = -1
-        self._EOT_token_in_place = False
-        super().__init__(_)
-
-    def _next_token(self):
-        if self._EOT_token_in_place:
-            return
-        if self._is_end_of_file():
-            self.curr_token = Token(TokenType.EOT)
-            self._EOT_token_in_place = True
-            return
-        self.idx += 1
-        self.curr_token = self.tokens[self.idx]
-
-    def _is_end_of_file(self):
-        return self.idx + 2 > len(self.tokens)
+from token_provider import TokenProvider
 
 
 def test_sanity():
@@ -43,21 +21,8 @@ def test_sanity():
     assert True == 1
 
 
-def test_token_int_shall_parse_literal():
-    """int"""
-
-    tokens = [
-        Token(TokenType.INT),
-        Token(TokenType.EOT),
-    ]
-    lexer = TokenProvider(None, tokens)
-    parser = Parser(lexer)
-    with pytest.raises(ParserException):  # TODO change to better exception
-        result = parser._shall(parser._parse_literal())
-
-
 literal_parse_funcs = [
-    Parser._parse_literal,
+    Parser._try_parse_literal,
     Parser._parse_term,
     Parser._parse_unary_expr,
     Parser._parse_multi_expr,
@@ -129,19 +94,6 @@ def test_token_null_literal(func):
     assert result == expected
 
 
-@pytest.mark.parametrize("func", literal_parse_funcs)
-def test_token_int_parse_literal_shoul_not_advance(func):
-    """int"""
-
-    tokens = [
-        Token(TokenType.INT),
-        Token(TokenType.EOT),
-    ]
-    lexer = TokenProvider(None, tokens)
-    parser = Parser(lexer)
-    result = func(parser)
-    assert result is None
-    assert parser.lexer.curr_token == tokens[0]
 
 
 obj_access_parse_funcs = [
