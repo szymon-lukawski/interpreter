@@ -11,29 +11,7 @@ from my_token import Token
 from my_parser import Parser
 from lexer import Lexer
 from AST import *
-
-
-class TokenProvider(Lexer):
-    """Mocks lexer."""
-
-    def __init__(self, _, list_of_tokens) -> None:
-        self.tokens = list_of_tokens
-        self.idx = -1
-        self._EOT_token_in_place = False
-        super().__init__(_)
-
-    def _next_token(self):
-        if self._EOT_token_in_place:
-            return
-        if self._is_end_of_file():
-            self.curr_token = Token(TokenType.EOT)
-            self._EOT_token_in_place = True
-            return
-        self.idx += 1
-        self.curr_token = self.tokens[self.idx]
-
-    def _is_end_of_file(self):
-        return self.idx + 2 > len(self.tokens)
+from token_provider import TokenProvider
 
 
 def test_sanity():
@@ -47,7 +25,7 @@ def test_null_literal():
     tokens = [Token(TokenType.NULL)]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_literal()
+    result = parser._try_parse_literal()
     assert type(result) == NullLiteral
     assert result.value is None
 
@@ -57,7 +35,7 @@ def test_int_literal():
     tokens = [Token(TokenType.INT_LITERAL, 1)]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_literal()
+    result = parser._try_parse_literal()
     assert type(result) == IntLiteral
     assert type(result.value) == int
     assert result.value == 1
@@ -68,7 +46,7 @@ def test_float_literal():
     tokens = [Token(TokenType.FLOAT_LITERAL, 1.5)]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_literal()
+    result = parser._try_parse_literal()
     assert type(result) == FloatLiteral
     assert type(result.value) == float
     assert result.value == 1.5
@@ -79,7 +57,7 @@ def test_string_literal():
     tokens = [Token(TokenType.STR_LITERAL, "1")]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_literal()
+    result = parser._try_parse_literal()
     assert type(result) == StrLiteral
     assert type(result.value) == str
     assert result.value == "1"
@@ -90,7 +68,7 @@ def test_empty_string_literal():
     tokens = [Token(TokenType.STR_LITERAL, "")]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_literal()
+    result = parser._try_parse_literal()
     assert type(result) == StrLiteral
     assert type(result.value) == str
     assert result.value == ""
@@ -101,7 +79,7 @@ def test_literal_parsing_when_should_not_consume():
     tokens = [Token(TokenType.STR), Token(TokenType.BEGIN)]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_literal()
+    result = parser._try_parse_literal()
     assert result is None
     assert parser.lexer.curr_token == tokens[0]
 
@@ -131,7 +109,7 @@ def test_parse_term_str_literal():
     tokens = [Token(TokenType.STR_LITERAL, "")]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_literal()
+    result = parser._try_parse_literal()
     assert type(result) == StrLiteral
     assert type(result.value) == str
     assert result.value == ""
@@ -158,7 +136,7 @@ def test_unary_expression():
     tokens = [Token(TokenType.INT_LITERAL, 1)]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_literal()
+    result = parser._try_parse_literal()
     assert type(result) == IntLiteral
     assert type(result.value) == int
     assert result.value == 1
@@ -200,7 +178,7 @@ def test_multi_expression():
     assert type(result) == MultiExpr
     assert len(result.children) == 2
     assert len(result.operations) == 1
-    assert result.operations[0] == '/'
+    assert result.operations[0] == "/"
     assert type(result.children[0]) == ObjectAccess
     assert result.children[0].name_chain == ["suma"]
     assert type(result.children[1]) == IntLiteral
@@ -225,9 +203,9 @@ def test_bigger_multi_expression_with_times_and_divide():
     assert type(result) == MultiExpr
     assert len(result.children) == 4
     assert len(result.operations) == 3
-    assert result.operations[0] == '*'
-    assert result.operations[1] == '*'
-    assert result.operations[2] == '/'
+    assert result.operations[0] == "*"
+    assert result.operations[1] == "*"
+    assert result.operations[2] == "/"
     assert type(result.children[0]) == FloatLiteral
     assert type(result.children[1]) == ObjectAccess
     assert type(result.children[2]) == ObjectAccess
@@ -252,7 +230,7 @@ def test_bigger_multi_expression_with_unary_expression():
     assert type(result) == MultiExpr
     assert len(result.children) == 2
     assert len(result.operations) == 1
-    assert result.operations[0] == '*'
+    assert result.operations[0] == "*"
     assert type(result.children[0]) == FloatLiteral
     assert type(result.children[1]) == UnaryExpr
     assert type(result.children[1].negated) == ObjectAccess
@@ -279,7 +257,7 @@ def test_add_expr_minus():
     assert len(result.children) == 2
     assert type(result.children[0]) == MultiExpr
     assert len(result.children[0].operations) == 1
-    assert result.children[0].operations[0] == '*'
+    assert result.children[0].operations[0] == "*"
     assert type(result.children[0].children[0]) == UnaryExpr
     assert type(result.children[0].children[0].negated) == FloatLiteral
     assert result.children[0].children[0].negated.value == 3.14
@@ -289,7 +267,7 @@ def test_add_expr_minus():
     assert result.children[0].children[1].negated.name_chain == ["r"]
 
     assert len(result.operations) == 1
-    assert result.operations[0] == '-'
+    assert result.operations[0] == "-"
 
     assert type(result.children[1]) == UnaryExpr
     assert type(result.children[1].negated) == ObjectAccess
@@ -316,7 +294,7 @@ def test_add_expr_plus():
     assert len(result.children) == 2
     assert type(result.children[0]) == MultiExpr
     assert len(result.children[0].operations) == 1
-    assert result.children[0].operations[0] == '*'
+    assert result.children[0].operations[0] == "*"
     assert type(result.children[0].children[0]) == UnaryExpr
     assert type(result.children[0].children[0].negated) == FloatLiteral
     assert result.children[0].children[0].negated.value == 3.14
@@ -326,7 +304,7 @@ def test_add_expr_plus():
     assert result.children[0].children[1].negated.name_chain == ["r"]
 
     assert len(result.operations) == 1
-    assert result.operations[0] == '+'
+    assert result.operations[0] == "+"
 
     assert type(result.children[1]) == UnaryExpr
     assert type(result.children[1].negated) == ObjectAccess
@@ -334,12 +312,12 @@ def test_add_expr_plus():
 
 
 rel_operators = [
-    (TokenType.LESS, '<'),
-    (TokenType.LESS_EQUAL, '<='),
-    (TokenType.EQUAL, '=='),
-    (TokenType.INEQUAL, '!='),
-    (TokenType.GREATER, '>'),
-    (TokenType.GREATER_EQUAL, '>='),
+    (TokenType.LESS, "<"),
+    (TokenType.LESS_EQUAL, "<="),
+    (TokenType.EQUAL, "=="),
+    (TokenType.INEQUAL, "!="),
+    (TokenType.GREATER, ">"),
+    (TokenType.GREATER_EQUAL, ">="),
 ]
 
 

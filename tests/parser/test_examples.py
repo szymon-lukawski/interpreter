@@ -11,29 +11,9 @@ from my_token import Token
 from my_parser import Parser
 from lexer import Lexer
 from AST import *
+from token_provider import TokenProvider
 
 
-class TokenProvider(Lexer):
-    """Mocks lexer."""
-
-    def __init__(self, _, list_of_tokens) -> None:
-        self.tokens = list_of_tokens
-        self.idx = -1
-        self._EOT_token_in_place = False
-        super().__init__(_)
-
-    def _next_token(self):
-        if self._EOT_token_in_place:
-            return
-        if self._is_end_of_file():
-            self.curr_token = Token(TokenType.EOT)
-            self._EOT_token_in_place = True
-            return
-        self.idx += 1
-        self.curr_token = self.tokens[self.idx]
-
-    def _is_end_of_file(self):
-        return self.idx + 2 > len(self.tokens)
 
 
 def test_sanity():
@@ -409,7 +389,7 @@ def test_if_if_else():
     assert type(result.children[2].prog) == Program
     assert len(result.children[2].prog.children) == 1
     assert type(result.children[2].prog.children[0]) == AssignmentStatement
-    assert result.children[2].prog.children[0].obj_access == "msg"
+    assert result.children[2].prog.children[0].obj_access == ["msg"]
     assert type(result.children[2].prog.children[0].expr) == AddExpr
     assert type(result.children[2].prog.children[0].expr.children[0]) == ObjectAccess
     assert result.children[2].prog.children[0].expr.children[0].name_chain == ["msg"]
@@ -445,7 +425,7 @@ def test_if_if_else():
     assert type(result.children[3].prog) == Program
     assert len(result.children[3].prog.children) == 1
     assert type(result.children[3].prog.children[0]) == AssignmentStatement
-    assert result.children[3].prog.children[0].obj_access == "msg"
+    assert result.children[3].prog.children[0].obj_access == ["msg"]
     assert type(result.children[3].prog.children[0].expr) == AddExpr
     assert type(result.children[3].prog.children[0].expr.children[0]) == ObjectAccess
     assert result.children[3].prog.children[0].expr.children[0].name_chain == ["msg"]
@@ -455,7 +435,7 @@ def test_if_if_else():
     assert type(result.children[3].else_prog) == Program
     assert len(result.children[3].else_prog.children) == 1
     assert type(result.children[3].else_prog.children[0]) == AssignmentStatement
-    assert result.children[3].else_prog.children[0].obj_access == "msg"
+    assert result.children[3].else_prog.children[0].obj_access == ["msg"]
     assert type(result.children[3].else_prog.children[0].expr) == AddExpr
     assert type(result.children[3].else_prog.children[0].expr.children[0]) == ObjectAccess
     assert result.children[3].else_prog.children[0].expr.children[0].name_chain == ["msg"]
@@ -463,7 +443,7 @@ def test_if_if_else():
     assert result.children[3].else_prog.children[0].expr.children[1].value == "ów"
 
     assert type(result.children[4]) == AssignmentStatement
-    assert result.children[4].obj_access == "msg"
+    assert result.children[4].obj_access == ["msg"]
     assert type(result.children[4].expr) == AddExpr
     assert type(result.children[4].expr.children[0]) == ObjectAccess
     assert result.children[4].expr.children[0].name_chain == ["msg"]
