@@ -8,7 +8,6 @@ from keywords import KEYWORDS_STRS, KEYWORDS_TO_TOKEN_TYPE
 from char_reader import CharReader
 from my_token import Token, PositionType
 from my_token_exceptions import (
-    MyTokenException,
     StringLiteralNotEnded,
     EscapingWrongChar,
     ExclamationMarkError,
@@ -18,9 +17,10 @@ from my_token_exceptions import (
     PrecidingZerosError,
     IdentifierTooLong,
     IdentifierCanNotStartWithUnderscore,
-    NumberLiteralTooManyChars,
     EscapingEOT,
-    InvalidCharInIdentifier
+    InvalidCharInIdentifier,
+    UseOfQuotationMarksIsInvalid,
+    UnrecognisedStartOfToken
 )
 
 from utils import is_identifier_body, is_str_a_keyword, is_separator
@@ -131,8 +131,10 @@ class Lexer:
                     raise ExclamationMarkError(position=pos)
                 self.reader.next_char()
                 self.curr_token = Token(TokenType.INEQUAL, position=pos)
+            case '"':
+                raise UseOfQuotationMarksIsInvalid(position=pos)
             case _:
-                raise MyTokenException(position=pos)
+                raise UnrecognisedStartOfToken(position=pos)
 
     def _try_parse_two_char_operator(
         self, if_one_char: TokenType, if_two_chars: TokenType, position: Tuple[int, int]
