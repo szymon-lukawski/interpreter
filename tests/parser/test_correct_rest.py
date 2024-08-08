@@ -12,29 +12,9 @@ from my_parser import Parser
 from lexer import Lexer
 from AST import *
 from parser_exceptions import ParserException
+from token_provider import TokenProvider
 
 
-class TokenProvider(Lexer):
-    """Mocks lexer."""
-
-    def __init__(self, _, list_of_tokens) -> None:
-        self.tokens = list_of_tokens
-        self.idx = -1
-        self._EOT_token_in_place = False
-        super().__init__(_)
-
-    def _next_token(self):
-        if self._EOT_token_in_place:
-            return
-        if self._is_end_of_file():
-            self.curr_token = Token(TokenType.EOT)
-            self._EOT_token_in_place = True
-            return
-        self.idx += 1
-        self.curr_token = self.tokens[self.idx]
-
-    def _is_end_of_file(self):
-        return self.idx + 2 > len(self.tokens)
 
 
 def test_sanity():
@@ -81,7 +61,7 @@ def test_args_no_args():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_args()
+    result = parser._try_parse_args()
     assert result == []
 
 
@@ -95,7 +75,7 @@ def test_args_int_literal():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_args()
+    result = parser._try_parse_args()
     assert result == [IntLiteral(1)]
 
 
@@ -111,7 +91,7 @@ def test_args_nested_int_literal():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_args()
+    result = parser._try_parse_args()
     assert result == [IntLiteral(1)]
 
 
@@ -138,7 +118,7 @@ def test_args_one_multi_expr_arg():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_args()
+    result = parser._try_parse_args()
     assert result == [
         MultiExpr(
             [
@@ -165,7 +145,7 @@ def test_args_two_diff_literals():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_args()
+    result = parser._try_parse_args()
     assert result == [IntLiteral(1), FloatLiteral(3.2)]
 
 
@@ -188,7 +168,7 @@ def test_args_four_term_arg():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_args()
+    result = parser._try_parse_args()
     assert result == [
         ObjectAccess(["a", "b"]),
         IntLiteral(1),
@@ -212,9 +192,9 @@ def test_parse_func_or_name_ala_name():
 def test_parse_func_or_name_ala_func_no_args():
     """ala()"""
     tokens = [
-        Token(TokenType.IDENTIFIER, "ala"),
-        Token(TokenType.LEFT_BRACKET),
-        Token(TokenType.RIGHT_BRACKET),
+        Token(TokenType.IDENTIFIER, "ala", (1,1)),
+        Token(TokenType.LEFT_BRACKET, position=(1,4)),
+        Token(TokenType.RIGHT_BRACKET, position=(1,5)),
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
@@ -259,7 +239,7 @@ built_in_types = [
     (TokenType.INT, "int"),
     (TokenType.FLOAT, "float"),
     (TokenType.STR, "str"),
-    (TokenType.NULL_TYPE, "null"),
+    (TokenType.NULL_TYPE, "null_type"),
 ]
 
 
@@ -310,7 +290,7 @@ def test_named_type_name_and_type_the_same(t, t_str):
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._shall(parser._parse_named_type())
+    result = parser._shall(parser._try_parse_named_type())
     assert result == NamedType(t_str, t_str)
 
 
@@ -325,7 +305,7 @@ def test_named_type_ala_of_type_human():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._shall(parser._parse_named_type())
+    result = parser._shall(parser._try_parse_named_type())
     assert result == NamedType("ala", "Human")
 
 
@@ -336,7 +316,7 @@ def test_named_types_zero():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_named_types()
+    result = parser._try_parse_named_types()
     assert result == []
 
 
@@ -351,7 +331,7 @@ def test_named_types_one():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_named_types()
+    result = parser._try_parse_named_types()
     assert result == [NamedType("ala", "Human")]
 
 
@@ -370,7 +350,7 @@ def test_named_types_two():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_named_types()
+    result = parser._try_parse_named_types()
     assert result == [NamedType("a", "int"), NamedType("b", "float")]
 
 
@@ -397,7 +377,7 @@ def test_named_types_two_self_two_built_in():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_named_types()
+    result = parser._try_parse_named_types()
     assert result == [
         NamedType("a", "Human"),
         NamedType("b", "float"),
@@ -571,7 +551,7 @@ def test_case_sections_empty():
 
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_case_sections()
+    result = parser._try_parse_case_sections()
     expected = []
     assert result == expected
 
@@ -587,7 +567,7 @@ def test_case_sections_one_empty():
 
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_case_sections()
+    result = parser._try_parse_case_sections()
     expected = [CaseSection("int", Program([]))]
     assert result == expected
 
@@ -615,7 +595,7 @@ def test_case_sections_2_my_types_2_built_in_all_empty():
 
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_case_sections()
+    result = parser._try_parse_case_sections()
     expected = [
         CaseSection("int", Program([])),
         CaseSection("Car", Program([])),
@@ -662,7 +642,7 @@ def test_case_sections_2_my_types_2_built_in_not_empty():
 
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_case_sections()
+    result = parser._try_parse_case_sections()
     expected = [
         CaseSection("int", Program([Program([])])),
         CaseSection("Car", Program([ReturnStatement(StrLiteral("Car"))])),
@@ -682,7 +662,7 @@ def test_visit_empty():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_visit_statement()
+    result = parser._try_parse_visit_statement()
     expected = VisitStatement(ObjectAccess(["ala"]), [])
     assert result == expected
 
@@ -724,7 +704,7 @@ def test_visit_2_other_types_2_built_in_parse_visit():
     ]
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
-    result = parser._parse_visit_statement()
+    result = parser._try_parse_visit_statement()
     expected = VisitStatement(
         ObjectAccess(["ala"]),
         [
