@@ -105,7 +105,7 @@ def test_after_newline_sht_r_double_position(text, expected_token : Token):
 
 
 def test_assign_with_eqaul():
-    """Have to separated by some whitespace"""
+    """Have to be separated"""
     text = "= =="
     r = TextIOReader(StringIO(text))
     l = Lexer(r)
@@ -127,6 +127,19 @@ def test_equal_with_assign():
     assert l.get_next_token() == expected_token_1
     assert l.get_next_token() == expected_token_2
     assert l.get_next_token() == Token(TokenType.EOT, position=(1,4))
+
+def test_equal_with_equal():
+    """Dont have to be separated with whitespace"""
+    text = "===="
+    r = TextIOReader(StringIO(text))
+    l = Lexer(r)
+    expected_token_1 = Token(TokenType.EQUAL, position=(1,1))
+    expected_token_2 = Token(TokenType.EQUAL, position=(1,3))
+    assert l.curr_token is None
+    assert l.get_next_token() == expected_token_1
+    assert l.get_next_token() == expected_token_2
+    assert l.get_next_token() == Token(TokenType.EOT, position=(1,5))
+
 
 def test_plus_with_eqaul():
     """Dont have to be separated with whitespace"""
