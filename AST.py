@@ -3,8 +3,10 @@
 from typing import List
 
 
-# TODO add argument and data validation in each constructor
 class ASTNode:
+    def __init__(self, pos=None):
+        self.pos = pos
+
     def accept(self, visitor):
         return visitor.visit(self)
 
@@ -24,8 +26,9 @@ def _eq_for_ast_with_children(my_object: object, other: object):
 
 
 class Program(ASTNode):
-    def __init__(self, children: List[Statement]) -> None:
+    def __init__(self, children: List[Statement], pos=None) -> None:
         self.children = children
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_program(self)
@@ -39,8 +42,9 @@ class Expr(ASTNode):
 
 
 class OrExpr(Expr):
-    def __init__(self, children: List[Expr]) -> None:
+    def __init__(self, children: List[Expr], pos=None) -> None:
         self.children = children
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_or(self)
@@ -50,8 +54,9 @@ class OrExpr(Expr):
 
 
 class AndExpr(Expr):
-    def __init__(self, children: List[Expr]) -> None:
+    def __init__(self, children: List[Expr], pos=None) -> None:
         self.children = children
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_and(self)
@@ -61,10 +66,11 @@ class AndExpr(Expr):
 
 
 class RelationExpr(Expr):
-    def __init__(self, left: Expr, right: Expr, operator: str) -> None:
+    def __init__(self, left: Expr, right: Expr, operator: str, pos=None) -> None:
         self.left = left
         self.right = right
         self.operator = operator
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_rel(self)
@@ -78,21 +84,25 @@ class RelationExpr(Expr):
         )
 
 
-def _eq_for_ast_with_children_and_operations(
-    my_object, other: object
-):
+def _eq_for_ast_with_children_and_operations(my_object, other: object):
     return (
         type(my_object) == type(other)
         and my_object.operations == other.operations
         and len(my_object.children) == len(other.children)
-        and all([(my_child == other.children[i]) for i, my_child in enumerate(my_object.children)])
+        and all(
+            [
+                (my_child == other.children[i])
+                for i, my_child in enumerate(my_object.children)
+            ]
+        )
     )
 
 
 class AddExpr(Expr):
-    def __init__(self, children: List[Expr], operations: List[str]) -> None:
+    def __init__(self, children: List[Expr], operations: List[str], pos=None) -> None:
         self.children = children
         self.operations = operations
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_add(self)
@@ -102,9 +112,10 @@ class AddExpr(Expr):
 
 
 class MultiExpr(Expr):
-    def __init__(self, children: List[Expr], operations: List[str]) -> None:
+    def __init__(self, children: List[Expr], operations: List[str], pos=None) -> None:
         self.children = children
         self.operations = operations
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_multi(self)
@@ -114,8 +125,9 @@ class MultiExpr(Expr):
 
 
 class UnaryExpr(Expr):
-    def __init__(self, negated: Expr) -> None:
+    def __init__(self, negated: Expr, pos=None) -> None:
         self.negated = negated
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_unary(self)
@@ -129,21 +141,20 @@ class Term(Expr):
 
 
 class Literal(Term):
-    def __init__(self, value: int | float | str | None) -> None:
+    def __init__(self, value: int | float | str | None, pos=None) -> None:
         self.value = value
+        super().__init__(pos)
 
     def __eq__(self, other: object) -> bool:
         return type(self) == type(other) and self.value == other.value
 
 
 class NullLiteral(Literal):
-    def __init__(self, value=None) -> None:
-        super().__init__(value)
+    def __init__(self, value=None, pos=None) -> None:
+        super().__init__(value, pos)
 
     def accept(self, visitor):
         return visitor.visit_null_literal(self)
-    
-
 
 
 class IntLiteral(Literal):
@@ -170,10 +181,13 @@ class CondStatement(Statement):
 
 
 class IfStatement(CondStatement):
-    def __init__(self, cond: Expr, prog: Program, else_prog: Program = None) -> None:
+    def __init__(
+        self, cond: Expr, prog: Program, else_prog: Program = None, pos=None
+    ) -> None:
         self.cond = cond
         self.prog = prog
         self.else_prog = else_prog
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_if(self)
@@ -188,9 +202,10 @@ class IfStatement(CondStatement):
 
 
 class WhileStatement(CondStatement):
-    def __init__(self, cond: Expr, prog: Program) -> None:
+    def __init__(self, cond: Expr, prog: Program, pos=None) -> None:
         self.cond = cond
         self.prog = prog
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_while(self)
@@ -207,8 +222,9 @@ class WhileStatement(CondStatement):
 
 
 class ObjectAccess(ASTNode):
-    def __init__(self, name_chain: List[str]) -> None:
+    def __init__(self, name_chain: List[str], pos=None) -> None:
         self.name_chain = name_chain
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_obj_access(self)
@@ -218,9 +234,10 @@ class ObjectAccess(ASTNode):
 
 
 class CaseSection(ASTNode):
-    def __init__(self, type_: str, program: Program) -> None:
+    def __init__(self, type_: str, program: Program, pos=None) -> None:
         self.type = type_
         self.program = program
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_case_section(self)
@@ -234,9 +251,10 @@ class CaseSection(ASTNode):
 
 
 class VisitStatement(Statement):
-    def __init__(self, obj: ObjectAccess, css: List[CaseSection]) -> None:
+    def __init__(self, obj: ObjectAccess, css: List[CaseSection], pos=None) -> None:
         self.obj = obj
         self.case_sections = css
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_visit(self)
@@ -255,9 +273,10 @@ class VisitStatement(Statement):
 
 
 class AssignmentStatement(Statement):
-    def __init__(self, obj_access: ObjectAccess, expr: Expr) -> None:
+    def __init__(self, obj_access: ObjectAccess, expr: Expr, pos=None) -> None:
         self.obj_access = obj_access
         self.expr = expr
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_assignment(self)
@@ -272,12 +291,18 @@ class AssignmentStatement(Statement):
 
 class VariableDeclaration(ASTNode):
     def __init__(
-        self, name: str, var_type: str, is_mutable: bool, default_value: Expr = None
+        self,
+        name: str,
+        var_type: str,
+        is_mutable: bool,
+        default_value: Expr = None,
+        pos=None,
     ) -> None:
         self.name = name
         self.type = var_type
         self.is_mutable = is_mutable
         self.default_value = default_value
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_var_dec(self)
@@ -293,9 +318,10 @@ class VariableDeclaration(ASTNode):
 
 
 class StructDef(ASTNode):
-    def __init__(self, name: str, attributes: List[VariableDeclaration]) -> None:
+    def __init__(self, name: str, attributes: List[VariableDeclaration], pos=None) -> None:
         self.name = name
         self.attributes = attributes
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_struct_def(self)
@@ -305,15 +331,19 @@ class StructDef(ASTNode):
             isinstance(other, StructDef)
             and self.name == other.name
             and all(
-                [(my_attr == other.attributes[i]) for i, my_attr in enumerate(self.attributes)]
+                [
+                    (my_attr == other.attributes[i])
+                    for i, my_attr in enumerate(self.attributes)
+                ]
             )
         )
 
 
 class NamedType(ASTNode):
-    def __init__(self, name: str, type_: str) -> None:
+    def __init__(self, name: str, type_: str, pos=None) -> None:
         self.name = name
         self.type = type_
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_named_type(self)
@@ -327,9 +357,10 @@ class NamedType(ASTNode):
 
 
 class VariantDef(ASTNode):
-    def __init__(self, name: str, named_types: List[NamedType]) -> None:
+    def __init__(self, name: str, named_types: List[NamedType], pos=None) -> None:
         self.name = name
         self.named_types = named_types
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_variant_def(self)
@@ -348,8 +379,9 @@ class VariantDef(ASTNode):
 
 
 class ReturnStatement(Statement):
-    def __init__(self, expr: Expr) -> None:
+    def __init__(self, expr: Expr, pos=None) -> None:
         self.expr = expr
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_return(self)
@@ -360,12 +392,18 @@ class ReturnStatement(Statement):
 
 class Param(ASTNode):
     def __init__(
-        self, name: str, var_type: str, is_mutable: bool, default_value: Expr = None
+        self,
+        name: str,
+        var_type: str,
+        is_mutable: bool,
+        default_value: Expr = None,
+        pos=None,
     ) -> None:
         self.name = name
         self.type = var_type
         self.is_mutable = is_mutable
         self.default_value = default_value
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_param(self)
@@ -382,12 +420,13 @@ class Param(ASTNode):
 
 class FuncDef(ASTNode):
     def __init__(
-        self, name: str, params: List[Param], type_: str, prog: Program
+        self, name: str, params: List[Param], type_: str, prog: Program, pos=None
     ) -> None:
         self.name = name
         self.params = params
         self.type = type_
         self.prog = prog
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_func_def(self)
@@ -396,16 +435,22 @@ class FuncDef(ASTNode):
         return (
             isinstance(other, FuncDef)
             and self.name == other.name
-            and all([(my_param == other.params[i]) for i, my_param in enumerate(self.params)])
+            and all(
+                [
+                    (my_param == other.params[i])
+                    for i, my_param in enumerate(self.params)
+                ]
+            )
             and self.type == other.type
             and self.prog == other.prog
         )
 
 
 class FunctionCall(ASTNode):
-    def __init__(self, name: str, args: List[Expr]) -> None:
+    def __init__(self, name: str, args: List[Expr], pos=None) -> None:
         self.name = name
         self.args = args
+        super().__init__(pos)
 
     def accept(self, visitor):
         return visitor.visit_func_call(self)

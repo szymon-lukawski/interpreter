@@ -24,10 +24,11 @@ class Parser:
         Parses program :) returns Program AST\n
         program \:\:\= {statement};
         """
-        statements: List = []
+        statements: List[Statement] = []
+        pos = self._get_current_pos()
         while statement := self._parse_statement():
             statements.append(statement)
-        return Program(statements)
+        return Program(statements, pos)
 
     def _parse_statement(self):
         """statement ::=  variable_declaration_statement
@@ -59,49 +60,56 @@ class Parser:
 
     def _try_parse_return(self):
         """return_statement ::== 'return', [expression], ';';"""
+        pos = self._get_current_pos()
         if self._try_parse(TokenType.RETURN):
             expr = self._parse_expr()
             self._must_parse(TokenType.SEMICOLON)
-            return ReturnStatement(expr)
+            return ReturnStatement(expr, pos)
 
     def _try_parse_while_statement(self):
         """while_statement ::= 'while', expression, block;"""
+        pos = self._get_current_pos()
         if self._try_parse(TokenType.WHILE):
             cond = self._parse_expr()
             prog = self._parse_block()
-            return WhileStatement(cond, prog)
+            return WhileStatement(cond, prog, pos)
 
     def _try_parse_if_statement(self):
         """if_statement ::= 'if', expression, block, ['else', block];"""
+        pos = self._get_current_pos()
         if self._try_parse(TokenType.IF):
             cond = self._parse_expr()
             prog = self._parse_block()
             else_prog = None
             if self._try_parse(TokenType.ELSE):
                 else_prog = self._parse_block()
-            return IfStatement(cond, prog, else_prog)
+            return IfStatement(cond, prog, else_prog, pos)
 
     def _try_parse_visit_statement(self):
         """visit_statement ::= 'visit', object_access, 'begin', {case_section} ,'end';"""
+        pos = self._get_current_pos()
         if self._try_parse(TokenType.VISIT):
             obj = self._parse_object_access()
             self._must_parse(TokenType.BEGIN)
             case_sections = self._try_parse_case_sections()
             self._must_parse(TokenType.END)
-            return VisitStatement(obj, case_sections)
+            return VisitStatement(obj, case_sections, pos)
 
     def _try_parse_case_sections(self):
         """{case_section ::= 'case', type, 'begin', program,'end';}"""
         case_sections = []
+        pos = self._get_current_pos()
         while self._try_parse(TokenType.CASE):
             type_ = self._parse_type()
             program = self._parse_block()
-            case_sections.append(CaseSection(type_, program))
+            case_sections.append(CaseSection(type_, program,pos))
+            pos = self._get_current_pos()
         return case_sections
 
-    def _try_parse_object_access(self, initial_name: str = None):
+    def _try_parse_object_access(self, initial_name: str = None, pos=None):
         """object_access ::=  func_or_ident, {('.', func_or_ident)};"""
         funcs_or_idents = []
+        pos = self._get_current_pos() if not pos else pos
         if not initial_name:
             funcs_or_idents.append(self._try_parse_func_or_name())
         else:
@@ -109,89 +117,90 @@ class Parser:
         if funcs_or_idents[0]:
             while self._try_parse(TokenType.DOT):
                 funcs_or_idents.append(self._parse_func_or_name())
-            return ObjectAccess(funcs_or_idents)
+            return ObjectAccess(funcs_or_idents, pos)
 
     def _parse_object_access(self):
         if obj_access := self._try_parse_object_access():
             return obj_access
         raise ExpectedDifferentToken(
-            self.lexer.curr_token.get_pos(), "Expected object access"
+            self._get_current_pos(), "Expected object access"
         )
 
     def _parse_func_or_name(self):
-        if func_or_name := self._try_parse_func_or_name():
-            return func_or_name
+        if func_or_name_with_pos := self._try_parse_func_or_name():
+            return func_or_name_with_pos
         raise ExpectedDifferentToken(
-            self.lexer.curr_token.get_pos(), "Expected function call or just identifier"
+            self._get_current_pos(), "Expected function call or just identifier"
         )
 
     def _try_parse_dec_and_def_or_assign_or_fun_call(self):
         """identifier"""
+        pos = self._get_current_pos()
         if name := self._try_parse_identifier():
-            return self._parse_after_identifier(name)
+            return self._parse_after_identifier(name, pos)
 
-    def _parse_after_identifier(self, name):
+    def _parse_after_identifier(self, name, pos):
         if self.lexer.curr_token.get_type() == TokenType.DOT or self.lexer.curr_token.get_type() == TokenType.ASSIGNMENT:
-            return self._parse_rest_assignment(name)
+            return self._parse_rest_assignment(name, pos)
         if self._try_parse(TokenType.COLON):
             # variable declaration or type def
-            if struct := self._try_parse_rest_struct(name):
+            if struct := self._try_parse_rest_struct(name, pos):
                 return struct
-            if variant := self._try_parse_rest_variant(name):
+            if variant := self._try_parse_rest_variant(name, pos):
                 return variant
             # must be variable declaration or error
             return self._parse_rest_var_dec_statement(name)
         if self._try_parse(TokenType.LEFT_BRACKET):
-            return self._parse_rest_func_def_or_func_call(name)
+            return self._parse_rest_func_def_or_func_call(name, pos)
         raise ExpectedDifferentToken(
             position=self.lexer.curr_token.get_pos(), msg="Expected: . = : ("
         )
 
-    def _parse_no_arg_or_no_param_function_def_or_call(self, name):
+    def _try_parse_no_arg_or_no_param_function_def_or_call(self, name, pos):
         if self._try_parse(TokenType.RIGHT_BRACKET):
             if self._try_parse(TokenType.COLON):
-                return self._parse_type_and_block(name, [])
+                return self._parse_type_and_block(name, [], pos)
             self._must_parse(TokenType.SEMICOLON)
-            return FunctionCall(name, [])
+            return FunctionCall(name, [], pos)
 
-    def _parse_type_and_block(self, name, params=None):
+    def _parse_type_and_block(self, name, params=None, pos=None):
         type_ = self._parse_type()
         program = self._parse_block()
-        return FuncDef(name, params, type_, program)
+        return FuncDef(name, params, type_, program, pos)
 
-    def _parse_start_with_identifier_func_def_or_call(self, name):
+    def _parse_start_with_identifier_func_def_or_call(self, name, pos):
         if ident := self._try_parse_identifier():
             if self._try_parse(TokenType.COLON):
                 params = self._parse_params([self._parse_param(ident)])
                 self._must_parse(TokenType.COLON)
-                return self._parse_type_and_block(name, params)
-            first_arg = self._try_parse_object_access(name)
+                return self._parse_type_and_block(name, params, pos)
+            first_arg = self._try_parse_object_access(name, pos)
             args = [first_arg] + self._try_parse_args()
-            return self._parse_ending_of_function_call_statement(name, args)
+            return self._parse_ending_of_function_call_statement(name, args, pos)
 
-    def _parse_ending_of_function_call_statement(self, name, args):
+    def _parse_ending_of_function_call_statement(self, name, args, pos):
         self._must_parse(TokenType.RIGHT_BRACKET)
         self._must_parse(TokenType.SEMICOLON)
-        return FunctionCall(name, args)
+        return FunctionCall(name, args, pos)
 
-    def _parse_rest_func_def_or_func_call(self, name):
+    def _parse_rest_func_def_or_func_call(self, name, pos):
         if empty_brackets_func_call_or_def := (
-            self._parse_no_arg_or_no_param_function_def_or_call(name)
+            self._try_parse_no_arg_or_no_param_function_def_or_call(name, pos)
         ):
             return empty_brackets_func_call_or_def
         if start_with_identifier := self._parse_start_with_identifier_func_def_or_call(
-            name
+            name, pos
         ):
             return start_with_identifier
         args = self._try_parse_args()
-        return self._parse_ending_of_function_call_statement(name, args)
+        return self._parse_ending_of_function_call_statement(name, args, pos)
 
-    def _try_parse_rest_variant(self, name):
+    def _try_parse_rest_variant(self, name, pos):
         if self._try_parse(TokenType.VARIANT):
             self._must_parse(TokenType.BEGIN)
             named_types = self._try_parse_named_types()
             self._must_parse(TokenType.END)
-            return VariantDef(name, named_types)
+            return VariantDef(name, named_types, pos)
 
     def _try_parse_named_types(self) -> List[NamedType]:
         """{named_type_statement}"""
@@ -202,22 +211,23 @@ class Parser:
 
     def _try_parse_named_type(self) -> NamedType:
         """named_type_statement ::= identifier, ':', type, ';'"""
+        pos = self._get_current_pos()
         if name := self._try_parse_identifier():
             self._must_parse(TokenType.COLON)
             type_ = self._parse_type()
             self._must_parse(TokenType.SEMICOLON)
-            return NamedType(name, type_)
+            return NamedType(name, type_, pos)
 
-    def _try_parse_rest_struct(self, name):
+    def _try_parse_rest_struct(self, name, pos):
         if self._try_parse(TokenType.STRUCT):
             self._must_parse(TokenType.BEGIN)
             var_decs = []
             while var_dec_state := self._try_parse_var_dec_stat():
                 var_decs.append(var_dec_state)
             self._must_parse(TokenType.END)
-            return StructDef(name, var_decs)
+            return StructDef(name, var_decs, pos)
 
-    def _parse_rest_assignment(self, name):
+    def _parse_rest_assignment(self, name, pos):
         """{'.', identifier} '=', expr, ';'"""
         attr_access = [name]
         while self._try_parse(TokenType.DOT):
@@ -225,7 +235,7 @@ class Parser:
         self._must_parse(TokenType.ASSIGNMENT)
         expr = self._parse_expr()
         self._must_parse(TokenType.SEMICOLON)
-        return AssignmentStatement(attr_access, expr)
+        return AssignmentStatement(attr_access, expr, pos)
 
     def _try_parse_var_dec_stat(self):
         """identifier, ':', ['mut'], type, ['=', expression]"""
@@ -248,7 +258,7 @@ class Parser:
 
     def _try_parse_func_or_name(self, name=None):
         """identifier ['(', args, ')']"""
-
+        pos=self._get_current_pos()
         if not name:
             name = self._try_parse_identifier()
         if not name:
@@ -256,7 +266,7 @@ class Parser:
         if self._try_parse(TokenType.LEFT_BRACKET):
             args = self._try_parse_args()
             self._must_parse(TokenType.RIGHT_BRACKET)
-            return FunctionCall(name, args)
+            return FunctionCall(name, args, pos)
         return name
 
     def _parse_identifier(self):
@@ -358,21 +368,23 @@ class Parser:
         if and_expr := self._try_parse_logical_and_expr():
             return self._try_parse_rest_logical_or(and_expr)
 
-    def _try_parse_rest_logical_or(self, first):
+    def _try_parse_rest_logical_or(self, first : Expr):
+        pos = first.pos
         and_exprs = [first]
         while self._try_parse(TokenType.OR):
             and_exprs.append(self._parse_logical_and_expr())
         if len(and_exprs) == 1:
             return first
-        return OrExpr(and_exprs)
+        return OrExpr(and_exprs, pos)
 
     def _try_parse_rest_logical_and(self, first):
+        pos = first.pos
         rel_exprs = [first]
         while self._try_parse(TokenType.AND):
             rel_exprs.append(self._parse_rel_expr())
         if len(rel_exprs) == 1:
             return first
-        return AndExpr(rel_exprs)
+        return AndExpr(rel_exprs, pos)
 
     def _try_parse_logical_and_expr(self):
         if rel_expr := self._try_parse_rel_expr():
@@ -387,6 +399,7 @@ class Parser:
             return self._try_parse_rest_add_expr(multi_expr)
 
     def _try_parse_rest_add_expr(self, first):
+        pos = first.pos
         multi_exprs = [first]
         operations = []
         while op := self._try_parse_additive_operator():
@@ -394,13 +407,14 @@ class Parser:
             multi_exprs.append(self._parse_multi_expr())
         if len(multi_exprs) == 1:
             return first
-        return AddExpr(multi_exprs, operations)
+        return AddExpr(multi_exprs, operations, pos)
 
     def _try_parse_multi_expr(self):
         if unary_expr := self._try_parse_unary_expr():
             return self._try_parse_rest_multi_expr(unary_expr)
 
     def _try_parse_rest_multi_expr(self, first):
+        pos = first.pos
         unary_exprs = [first]
         operations = []
         while op := self._try_parse_multi_operator():
@@ -408,7 +422,7 @@ class Parser:
             unary_exprs.append(self._parse_unary_expr())
         if len(unary_exprs) == 1:
             return first
-        return MultiExpr(unary_exprs, operations)
+        return MultiExpr(unary_exprs, operations, pos)
 
     def _parse_logical_or_expr(self):
         """logical_or_expression ::= logical_and_expression, {'|', logical_and_expression};"""
@@ -427,7 +441,7 @@ class Parser:
 
     def _try_parse_rest_rel_expr(self, first):
         if rel := self._try_parse_rel_operator():
-            return RelationExpr(first, self._parse_add_expr(), rel)
+            return RelationExpr(first, self._parse_add_expr(), rel, first.pos)
         return first
 
     def _try_parse_rel_operator(self):
@@ -481,13 +495,15 @@ class Parser:
 
     def _parse_unary_expr(self):
         """unary_expr ::= ['-'], term;"""
+        pos = self._get_current_pos()
         if self._try_parse(TokenType.MINUS):
-            return UnaryExpr(self._parse_term())
+            return UnaryExpr(self._parse_term(), pos)
         return self._parse_term()
 
     def _try_parse_unary_expr(self):
+        pos = self._get_current_pos()
         if self._try_parse(TokenType.MINUS):
-            return UnaryExpr(self._parse_term())
+            return UnaryExpr(self._parse_term(), pos)
         return self._try_parse_term()
 
     def _try_parse_term(self):
@@ -556,3 +572,6 @@ class Parser:
         raise ExpectedDifferentToken(
             self.lexer.curr_token.get_pos(), f"Expected token type: {token_type}"
         )
+
+    def _get_current_pos(self):
+        return self.lexer.curr_token.get_pos()
