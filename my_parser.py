@@ -175,8 +175,8 @@ class Parser:
                 params = self._parse_params([self._parse_param(ident, pos_arg_or_param)])
                 self._must_parse(TokenType.COLON)
                 return self._parse_rest_func_def(name, params, pos)
-            first_arg = self._try_parse_object_access(name, pos_arg_or_param)
-            args = [first_arg] + self._try_parse_args()
+            first_arg = self._try_parse_object_access(ident, pos_arg_or_param) # albo funkcja
+            args = self._try_parse_args(first_arg)
             return self._parse_ending_of_function_call_statement(name, args, pos)
 
     def _parse_ending_of_function_call_statement(self, name, args, pos):
@@ -263,8 +263,6 @@ class Parser:
         pos=self._get_current_pos()
         if not name:
             name = self._try_parse_identifier()
-        if not name:
-            return
         if self._try_parse(TokenType.LEFT_BRACKET):
             args = self._try_parse_args()
             self._must_parse(TokenType.RIGHT_BRACKET)
@@ -286,12 +284,13 @@ class Parser:
             self._consume_token()
             return name
 
-    def _try_parse_args(self, initial_args=None):
+    def _try_parse_args(self, initial_arg=None):
         """args ::= [expression , {',', expression}]"""
-        if not initial_args:
-            args = []
-        else:
-            args = [] + initial_args
+        args = []
+        if initial_arg:
+            args.append(initial_arg)
+            self._try_parse(TokenType.COMMA)
+
         if expr := self._try_parse_expr():
             args.append(expr)
             while self._try_parse(TokenType.COMMA):
