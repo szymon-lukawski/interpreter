@@ -155,10 +155,6 @@ class Lexer:
         
         
         string_literal_value = self._parse_str_literal_value()
-        if string_literal_value in KEYWORDS_STRS:
-            self.curr_token = Token(
-                KEYWORDS_TO_TOKEN_TYPE[string_literal_value], position
-            )
 
         self.curr_token = Token(TokenType.STR_LITERAL, string_literal_value, position)
 
