@@ -162,6 +162,7 @@ class Interpreter(Visitor):
             self.function_stack = []
             self.type_stack = []
             self.variant_stack = []  # ?
+            self.push_scope()
 
         def push_scope(self):
             self.variable_stack.append({})
@@ -178,12 +179,12 @@ class Interpreter(Visitor):
             else:
                 raise RuntimeError("Cannot pop the global scope")
 
-        def add_variable(self, name, var_type, value=None):
+        def add_variable(self, name, var_type, is_mutable: bool = False, value=None):
             if name in self.variable_stack[-1]:
                 raise RuntimeError(
                     f"Variable '{name}' already declared in the current scope"
                 )
-            self.variable_stack[-1][name] = {"type": var_type, "value": value}
+            self.variable_stack[-1][name] = {"type": var_type, "is_mutable": is_mutable, "value": value}
 
         def variable_exists_in_current_scope(self, name):
             return name in self.variable_stack[-1]
@@ -203,8 +204,11 @@ class Interpreter(Visitor):
         def set_variable_value(self, name, value):
             for scope in reversed(self.variable_stack):
                 if name in scope:
-                    scope[name]["value"] = value
-                    return
+                    if scope[name]["is_mutable"] or not scope[name]["is_mutable"] and scope[name]["value"] is None:
+                        scope[name]["value"] = value
+                        return
+                    else:
+                        raise RuntimeError(f"Trying to reassign value to non mutable variable '{name}'")
             raise RuntimeError(f"Variable '{name}' not found in any scope")
 
         def add_function(self, name, definition):
@@ -271,7 +275,7 @@ class Interpreter(Visitor):
         for statement in program.children:
             statement.accept(self)
 
-    def visit_assignment(self, assignment):
+    def visit_assignment(self, assignment : AssignmentStatement):
         # 1 bez .
         # sprawdz czy jest i ew zwróć referencję do struktury opisującej tą nazwę.
         # sprawdz czy reszta dostępu (reszta object_accessu) pasuje do zwróconej struktury i zwróć referencję do pola które nalezy przypisać.
@@ -279,7 +283,7 @@ class Interpreter(Visitor):
         # sprawdz czy zmienna jest niemutowalna i nie ma wartości.
         value = assignment.expr.accept(self)
         # porównaj typy. Jesli sa zgodne lub kompatybilne to przypisz wartość
-        self.environment[assignment.obj_access.nested_objects[0].name] = value
+        self.scopes.set_variable_value(assignment.obj_access.name_chain[0], value)
 
     def visit_param(self, param: Param):
         return super().visit_param(param)
@@ -331,13 +335,7 @@ class Interpreter(Visitor):
             statement.accept(self)
 
     def visit_var_dec(self, var_dec):
-        # TODO dodaj zmienną do tego scopa
-        pass
-        # self.environment[var_dec.name] = {
-        #     "type": var_dec.type.name,
-        #     "is_mutable": var_dec.is_mutable,
-        #     "value": None
-        # }
+        self.scopes.add_variable(var_dec.name, var_dec.type, var_dec.is_mutable, var_dec.default_value.accept(self) if var_dec.default_value is not None else None)
 
     def visit_struct_def(self, struct_def):
         # TODO dodaj strukturę do tego scopa
