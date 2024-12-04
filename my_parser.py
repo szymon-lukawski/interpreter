@@ -149,7 +149,7 @@ class Parser:
             if variant := self._try_parse_rest_variant(name, pos):
                 return variant
             # must be variable declaration or error
-            return self._parse_rest_var_dec_statement(name)
+            return self._parse_rest_var_dec_statement(name, pos)
         if self._try_parse(TokenType.LEFT_BRACKET):
             return self._parse_rest_func_def_or_func_call(name, pos)
         raise ExpectedDifferentToken(
@@ -159,23 +159,24 @@ class Parser:
     def _try_parse_no_arg_or_no_param_function_def_or_call(self, name, pos):
         if self._try_parse(TokenType.RIGHT_BRACKET):
             if self._try_parse(TokenType.COLON):
-                return self._parse_type_and_block(name, [], pos)
+                return self._parse_rest_func_def(name, [], pos)
             self._must_parse(TokenType.SEMICOLON)
             return FunctionCall(name, [], pos)
 
-    def _parse_type_and_block(self, name, params=None, pos=None):
+    def _parse_rest_func_def(self, name, params=None, pos=None):
         type_ = self._parse_type()
         program = self._parse_block()
         return FuncDef(name, params, type_, program, pos)
 
     def _parse_start_with_identifier_func_def_or_call(self, name, pos):
+        pos_arg_or_param = self._get_current_pos()
         if ident := self._try_parse_identifier():
             if self._try_parse(TokenType.COLON):
-                params = self._parse_params([self._parse_param(ident)])
+                params = self._parse_params([self._parse_param(ident, pos_arg_or_param)])
                 self._must_parse(TokenType.COLON)
-                return self._parse_type_and_block(name, params, pos)
-            first_arg = self._try_parse_object_access(name, pos)
-            args = [first_arg] + self._try_parse_args()
+                return self._parse_rest_func_def(name, params, pos)
+            first_arg = self._try_parse_object_access(ident, pos_arg_or_param) # albo funkcja
+            args = self._try_parse_args(first_arg)
             return self._parse_ending_of_function_call_statement(name, args, pos)
 
     def _parse_ending_of_function_call_statement(self, name, args, pos):
@@ -239,11 +240,12 @@ class Parser:
 
     def _try_parse_var_dec_stat(self):
         """identifier, ':', ['mut'], type, ['=', expression]"""
+        pos = self._get_current_pos()
         if name := self._try_parse_identifier():
             self._must_parse(TokenType.COLON)
-            return self._parse_rest_var_dec_statement(name)
+            return self._parse_rest_var_dec_statement(name, pos)
 
-    def _parse_rest_var_dec_statement(self, name):
+    def _parse_rest_var_dec_statement(self, name, pos):
         """['mut'], type, ['=', expression]"""
         expr = None
         is_mutable = bool(self._try_parse(TokenType.MUT))
@@ -253,16 +255,14 @@ class Parser:
             self._must_parse(TokenType.ASSIGNMENT)
             expr = self._parse_expr()
             self._must_parse(TokenType.SEMICOLON)
-            return VariableDeclaration(name, var_type, is_mutable, expr)
-        return VariableDeclaration(name, var_type, is_mutable)
+            return VariableDeclaration(name, var_type, is_mutable, expr, pos)
+        return VariableDeclaration(name, var_type, is_mutable, pos=pos)
 
     def _try_parse_func_or_name(self, name=None):
         """identifier ['(', args, ')']"""
         pos=self._get_current_pos()
         if not name:
             name = self._try_parse_identifier()
-        if not name:
-            return
         if self._try_parse(TokenType.LEFT_BRACKET):
             args = self._try_parse_args()
             self._must_parse(TokenType.RIGHT_BRACKET)
@@ -284,12 +284,13 @@ class Parser:
             self._consume_token()
             return name
 
-    def _try_parse_args(self, initial_args=None):
+    def _try_parse_args(self, initial_arg=None):
         """args ::= [expression , {',', expression}]"""
-        if not initial_args:
-            args = []
-        else:
-            args = [] + initial_args
+        args = []
+        if initial_arg:
+            args.append(initial_arg)
+            self._try_parse(TokenType.COMMA)
+
         if expr := self._try_parse_expr():
             args.append(expr)
             while self._try_parse(TokenType.COMMA):
@@ -310,9 +311,10 @@ class Parser:
                 params.append(self._parse_param())
         return params
 
-    def _parse_param(self, name: str = None):
+    def _parse_param(self, name: str = None, pos = None):
         """param ::= identifier, ':', ['mut'], type;"""
         if not name:
+            pos = self._get_current_pos()
             name = self._parse_identifier()
             self._must_parse(TokenType.COLON)
         is_mutable = bool(self._try_parse(TokenType.MUT))
@@ -323,8 +325,8 @@ class Parser:
         if not is_no_expr:
             self._must_parse(TokenType.ASSIGNMENT)
             expr = self._parse_expr()
-            return Param(name, type_, is_mutable, expr)
-        return Param(name, type_, is_mutable)
+            return Param(name, type_, is_mutable, expr, pos)
+        return Param(name, type_, is_mutable, pos=pos)
 
     def _parse_type(self):
         """type ::=  'int'
