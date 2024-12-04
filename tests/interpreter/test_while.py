@@ -44,4 +44,16 @@ def test_can_not_refer_to_variable_after_poped_scope():
     assert str(e.value) == "Variable 'b' not found in any scope"
 
 
+def test_fib():
+    """n: mut int = 10; a: mut int = 0; b: mut int = 1; while n > 0 begin tmp: int = a+b; a = b; b = tmp; n = n - 1; end"""
+    ast = Program([VariableDeclaration('n', 'int', True, IntLiteral(10)), VariableDeclaration('a', 'int', True, IntLiteral(0)), VariableDeclaration('b', 'int', True, IntLiteral(1)), WhileStatement(RelationExpr(ObjectAccess(['n']), IntLiteral(0), '>'), Program([VariableDeclaration('tmp', 'int', False, AddExpr([ObjectAccess(['a']), ObjectAccess(['b'])], ['+'])), AssignmentStatement(ObjectAccess(['a']), ObjectAccess(['b'])), AssignmentStatement(ObjectAccess(['b']), ObjectAccess(['tmp'])), AssignmentStatement(ObjectAccess(['n']), AddExpr([ObjectAccess(['n']), IntLiteral(1)], ['-']))]))])
+    i = Interpreter()
+    ast.accept(i)
+    # 0 1 1 2 3 5 8 13 21 34 55 89 143
+    assert i.scopes.get_variable_value('n') == 0
+    assert i.scopes.get_variable_value('a') == 55
+    assert i.scopes.get_variable_value('b') == 89
+
+
+
 
