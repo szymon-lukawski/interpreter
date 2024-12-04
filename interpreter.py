@@ -298,9 +298,13 @@ class Interpreter(Visitor):
         evaled_condition = if_stmt.cond.accept(self)
         # sprawdz czy wynik condition da się zamienić na wartość
         if evaled_condition:
+            self.scopes.push_scope()
             if_stmt.prog.accept(self)
+            self.scopes.pop_scope()
         elif if_stmt.else_prog:
+            self.scopes.push_scope()
             if_stmt.else_prog.accept(self)
+            self.scopes.pop_scope()
 
     def visit_return(self, return_stmt):
         # TODO
@@ -319,20 +323,11 @@ class Interpreter(Visitor):
         args = [self.visit(arg) for arg in func_call.args]
         return f"Calling {func_call.name} with arguments {args}"
 
-    def visit_identifier(self, identifier):
-        return self.environment.get(identifier.name, None)
 
     def visit_obj_access(self, obj_access):
-        result = None
-        for obj in obj_access.nested_objects:
-            result = result.get(obj.name, None)
-            if result is None:
-                break
-        return result
-
-    def visit_fork(self, fork):
-        for statement in fork.statements:
-            statement.accept(self)
+        # For now supports only simple types
+        for name in obj_access.name_chain:
+            return self.scopes.get_variable_value(name)
 
     def visit_var_dec(self, var_dec):
         self.scopes.add_variable(var_dec.name, var_dec.type, var_dec.is_mutable, var_dec.default_value.accept(self) if var_dec.default_value is not None else None)
