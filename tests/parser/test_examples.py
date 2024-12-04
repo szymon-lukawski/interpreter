@@ -258,11 +258,11 @@ def test_czlowiek_struct_example():
     assert result.children[1].type == "Czlowiek"
     assert not result.children[1].is_mutable
 
-    assert result.children[2].obj_access == ["janek", "imie"]
+    assert result.children[2].obj_access.name_chain == ["janek", "imie"]
     assert type(result.children[2].expr) == StrLiteral
     assert result.children[2].expr.value == "Janek"
 
-    assert result.children[3].obj_access == ["janek", "wiek"]
+    assert result.children[3].obj_access.name_chain == ["janek", "wiek"]
     assert type(result.children[3].expr) == IntLiteral
     assert result.children[3].expr.value == 20
 
@@ -389,7 +389,7 @@ def test_if_if_else():
     assert type(result.children[2].prog) == Program
     assert len(result.children[2].prog.children) == 1
     assert type(result.children[2].prog.children[0]) == AssignmentStatement
-    assert result.children[2].prog.children[0].obj_access == ["msg"]
+    assert result.children[2].prog.children[0].obj_access.name_chain == ["msg"]
     assert type(result.children[2].prog.children[0].expr) == AddExpr
     assert type(result.children[2].prog.children[0].expr.children[0]) == ObjectAccess
     assert result.children[2].prog.children[0].expr.children[0].name_chain == ["msg"]
@@ -425,7 +425,7 @@ def test_if_if_else():
     assert type(result.children[3].prog) == Program
     assert len(result.children[3].prog.children) == 1
     assert type(result.children[3].prog.children[0]) == AssignmentStatement
-    assert result.children[3].prog.children[0].obj_access == ["msg"]
+    assert result.children[3].prog.children[0].obj_access.name_chain == ["msg"]
     assert type(result.children[3].prog.children[0].expr) == AddExpr
     assert type(result.children[3].prog.children[0].expr.children[0]) == ObjectAccess
     assert result.children[3].prog.children[0].expr.children[0].name_chain == ["msg"]
@@ -435,7 +435,7 @@ def test_if_if_else():
     assert type(result.children[3].else_prog) == Program
     assert len(result.children[3].else_prog.children) == 1
     assert type(result.children[3].else_prog.children[0]) == AssignmentStatement
-    assert result.children[3].else_prog.children[0].obj_access == ["msg"]
+    assert result.children[3].else_prog.children[0].obj_access.name_chain == ["msg"]
     assert type(result.children[3].else_prog.children[0].expr) == AddExpr
     assert type(result.children[3].else_prog.children[0].expr.children[0]) == ObjectAccess
     assert result.children[3].else_prog.children[0].expr.children[0].name_chain == ["msg"]
@@ -443,7 +443,7 @@ def test_if_if_else():
     assert result.children[3].else_prog.children[0].expr.children[1].value == "ów"
 
     assert type(result.children[4]) == AssignmentStatement
-    assert result.children[4].obj_access == ["msg"]
+    assert result.children[4].obj_access.name_chain == ["msg"]
     assert type(result.children[4].expr) == AddExpr
     assert type(result.children[4].expr.children[0]) == ObjectAccess
     assert result.children[4].expr.children[0].name_chain == ["msg"]
@@ -552,7 +552,7 @@ def test_variant_example():
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
     result = parser.parse_program()
-    expected = Program([VariableDeclaration('jakis_warunek', 'int', False, IntLiteral(1, None), pos=(2, 5)), VariantDef('Liczba', [NamedType('calkowita', 'int', pos=(5, 9)), NamedType('zmiennoprzecinkowa', 'float', pos=(6, 9))], (3, 5)), VariableDeclaration('moja_liczba', 'Liczba', False, pos=(8, 5)), IfStatement(ObjectAccess(['jakis_warunek'], pos=(9, 8)), Program([AssignmentStatement(['moja_liczba'], IntLiteral(30, None), (11, 9))], (11, 9)), Program([AssignmentStatement(['moja_liczba'], FloatLiteral(3.14, None), (14, 9))], (14, 9)), (9, 5)), VariableDeclaration('wynik', 'str', False, pos=(16, 5)), VisitStatement(ObjectAccess(['moja_liczba'], pos=(17, 11)), [CaseSection('int', Program([AssignmentStatement(['wynik'], ObjectAccess(['moja_liczba', 'calkowita'], pos=(20, 21)), (20, 13))], (20, 13)), pos=(19, 9)), CaseSection('float', Program([AssignmentStatement(['wynik'], ObjectAccess(['moja_liczba', 'zmiennoprzecinkowa'], pos=(23, 21)), (23, 13))], (23, 13)), pos=(22, 9))], pos=(17, 5))], (2, 5))
+    expected = Program([VariableDeclaration('jakis_warunek', 'int', False, IntLiteral(1, None), pos=(2, 5)), VariantDef('Liczba', [NamedType('calkowita', 'int', pos=(5, 9)), NamedType('zmiennoprzecinkowa', 'float', pos=(6, 9))], (3, 5)), VariableDeclaration('moja_liczba', 'Liczba', False, pos=(8, 5)), IfStatement(ObjectAccess(['jakis_warunek'], pos=(9, 8)), Program([AssignmentStatement(ObjectAccess(['moja_liczba']), IntLiteral(30, None), (11, 9))], (11, 9)), Program([AssignmentStatement(ObjectAccess(['moja_liczba']), FloatLiteral(3.14, None), (14, 9))], (14, 9)), (9, 5)), VariableDeclaration('wynik', 'str', False, pos=(16, 5)), VisitStatement(ObjectAccess(['moja_liczba'], pos=(17, 11)), [CaseSection('int', Program([AssignmentStatement(ObjectAccess(['wynik']), ObjectAccess(['moja_liczba', 'calkowita'], pos=(20, 21)), (20, 13))], (20, 13)), pos=(19, 9)), CaseSection('float', Program([AssignmentStatement(ObjectAccess(['wynik']), ObjectAccess(['moja_liczba', 'zmiennoprzecinkowa'], pos=(23, 21)), (23, 13))], (23, 13)), pos=(22, 9))], pos=(17, 5))], (2, 5))
     assert result == expected
 
 
