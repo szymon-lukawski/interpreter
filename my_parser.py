@@ -236,7 +236,7 @@ class Parser:
         self._must_parse(TokenType.ASSIGNMENT)
         expr = self._parse_expr()
         self._must_parse(TokenType.SEMICOLON)
-        return AssignmentStatement(attr_access, expr, pos)
+        return AssignmentStatement(ObjectAccess(attr_access), expr, pos)
 
     def _try_parse_var_dec_stat(self):
         """identifier, ':', ['mut'], type, ['=', expression]"""
