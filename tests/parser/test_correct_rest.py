@@ -1014,7 +1014,7 @@ def test_func_call_arg_starting_with_identifier():
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
     result = parser.parse_program()
-    expected = Program([FunctionCall("add", [ObjectAccess(["add"])])])
+    expected = Program([FunctionCall("add", [ObjectAccess(["arg1"])])])
     assert result == expected
 
 
@@ -1033,7 +1033,7 @@ def test_func_func_call_arg_starting_with_chained_identifier():
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
     result = parser.parse_program()
-    expected = Program([FunctionCall("area", [ObjectAccess(["area", "sqare"])])])
+    expected = Program([FunctionCall("area", [ObjectAccess(["obj", "sqare"])])])
     assert result == expected
 
 
