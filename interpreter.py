@@ -180,6 +180,8 @@ class Interpreter(Visitor):
                 raise RuntimeError("Cannot pop the global scope")
 
         def add_variable(self, name, var_type, is_mutable: bool = False, value=None):
+            if not self.type_exists_in_all_scopes(var_type):
+                raise RuntimeError(f"Type '{var_type}' not found in any scope")
             if name in self.variable_stack[-1]:
                 raise RuntimeError(
                     f"Variable '{name}' already declared in the current scope"
