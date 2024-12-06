@@ -80,7 +80,7 @@ class Printer(Visitor):
         
     def visit_obj_access(self, obj_access: ObjectAccess):
         self.parts.append("ObjectAccess([")
-        for i, name in enumerate(obj_access.name_chain):
+        for i, name in enumerate(obj_access.name_chain, start=1):
             if isinstance(name, str):
                 self.parts.append(f"'{name}'")
             elif isinstance(name, FunctionCall):
