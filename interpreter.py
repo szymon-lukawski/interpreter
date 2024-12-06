@@ -211,12 +211,13 @@ class Interpreter(Visitor):
                         raise RuntimeError(f"Trying to reassign value to non mutable variable '{name}'")
             raise RuntimeError(f"Variable '{name}' not found in any scope")
 
-        def add_function(self, name, definition):
+        def add_function(self, func_def: FuncDef):
+            name = func_def.name
             if name in self.function_stack[-1]:
                 raise RuntimeError(
                     f"Function '{name}' already declared in the current scope"
                 )
-            self.function_stack[-1][name] = definition
+            self.function_stack[-1][name] = func_def
 
         def function_exists_in_current_scope(self, name):
             return name in self.function_stack[-1]
@@ -270,6 +271,9 @@ class Interpreter(Visitor):
 
     def __init__(self):
         self.scopes = self.Scopes()
+        self.call_stack = []
+        self.return_stack = []
+
 
     def visit_program(self, program):
         for statement in program.children:
@@ -310,8 +314,7 @@ class Interpreter(Visitor):
             self.scopes.pop_scope()
 
     def visit_return(self, return_stmt):
-        # TODO
-        return self.visit(return_stmt.expr)
+        self.return_stack.append(return_stmt.expr.accept(self))
 
     def visit_type(self, type_node):
         return type_node.name
@@ -322,15 +325,25 @@ class Interpreter(Visitor):
             "program": self.visit(case_section.program),
         }
 
-    def visit_func_call(self, func_call):
-        args = [self.visit(arg) for arg in func_call.args]
-        return f"Calling {func_call.name} with arguments {args}"
+    def visit_func_call(self, func_call : FunctionCall):
+        args = [arg.accept(self) for arg in func_call.args]
+        func_def = self.scopes.get_function_definition(func_call.name)
+        self.scopes.push_scope()
+        for param, arg in zip(func_def.params, args):
+            self.scopes.add_variable(param.name, param.type, param.is_mutable, arg)
+        func_def.prog.accept(self)
+        self.scopes.pop_scope()
+        return self.return_stack.pop()
 
 
-    def visit_obj_access(self, obj_access):
+    def visit_obj_access(self, obj_access : ObjectAccess):
         # For now supports only simple types
-        for name in obj_access.name_chain:
-            return self.scopes.get_variable_value(name)
+        if isinstance(obj_access.name_chain[0], str):
+            return self.scopes.get_variable_value(obj_access.name_chain[0])
+        if isinstance(obj_access.name_chain[0], FunctionCall):
+            return obj_access.name_chain[0].accept(self)
+            
+        raise RuntimeError("Can not interpret complex types yet!")
 
     def visit_var_dec(self, var_dec):
         self.scopes.add_variable(var_dec.name, var_dec.type, var_dec.is_mutable, var_dec.default_value.accept(self) if var_dec.default_value is not None else None)
@@ -347,9 +360,7 @@ class Interpreter(Visitor):
         return {"name": named_type.name, "type": self.visit(named_type.type)}
 
     def visit_func_def(self, func_def):
-
-        # TODO dodaj funckję do tego scopa
-        pass  # Implement as needed
+        self.scopes.add_function(func_def)
 
     def visit_or(self, or_expr):
         for child in or_expr.children:

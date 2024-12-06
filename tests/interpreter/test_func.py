@@ -63,3 +63,46 @@ def test_sum_of_two_no_arg_functions():
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_variable_value("a") == 3
+
+
+def test_func_with_one_arg():
+    """add_one(a : int) : int begin return a + 1; end b : int = add_one(2);"""
+    ast = Program(
+        [
+            FuncDef(
+                "add_one",
+                [Param("a", "int", False)],
+                "int",
+                Program(
+                    [
+                        ReturnStatement(
+                            AddExpr(
+                                [
+                                    ObjectAccess(
+                                        [
+                                            "a",
+                                        ]
+                                    ),
+                                    IntLiteral(1),
+                                ],
+                                ["+"],
+                            )
+                        )
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "b",
+                "int",
+                False,
+                ObjectAccess(
+                    [
+                        FunctionCall("add_one", [IntLiteral(2)]),
+                    ]
+                ),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("b") == 3
