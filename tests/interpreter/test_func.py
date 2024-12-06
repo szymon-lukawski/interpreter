@@ -211,3 +211,85 @@ def test_add_three_integers():
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_variable_value("d") == 6
+
+
+def test_two_returns():
+    """a() : int begin return 1; return 2; end b : int = a();"""
+    ast = Program([FuncDef('a', [], 'int', Program([ReturnStatement(IntLiteral(1)), ReturnStatement(IntLiteral(2))])), VariableDeclaration('b', 'int', False, ObjectAccess([FunctionCall('a', [])]))])
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("b") == 1
+
+def test_return_in_if():
+    """a(): int begin if 1 begin return 2; end return 3; end b : int = a();"""
+    ast = Program([FuncDef('a', [], 'int', Program([IfStatement(IntLiteral(1), Program([ReturnStatement(IntLiteral(2))])), ReturnStatement(IntLiteral(3))])), VariableDeclaration('b', 'int', False, ObjectAccess([FunctionCall('a', [])]))])
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("b") == 2
+
+
+@pytest.mark.parametrize("n,expected", [(1,1),(2,2),(3,3),(4,5),(5,8),(6,13)])
+def test_rec_fib(n,expected):
+    """fib(n : int) : int begin if n < 2 begin return 1; end return fib(n-1) + fib(n-2); end a : int = fib(1);"""
+    ast = Program(
+        [
+            FuncDef(
+                "fib",
+                [Param("n", "int", False)],
+                "int",
+                Program(
+                    [
+                        IfStatement(
+                            RelationExpr(ObjectAccess(["n"]), IntLiteral(2), "<"),
+                            Program([ReturnStatement(IntLiteral(1))]),
+                        ),
+                        ReturnStatement(
+                            AddExpr(
+                                [
+                                    ObjectAccess(
+                                        [
+                                            FunctionCall(
+                                                "fib",
+                                                [
+                                                    AddExpr(
+                                                        [
+                                                            ObjectAccess(["n"]),
+                                                            IntLiteral(1),
+                                                        ],
+                                                        ["-"],
+                                                    )
+                                                ],
+                                            )
+                                        ]
+                                    ),
+                                    ObjectAccess(
+                                        [
+                                            FunctionCall(
+                                                "fib",
+                                                [
+                                                    AddExpr(
+                                                        [
+                                                            ObjectAccess(["n"]),
+                                                            IntLiteral(2),
+                                                        ],
+                                                        ["-"],
+                                                    )
+                                                ],
+                                            )
+                                        ]
+                                    ),
+                                ],
+                                ["+"],
+                            )
+                        ),
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "a", "int", False, ObjectAccess([FunctionCall("fib", [IntLiteral(n)])])
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value('a') == expected

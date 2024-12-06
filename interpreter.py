@@ -282,7 +282,9 @@ class Interpreter(Visitor):
 
     def visit_program(self, program):
         for statement in program.children:
-            statement.accept(self)
+            rv = statement.accept(self)
+            if rv:
+                return rv
 
     def visit_assignment(self, assignment : AssignmentStatement):
         # 1 bez .
@@ -309,17 +311,20 @@ class Interpreter(Visitor):
     def visit_if(self, if_stmt):
         evaled_condition = if_stmt.cond.accept(self)
         # sprawdz czy wynik condition da się zamienić na wartość
+        rv = None
         if evaled_condition:
             self.scopes.push_scope()
-            if_stmt.prog.accept(self)
+            rv = if_stmt.prog.accept(self)
             self.scopes.pop_scope()
         elif if_stmt.else_prog:
             self.scopes.push_scope()
-            if_stmt.else_prog.accept(self)
+            rv = if_stmt.else_prog.accept(self)
             self.scopes.pop_scope()
+        return rv
 
     def visit_return(self, return_stmt):
-        self.return_stack.append(return_stmt.expr.accept(self))
+        # self.return_stack.append(return_stmt.expr.accept(self))
+        return return_stmt.expr.accept(self)
 
     def visit_case_section(self, case_section : CaseSection):
         return {
@@ -333,9 +338,10 @@ class Interpreter(Visitor):
         self.scopes.push_scope()
         for param, arg in zip(func_def.params, args):
             self.scopes.add_variable(param.name, param.type, param.is_mutable, arg)
-        func_def.prog.accept(self)
+        rv = func_def.prog.accept(self)
         self.scopes.pop_scope()
-        return self.return_stack.pop()
+        # return self.return_stack.pop()
+        return rv
 
 
     def visit_obj_access(self, obj_access : ObjectAccess):
