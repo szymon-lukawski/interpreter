@@ -106,3 +106,108 @@ def test_func_with_one_arg():
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_variable_value("b") == 3
+
+
+def test_add_two_integers():
+    """add(a:int, b: int):int begin return a + b; end c : int = add(1,2);"""
+    ast = Program(
+        [
+            FuncDef(
+                "add",
+                [Param("a", "int", False), Param("b", "int", False)],
+                "int",
+                Program(
+                    [
+                        ReturnStatement(
+                            AddExpr(
+                                [
+                                    ObjectAccess(
+                                        [
+                                            "a",
+                                        ]
+                                    ),
+                                    ObjectAccess(
+                                        [
+                                            "b",
+                                        ]
+                                    ),
+                                ],
+                                ["+"],
+                            )
+                        )
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "c",
+                "int",
+                False,
+                ObjectAccess(
+                    [
+                        FunctionCall("add", [IntLiteral(1), IntLiteral(2)]),
+                    ]
+                ),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("c") == 3
+
+
+def test_add_three_integers():
+    """add(a:int, b: int, c: int):int begin return a + b + c; end d : int = add(1,2,3);"""
+    ast = Program(
+        [
+            FuncDef(
+                "add",
+                [
+                    Param("a", "int", False),
+                    Param("b", "int", False),
+                    Param("c", "int", False),
+                ],
+                "int",
+                Program(
+                    [
+                        ReturnStatement(
+                            AddExpr(
+                                [
+                                    ObjectAccess(
+                                        [
+                                            "a",
+                                        ]
+                                    ),
+                                    ObjectAccess(
+                                        [
+                                            "b",
+                                        ]
+                                    ),
+                                    ObjectAccess(
+                                        [
+                                            "c",
+                                        ]
+                                    ),
+                                ],
+                                ["+", "+"],
+                            )
+                        )
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "d",
+                "int",
+                False,
+                ObjectAccess(
+                    [
+                        FunctionCall(
+                            "add", [IntLiteral(1), IntLiteral(2), IntLiteral(3)]
+                        ),
+                    ]
+                ),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("d") == 6
