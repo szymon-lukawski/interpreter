@@ -316,13 +316,10 @@ class Interpreter(Visitor):
     def visit_return(self, return_stmt):
         self.return_stack.append(return_stmt.expr.accept(self))
 
-    def visit_type(self, type_node):
-        return type_node.name
-
-    def visit_case_section(self, case_section):
+    def visit_case_section(self, case_section : CaseSection):
         return {
-            "type": self.visit(case_section.type),
-            "program": self.visit(case_section.program),
+            "type": case_section.type,
+            "program": case_section.program,
         }
 
     def visit_func_call(self, func_call : FunctionCall):
@@ -349,8 +346,7 @@ class Interpreter(Visitor):
         self.scopes.add_variable(var_dec.name, var_dec.type, var_dec.is_mutable, var_dec.default_value.accept(self) if var_dec.default_value is not None else None)
 
     def visit_struct_def(self, struct_def):
-        # TODO dodaj strukturę do tego scopa
-        return {"name": struct_def.name, "attributes": struct_def.attributes}
+        self.scopes.add_type(struct_def.name, struct_def.attributes)
 
     def visit_variant_def(self, variant_def):
         # TODO dodaj variant do tego scopa
