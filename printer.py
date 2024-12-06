@@ -79,7 +79,15 @@ class Printer(Visitor):
 
         
     def visit_obj_access(self, obj_access: ObjectAccess):
-        self.parts.append(f"ObjectAccess([{", ".join([f"'{name}'" for name in obj_access.name_chain])}])")
+        self.parts.append("ObjectAccess([")
+        for i, name in enumerate(obj_access.name_chain):
+            if isinstance(name, str):
+                self.parts.append(f"'{name}'")
+            elif isinstance(name, FunctionCall):
+                name.accept(self)
+            if i != len(obj_access.name_chain):
+                self.parts.append(", ")
+        self.parts.append("])")
 
 
     def visit_param(self, param: Param):
