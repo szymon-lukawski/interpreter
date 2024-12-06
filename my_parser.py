@@ -173,6 +173,7 @@ class Parser:
         if ident := self._try_parse_identifier():
             if self._try_parse(TokenType.COLON):
                 params = self._parse_params([self._parse_param(ident, pos_arg_or_param)])
+                self._must_parse(TokenType.RIGHT_BRACKET)
                 self._must_parse(TokenType.COLON)
                 return self._parse_rest_func_def(name, params, pos)
             first_arg = self._try_parse_object_access(ident, pos_arg_or_param) # albo funkcja
@@ -303,7 +304,7 @@ class Parser:
             params = []
         else:
             params = [] + initial_params
-            # self._try_parse(TokenType.COMMA)
+            self._try_parse(TokenType.COMMA)
         if self.lexer.curr_token.get_type() != TokenType.RIGHT_BRACKET:
             params.append(self._parse_param())
             while self.lexer.curr_token.get_type() == TokenType.COMMA:
@@ -319,9 +320,7 @@ class Parser:
             self._must_parse(TokenType.COLON)
         is_mutable = bool(self._try_parse(TokenType.MUT))
         type_ = self._parse_type()
-        is_no_expr = bool(self._try_parse(TokenType.COMMA)) or bool(
-            self._try_parse(TokenType.RIGHT_BRACKET)
-        )
+        is_no_expr = self.lexer.curr_token.get_type() == TokenType.COMMA or self.lexer.curr_token.get_type() == TokenType.RIGHT_BRACKET
         if not is_no_expr:
             self._must_parse(TokenType.ASSIGNMENT)
             expr = self._parse_expr()
