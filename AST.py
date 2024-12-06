@@ -220,9 +220,24 @@ class WhileStatement(CondStatement):
 
 ######################
 
+class FunctionCall(ASTNode):
+    def __init__(self, name: str, args: List[Expr], pos=None) -> None:
+        self.name = name
+        self.args = args
+        super().__init__(pos)
+
+    def accept(self, visitor):
+        return visitor.visit_func_call(self)
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, FunctionCall)
+            and self.name == other.name
+            and all([(my_arg == other.args[i]) for i, my_arg in enumerate(self.args)])
+        )
 
 class ObjectAccess(ASTNode):
-    def __init__(self, name_chain: List[str], pos=None) -> None:
+    def __init__(self, name_chain: List[str | FunctionCall], pos=None) -> None:
         self.name_chain = name_chain
         super().__init__(pos)
 
@@ -446,18 +461,3 @@ class FuncDef(ASTNode):
         )
 
 
-class FunctionCall(ASTNode):
-    def __init__(self, name: str, args: List[Expr], pos=None) -> None:
-        self.name = name
-        self.args = args
-        super().__init__(pos)
-
-    def accept(self, visitor):
-        return visitor.visit_func_call(self)
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, FunctionCall)
-            and self.name == other.name
-            and all([(my_arg == other.args[i]) for i, my_arg in enumerate(self.args)])
-        )
