@@ -52,3 +52,26 @@ def test_can_not_use_struct_type_before_it_was_defined():
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)
     assert str(e.value) == "Type 'A' not found in any scope"
+
+
+def test_declarations_in_inner_scope_not_visable_in_outer():
+    """a: int = 1; if a begin A : struct begin end end b : A;"""
+    ast = Program(
+        [
+            VariableDeclaration("a", "int", False, IntLiteral(1)),
+            IfStatement(
+                ObjectAccess(
+                    [
+                        "a",
+                    ]
+                ),
+                Program([StructDef("A", [])]),
+            ),
+            VariableDeclaration("b", "A", False),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert str(e.value) == "Type 'A' not found in any scope"
+
