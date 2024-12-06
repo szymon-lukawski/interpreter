@@ -160,7 +160,7 @@ class Interpreter(Visitor):
         def __init__(self):
             self.variable_stack = []
             self.function_stack = []
-            self.type_stack = []
+            self.type_stack = [{'int', 'float', 'str', 'nulltype'}]
             self.variant_stack = []  # ?
             self.push_scope()
 
@@ -178,6 +178,9 @@ class Interpreter(Visitor):
                 self.variant_stack.pop()
             else:
                 raise RuntimeError("Cannot pop the global scope")
+
+        def _exists_(self, type_name : str):
+            return any(type_name in scope for scope in self.type_stack)
 
         def add_variable(self, name, var_type, is_mutable: bool = False, value=None):
             if not self.type_exists_in_all_scopes(var_type):
@@ -350,9 +353,8 @@ class Interpreter(Visitor):
     def visit_struct_def(self, struct_def):
         self.scopes.add_type(struct_def.name, struct_def.attributes)
 
-    def visit_variant_def(self, variant_def):
-        # TODO dodaj variant do tego scopa
-        pass  # Implement as needed
+    def visit_variant_def(self, variant_def : VariantDef):
+        self.scopes.add_variant(variant_def.name, variant_def.named_types)
 
     def visit_named_type(self, named_type):
         return {"name": named_type.name, "type": self.visit(named_type.type)}
