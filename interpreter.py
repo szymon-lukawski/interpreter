@@ -160,10 +160,12 @@ class Interpreter(Visitor):
         def __init__(self):
             self.variable_stack = [{}]
             self.function_stack = [{}]
-            self.type_stack = [{'int', 'float', 'str', 'nulltype'}]
+            self.type_stack = [{'int': None, 'float': None, 'str': None, 'null_type': None}]
             self.variant_stack = [{}]  # ?
             self.curr_scope = 0
-            
+        
+        def is_type_built_in(self, type_name):
+            return type_name in {"int", "float", "str", "null_type"}
 
         def push_scope(self):
             self.variable_stack.append({})
@@ -193,7 +195,28 @@ class Interpreter(Visitor):
                 raise RuntimeError(
                     f"Variable '{name}' already declared in the current scope"
                 )
-            self.variable_stack[-1][name] = {"type": var_type, "is_mutable": is_mutable, "value": value}
+            if self.is_type_built_in(var_type):
+                self.variable_stack[self.curr_scope][name] = self.create_built_in_instance(var_type, is_mutable, value)
+            else:
+                self.variable_stack[self.curr_scope][name] = self.create_struct_type_instance(var_type, is_mutable)
+
+        def create_built_in_instance(self, var_type, is_mutable, value):
+            return {"type": var_type, "is_mutable": is_mutable, "value": value}
+
+        def create_struct_type_instance(self, var_type, is_mutable):
+            struct_dict = {"type": var_type, "is_mutable": is_mutable, "value": None}
+            variable_defs : List[VariableDeclaration] = self.get_type_definition(var_type)
+            value_dict = dict()
+            for var_def in variable_defs:
+                value = None
+                if self.is_type_built_in(var_def.type):
+                    value = self.create_built_in_instance(var_def.type, var_def.is_mutable, var_def.default_value)
+                else:
+                    value = self.create_struct_type_instance(var_def.type, var_def.is_mutable)
+                value_dict[var_def.name] = value
+            struct_dict["value"] = value_dict
+            
+            return struct_dict
 
         def variable_exists_in_current_scope(self, name):
             return name in self.variable_stack[self.curr_scope]
@@ -207,14 +230,23 @@ class Interpreter(Visitor):
                     return value
             raise RuntimeError(f"Variable '{name}' not found in any scope")
 
-        def set_variable_value(self, name, value):
+        def set_variable_value(self, name_chain, value):
+            name = name_chain[0]
             for scope in reversed(self.variable_stack[:self.curr_scope+1]):
                 if name in scope:
-                    if scope[name]["is_mutable"] or not scope[name]["is_mutable"] and scope[name]["value"] is None:
-                        scope[name]["value"] = value
-                        return
-                    else:
-                        raise RuntimeError(f"Trying to reassign value to non mutable variable '{name}'")
+                    if len(name_chain) ==  1:
+                        if scope[name]["is_mutable"] or not scope[name]["is_mutable"] and scope[name]["value"] is None:
+                            scope[name]["value"] = value
+                            return
+                        else:
+                            raise RuntimeError(f"Trying to reassign value to non mutable variable '{name}'")
+                    obj = scope[name]["value"]
+                    for name_ in name_chain[1:-1]:
+                        obj = obj[name_]["value"]
+                    
+
+                    obj[name_chain[-1]]["value"] = value
+                    return
             raise RuntimeError(f"Variable '{name}' not found in any scope")
 
         def add_function(self, func_def: FuncDef):
@@ -280,7 +312,7 @@ class Interpreter(Visitor):
         # sprawdz czy zmienna jest niemutowalna i nie ma wartości.
         value = assignment.expr.accept(self)
         # porównaj typy. Jesli sa zgodne lub kompatybilne to przypisz wartość
-        self.scopes.set_variable_value(assignment.obj_access.name_chain[0], value)
+        self.scopes.set_variable_value(assignment.obj_access.name_chain, value)
 
     def visit_param(self, param: Param):
         return super().visit_param(param)
@@ -331,21 +363,24 @@ class Interpreter(Visitor):
         self.scopes.pop_scope()
         # self._change_scope_to(curr_scope)
         return rv
+        # TODO ^^^ what if the scope difference is greater than 1
 
 
     def visit_obj_access(self, obj_access : ObjectAccess):
         # For now supports only simple types
+        obj = None
         if isinstance(obj_access.name_chain[0], str):
-            return self.scopes.get_variable_value(obj_access.name_chain[0])
+            obj = self.scopes.get_variable_value(obj_access.name_chain[0])
         if isinstance(obj_access.name_chain[0], FunctionCall):
-            return obj_access.name_chain[0].accept(self)
-            
-        raise RuntimeError("Can not interpret complex types yet!")
+            obj =  obj_access.name_chain[0].accept(self)
+        for name in obj_access.name_chain[1:]:
+            obj = obj[name]["value"]
+        return obj
 
     def visit_var_dec(self, var_dec):
         self.scopes.add_variable(var_dec.name, var_dec.type, var_dec.is_mutable, var_dec.default_value.accept(self) if var_dec.default_value is not None else None)
 
-    def visit_struct_def(self, struct_def):
+    def visit_struct_def(self, struct_def : StructDef):
         self.scopes.add_type(struct_def.name, struct_def.attributes)
 
     def visit_variant_def(self, variant_def : VariantDef):
