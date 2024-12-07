@@ -584,3 +584,36 @@ def test_complex_function_scope():
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_variable_value("a") == 20
+
+
+def test_functional_call_without_assignment():
+    """x : mut int = 12; a(): null_type begin x = 7; end a();"""
+    ast = Program(
+        [
+            VariableDeclaration("x", "int", True, IntLiteral(12)),
+            FuncDef(
+                "a",
+                [],
+                "null_type",
+                Program([AssignmentStatement(ObjectAccess(["x"]), IntLiteral(7))]),
+            ),
+            FunctionCall("a", []),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("x") == 7
+
+
+def test_max_recursion_depth():
+    """a() : null_type begin a(); end a();"""
+    ast = Program(
+        [
+            FuncDef("a", [], "null_type", Program([FunctionCall("a", [])])),
+            FunctionCall("a", []),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert str(e.value) == "Maximal recursion depth reached!"

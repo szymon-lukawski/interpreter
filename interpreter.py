@@ -159,9 +159,10 @@ class Interpreter(Visitor):
 
     class Scopes:
         def __init__(self):
+            self.built_in_type_names = {"int", "float", "str", "null_type"}
             self.variable_stack = [{}]
             self.function_stack = [{}]
-            self.type_stack = [{'int': None, 'float': None, 'str': None, 'null_type': None}]
+            self.type_stack = [{type_name : None for type_name in self.built_in_type_names}]
             self.variant_stack = [{}]  # ?
             self.curr_scope = 0
         
@@ -295,8 +296,10 @@ class Interpreter(Visitor):
                     return scope[name]
             raise RuntimeError(f"Variant '{name}' not found in any scope")
 
-    def __init__(self):
+    def __init__(self, max_recursion_depth : int = 100):
         self.scopes = self.Scopes()
+        self._max_recursion_depth = max_recursion_depth
+        self.curr_recursion = 1
 
 
     def visit_program(self, program):
@@ -360,7 +363,11 @@ class Interpreter(Visitor):
         self.scopes.push_scope()
         for param, arg in zip(func_def.params, args):
             self.scopes.add_variable(param.name, param.type, param.is_mutable, arg)
+        self.curr_recursion += 1
+        if self.curr_recursion > self._max_recursion_depth:
+            raise RuntimeError("Maximal recursion depth reached!")
         rv = func_def.prog.accept(self)
+        self.curr_recursion -= 1
         self.scopes.pop_scope()
         # self._change_scope_to(curr_scope)
         return rv
