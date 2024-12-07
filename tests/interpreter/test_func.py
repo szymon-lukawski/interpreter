@@ -215,22 +215,59 @@ def test_add_three_integers():
 
 def test_two_returns():
     """a() : int begin return 1; return 2; end b : int = a();"""
-    ast = Program([FuncDef('a', [], 'int', Program([ReturnStatement(IntLiteral(1)), ReturnStatement(IntLiteral(2))])), VariableDeclaration('b', 'int', False, ObjectAccess([FunctionCall('a', [])]))])
+    ast = Program(
+        [
+            FuncDef(
+                "a",
+                [],
+                "int",
+                Program(
+                    [ReturnStatement(IntLiteral(1)), ReturnStatement(IntLiteral(2))]
+                ),
+            ),
+            VariableDeclaration(
+                "b", "int", False, ObjectAccess([FunctionCall("a", [])])
+            ),
+        ]
+    )
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_variable_value("b") == 1
 
+
 def test_return_in_if():
     """a(): int begin if 1 begin return 2; end return 3; end b : int = a();"""
-    ast = Program([FuncDef('a', [], 'int', Program([IfStatement(IntLiteral(1), Program([ReturnStatement(IntLiteral(2))])), ReturnStatement(IntLiteral(3))])), VariableDeclaration('b', 'int', False, ObjectAccess([FunctionCall('a', [])]))])
+    ast = Program(
+        [
+            FuncDef(
+                "a",
+                [],
+                "int",
+                Program(
+                    [
+                        IfStatement(
+                            IntLiteral(1), Program([ReturnStatement(IntLiteral(2))])
+                        ),
+                        ReturnStatement(IntLiteral(3)),
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "b", "int", False, ObjectAccess([FunctionCall("a", [])])
+            ),
+        ]
+    )
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_variable_value("b") == 2
 
 
-@pytest.mark.parametrize("n,expected", [(1,1),(2,2),(3,3),(4,5),(5,8),(6,13)])
-def test_rec_fib(n,expected):
-    """fib(n : int) : int begin if n < 2 begin return 1; end return fib(n-1) + fib(n-2); end a : int = fib(1);"""
+idx_fib_pairs = list(zip(range(1, 7), [1, 2, 3, 5, 8, 13]))
+
+
+@pytest.mark.parametrize("n,expected", idx_fib_pairs)
+def test_rec_fib(n, expected):
+    """fib(n : int) : int begin if n < 2 begin return 1; end return fib(n-1) + fib(n-2); end a : int = fib(<n>);"""
     ast = Program(
         [
             FuncDef(
@@ -292,4 +329,103 @@ def test_rec_fib(n,expected):
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value('a') == expected
+    assert i.scopes.get_variable_value("a") == expected
+
+
+@pytest.mark.parametrize("n,expected", idx_fib_pairs)
+def test_iter_fib(n, expected):
+    """fib(n : mut int) : int begin a:mut int=0; b: mut int = 1; c : mut int = 1; while n > 0 begin c = a + b; a = b; b = c; n = n - 1; end return b;  end a : int = fib(1);"""
+    ast = Program(
+        [
+            FuncDef(
+                "fib",
+                [Param("n", "int", True)],
+                "int",
+                Program(
+                    [
+                        VariableDeclaration("a", "int", True, IntLiteral(0)),
+                        VariableDeclaration("b", "int", True, IntLiteral(1)),
+                        VariableDeclaration("c", "int", True, IntLiteral(1)),
+                        WhileStatement(
+                            RelationExpr(ObjectAccess(["n"]), IntLiteral(0), ">"),
+                            Program(
+                                [
+                                    AssignmentStatement(
+                                        ObjectAccess(["c"]),
+                                        AddExpr(
+                                            [ObjectAccess(["a"]), ObjectAccess(["b"])],
+                                            ["+"],
+                                        ),
+                                    ),
+                                    AssignmentStatement(
+                                        ObjectAccess(["a"]), ObjectAccess(["b"])
+                                    ),
+                                    AssignmentStatement(
+                                        ObjectAccess(["b"]), ObjectAccess(["c"])
+                                    ),
+                                    AssignmentStatement(
+                                        ObjectAccess(["n"]),
+                                        AddExpr(
+                                            [ObjectAccess(["n"]), IntLiteral(1)], ["-"]
+                                        ),
+                                    ),
+                                ]
+                            ),
+                        ),
+                        ReturnStatement(ObjectAccess(["b"])),
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "a", "int", False, ObjectAccess([FunctionCall("fib", [IntLiteral(n)])])
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("a") == expected
+
+
+def test_return_inside_if_inside_while():
+    """msg_when_done(n : mut int) : str begin while 1 begin if n < 0 begin return 'BOOM'; end n = n - 1; end end a : str = msg_when_done(100);"""
+    ast = Program(
+        [
+            FuncDef(
+                "msg_when_done",
+                [Param("n", "int", True)],
+                "str",
+                Program(
+                    [
+                        WhileStatement(
+                            IntLiteral(1),
+                            Program(
+                                [
+                                    IfStatement(
+                                        RelationExpr(
+                                            ObjectAccess(["n"]), IntLiteral(0), "<"
+                                        ),
+                                        Program([ReturnStatement(StrLiteral("BOOM"))]),
+                                    ),
+                                    AssignmentStatement(
+                                        ObjectAccess(["n"]),
+                                        AddExpr(
+                                            [ObjectAccess(["n"]), IntLiteral(1)], ["-"]
+                                        ),
+                                    ),
+                                ]
+                            ),
+                        )
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "a",
+                "str",
+                False,
+                ObjectAccess([FunctionCall("msg_when_done", [IntLiteral(100)])]),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("a") == "BOOM"
