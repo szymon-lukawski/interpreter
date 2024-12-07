@@ -303,10 +303,12 @@ class Interpreter(Visitor):
         return super().visit_visit(visit_statement)
 
     def visit_while(self, while_stmt: WhileStatement):
-        while while_stmt.cond.accept(self):
+        rv = None 
+        while rv is None and while_stmt.cond.accept(self):
             self.scopes.push_scope()
-            while_stmt.prog.accept(self)
+            rv = while_stmt.prog.accept(self)
             self.scopes.pop_scope()
+        return rv
 
     def visit_if(self, if_stmt):
         evaled_condition = if_stmt.cond.accept(self)
