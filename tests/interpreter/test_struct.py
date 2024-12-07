@@ -75,3 +75,31 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
         ast.accept(i)
     assert str(e.value) == "Type 'A' not found in any scope"
 
+
+def test_assign_value_to_struct_instance_attr():
+    """A : struct begin x: mut int; end a : A; a.x = 10;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", True)]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a", "x"]), IntLiteral(10)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["a", "x"])) == 10
+
+
+def test_struct_inside_struct():
+    """A : struct begin x: int; end B : struct begin a : A; end b : B; b.a.x = 10;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            StructDef("B", [VariableDeclaration("a", "A", False)]),
+            VariableDeclaration("b", "B", False),
+            AssignmentStatement(ObjectAccess(["b", "a", "x"]), IntLiteral(10)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["b", "a", "x"])) == 10
