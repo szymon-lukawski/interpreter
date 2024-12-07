@@ -429,3 +429,64 @@ def test_return_inside_if_inside_while():
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_variable_value("a") == "BOOM"
+
+
+def test_calling_scope_not_the_same_as_scope_of_called():
+    """a : int = 1; one(): int begin return a + zero; end b : int = one(); zero : int = 0;"""
+    ast = Program(
+        [
+            VariableDeclaration("a", "int", False, IntLiteral(1)),
+            FuncDef(
+                "one",
+                [],
+                "int",
+                Program(
+                    [
+                        ReturnStatement(
+                            AddExpr(
+                                [ObjectAccess(["a"]), ObjectAccess(["zero"])], ["+"]
+                            )
+                        )
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "b", "int", False, ObjectAccess([FunctionCall("one", [])])
+            ),
+            VariableDeclaration("zero", "int", False, IntLiteral(0)),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert str(e.value) == "Variable 'zero' not found in any scope"
+
+
+def test_variable_and_func_at_the_same_scope_but_variable_interpreted_before_function_call():
+    """a : int = 1; one(): int begin return a + zero;  end zero : int = 0; b : int = one();"""
+    ast = Program(
+        [
+            VariableDeclaration("a", "int", False, IntLiteral(1)),
+            FuncDef(
+                "one",
+                [],
+                "int",
+                Program(
+                    [
+                        ReturnStatement(
+                            AddExpr(
+                                [ObjectAccess(["a"]), ObjectAccess(["zero"])], ["+"]
+                            )
+                        )
+                    ]
+                ),
+            ),
+            VariableDeclaration("zero", "int", False, IntLiteral(0)),
+            VariableDeclaration(
+                "b", "int", False, ObjectAccess([FunctionCall("one", [])])
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("b") == 1

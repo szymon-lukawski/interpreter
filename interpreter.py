@@ -158,17 +158,19 @@ class Interpreter(Visitor):
 
     class Scopes:
         def __init__(self):
-            self.variable_stack = []
-            self.function_stack = []
+            self.variable_stack = [{}]
+            self.function_stack = [{}]
             self.type_stack = [{'int', 'float', 'str', 'nulltype'}]
-            self.variant_stack = []  # ?
-            self.push_scope()
+            self.variant_stack = [{}]  # ?
+            self.curr_scope = 0
+            
 
         def push_scope(self):
             self.variable_stack.append({})
             self.function_stack.append({})
             self.type_stack.append({})
             self.variant_stack.append({})
+            self.curr_scope += 1
 
         def pop_scope(self):
             if len(self.variable_stack) > 1:
@@ -176,29 +178,28 @@ class Interpreter(Visitor):
                 self.function_stack.pop()
                 self.type_stack.pop()
                 self.variant_stack.pop()
+                self.curr_scope -= 1
             else:
                 raise RuntimeError("Cannot pop the global scope")
+            
+        def set_active_scope_to_(self, scope_idx : int):
+            self.curr_scope = scope_idx # TODO add value checking if within correct range
 
-        def _exists_(self, type_name : str):
-            return any(type_name in scope for scope in self.type_stack)
 
         def add_variable(self, name, var_type, is_mutable: bool = False, value=None):
             if not self.type_exists_in_all_scopes(var_type):
                 raise RuntimeError(f"Type '{var_type}' not found in any scope")
-            if name in self.variable_stack[-1]:
+            if name in self.variable_stack[self.curr_scope]:
                 raise RuntimeError(
                     f"Variable '{name}' already declared in the current scope"
                 )
             self.variable_stack[-1][name] = {"type": var_type, "is_mutable": is_mutable, "value": value}
 
         def variable_exists_in_current_scope(self, name):
-            return name in self.variable_stack[-1]
-
-        def variable_is_visable(self, name):
-            return any(name in scope for scope in self.variable_stack)
+            return name in self.variable_stack[self.curr_scope]
 
         def get_variable_value(self, name):
-            for scope in reversed(self.variable_stack):
+            for scope in reversed(self.variable_stack[:self.curr_scope+1]):
                 if name in scope:
                     value = scope[name]["value"]
                     if value is None:
@@ -207,7 +208,7 @@ class Interpreter(Visitor):
             raise RuntimeError(f"Variable '{name}' not found in any scope")
 
         def set_variable_value(self, name, value):
-            for scope in reversed(self.variable_stack):
+            for scope in reversed(self.variable_stack[:self.curr_scope+1]):
                 if name in scope:
                     if scope[name]["is_mutable"] or not scope[name]["is_mutable"] and scope[name]["value"] is None:
                         scope[name]["value"] = value
@@ -218,66 +219,51 @@ class Interpreter(Visitor):
 
         def add_function(self, func_def: FuncDef):
             name = func_def.name
-            if name in self.function_stack[-1]:
+            if name in self.function_stack[self.curr_scope]:
                 raise RuntimeError(
                     f"Function '{name}' already declared in the current scope"
                 )
-            self.function_stack[-1][name] = func_def
+            self.function_stack[self.curr_scope][name] = func_def
 
-        def function_exists_in_current_scope(self, name):
-            return name in self.function_stack[-1]
-
-        def function_exists_in_all_scopes(self, name):
-            return any(name in scope for scope in self.function_stack)
 
         def get_function_definition(self, name):
-            for scope in reversed(self.function_stack):
+            for scope in reversed(self.function_stack[:self.curr_scope+1]):
                 if name in scope:
                     return scope[name]
             raise RuntimeError(f"Function '{name}' not found in any scope")
 
         def add_type(self, name, definition):
-            if name in self.type_stack[-1]:
+            if name in self.type_stack[self.curr_scope]:
                 raise RuntimeError(
                     f"Type '{name}' already declared in the current scope"
                 )
-            self.type_stack[-1][name] = definition
+            self.type_stack[self.curr_scope][name] = definition
 
-        def type_exists_in_current_scope(self, name):
-            return name in self.type_stack[-1]
 
         def type_exists_in_all_scopes(self, name):
-            return any(name in scope for scope in self.type_stack)
+            return any(name in scope for scope in self.type_stack[:self.curr_scope+1])
 
         def get_type_definition(self, name):
-            for scope in reversed(self.type_stack):
+            for scope in reversed(self.type_stack[:self.curr_scope+1]):
                 if name in scope:
                     return scope[name]
             raise RuntimeError(f"Type '{name}' not found in any scope")
 
         def add_variant(self, name, definition):
-            if name in self.variant_stack[-1]:
+            if name in self.variant_stack[self.curr_scope]:
                 raise RuntimeError(
                     f"Variant '{name}' already declared in the current scope"
                 )
-            self.variant_stack[-1][name] = definition
-
-        def variant_exists_in_current_scope(self, name):
-            return name in self.variant_stack[-1]
-
-        def variant_exists_in_all_scopes(self, name):
-            return any(name in scope for scope in self.variant_stack)
+            self.variant_stack[self.curr_scope][name] = definition
 
         def get_variant_definition(self, name):
-            for scope in reversed(self.variant_stack):
+            for scope in reversed(self.variant_stack[:self.curr_scope+1]):
                 if name in scope:
                     return scope[name]
             raise RuntimeError(f"Variant '{name}' not found in any scope")
 
     def __init__(self):
         self.scopes = self.Scopes()
-        self.call_stack = []
-        self.return_stack = []
 
 
     def visit_program(self, program):
@@ -325,7 +311,6 @@ class Interpreter(Visitor):
         return rv
 
     def visit_return(self, return_stmt):
-        # self.return_stack.append(return_stmt.expr.accept(self))
         return return_stmt.expr.accept(self)
 
     def visit_case_section(self, case_section : CaseSection):
@@ -335,14 +320,16 @@ class Interpreter(Visitor):
         }
 
     def visit_func_call(self, func_call : FunctionCall):
+        # curr_scope = self.get_active_scope()
         args = [arg.accept(self) for arg in func_call.args]
         func_def = self.scopes.get_function_definition(func_call.name)
+        # self._change_scope_to_(func_def_scope)
         self.scopes.push_scope()
         for param, arg in zip(func_def.params, args):
             self.scopes.add_variable(param.name, param.type, param.is_mutable, arg)
         rv = func_def.prog.accept(self)
         self.scopes.pop_scope()
-        # return self.return_stack.pop()
+        # self._change_scope_to(curr_scope)
         return rv
 
 
