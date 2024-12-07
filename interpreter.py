@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Dict, Callable
 from AST import *
 from visitor import Visitor
@@ -227,7 +228,7 @@ class Interpreter(Visitor):
                     value = scope[name]["value"]
                     if value is None:
                         raise RuntimeError(f"Variable '{name}' has no value")
-                    return value
+                    return deepcopy(value)
             raise RuntimeError(f"Variable '{name}' not found in any scope")
 
         def set_variable_value(self, name_chain, value):

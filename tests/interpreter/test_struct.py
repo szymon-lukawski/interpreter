@@ -103,3 +103,59 @@ def test_struct_inside_struct():
     i = Interpreter()
     ast.accept(i)
     assert i.visit_obj_access(ObjectAccess(["b", "a", "x"])) == 10
+
+
+def test_struct_inside_struct_retriving_value_of_struct():
+    """A : struct begin x: int; end B : struct begin a : A; end b : B; b.a.x = 10;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            StructDef("B", [VariableDeclaration("a", "A", False)]),
+            VariableDeclaration("b", "B", False),
+            AssignmentStatement(ObjectAccess(["b", "a", "x"]), IntLiteral(10)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["b", "a"])) == {
+        "x": {"is_mutable": False, "type": "int", "value": 10}
+    }
+
+
+def test_assignment_of_complex_type():
+    """A : struct begin x: int; end B : struct begin a : A; end c : A; c.x = 12; b : B; b.a = c;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            StructDef("B", [VariableDeclaration("a", "A", False)]),
+            VariableDeclaration("c", "A", False),
+            AssignmentStatement(ObjectAccess(["c", "x"]), IntLiteral(12)),
+            VariableDeclaration("b", "B", False),
+            AssignmentStatement(ObjectAccess(["b", "a"]), ObjectAccess(["c"])),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["b", "a"])) == {
+        "x": {"is_mutable": False, "type": "int", "value": 12}
+    }
+
+
+def test_assignment_of_comlex_types_is_by_value():
+    """A : struct begin x: int; end B : struct begin a : A; end c : A; c.x = 12; b : B; b.a = c; c.x = 10;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            StructDef("B", [VariableDeclaration("a", "A", False)]),
+            VariableDeclaration("c", "A", False),
+            AssignmentStatement(ObjectAccess(["c", "x"]), IntLiteral(12)),
+            VariableDeclaration("b", "B", False),
+            AssignmentStatement(ObjectAccess(["b", "a"]), ObjectAccess(["c"])),
+            AssignmentStatement(ObjectAccess(["c", "x"]), IntLiteral(10)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["b", "a"])) == {
+        "x": {"is_mutable": False, "type": "int", "value": 12}
+    }
