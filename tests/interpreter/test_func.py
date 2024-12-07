@@ -490,3 +490,97 @@ def test_variable_and_func_at_the_same_scope_but_variable_interpreted_before_fun
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_variable_value("b") == 1
+
+
+def test_complex_function_scope():
+    """add(arg1: int, arg2: int) : int
+    begin
+    add_sub_function(arg1: int, arg2: int) : int
+    begin
+        return arg1 + arg2;
+    end
+
+    add(arg1: int, arg2: int) : int
+    begin
+        return add_sub_function(arg1, arg2);
+    end
+
+    return add(arg1, arg2);
+    end
+    a = add(5,15);
+    """
+    ast = Program(
+        [
+            FuncDef(
+                "add",
+                [Param("arg1", "int", False), Param("arg2", "int", False)],
+                "int",
+                Program(
+                    [
+                        FuncDef(
+                            "add_sub_function",
+                            [Param("arg1", "int", False), Param("arg2", "int", False)],
+                            "int",
+                            Program(
+                                [
+                                    ReturnStatement(
+                                        AddExpr(
+                                            [
+                                                ObjectAccess(["arg1"]),
+                                                ObjectAccess(["arg2"]),
+                                            ],
+                                            ["+"],
+                                        )
+                                    )
+                                ]
+                            ),
+                        ),
+                        FuncDef(
+                            "add",
+                            [Param("arg1", "int", False), Param("arg2", "int", False)],
+                            "int",
+                            Program(
+                                [
+                                    ReturnStatement(
+                                        ObjectAccess(
+                                            [
+                                                FunctionCall(
+                                                    "add_sub_function",
+                                                    [
+                                                        ObjectAccess(["arg1"]),
+                                                        ObjectAccess(["arg2"]),
+                                                    ],
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
+                            ),
+                        ),
+                        ReturnStatement(
+                            ObjectAccess(
+                                [
+                                    FunctionCall(
+                                        "add",
+                                        [
+                                            ObjectAccess(["arg1"]),
+                                            ObjectAccess(["arg2"]),
+                                        ],
+                                    )
+                                ]
+                            )
+                        ),
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "a",
+                "int",
+                False,
+                ObjectAccess([FunctionCall("add", [IntLiteral(5), IntLiteral(15)])]),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_variable_value("a") == 20
