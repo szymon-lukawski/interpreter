@@ -94,6 +94,23 @@ def test_variant_as_param_type():
     assert i.scopes.get_symbol("y").value == 7
 
 
+def test_recurrent_variant_def():
+    """VariantList : variant begin vl : VariantList; x : int; end l : VariantList; l = 1;"""
+    ast = Program(
+        [
+            VariantDef(
+                "VariantList", [NamedType("vl", "VariantList"), NamedType("x", "int")]
+            ),
+            VariableDeclaration("l", "VariantList", False),
+            AssignmentStatement(ObjectAccess(["l"]), IntLiteral(1)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_symbol("y").value == 1
+
+
+
 def test_binary_tree():
     """Leaf : struct begin value : int; end Node : struct begin left : Tree; right : Tree; end Tree : variant begin leaf : Leaf; node : Node; end sumTree(tree : Tree) : int begin visit tree begin case leaf begin return leaf.value; end case node begin return sumTree(node.left)+sumTree(node.right); end end end l : Leaf; l.value = 5; sum : int = sumTree(l);"""
     ast = Program(
