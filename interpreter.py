@@ -8,7 +8,7 @@ from scopes import Scopes
 class Interpreter(Visitor):
 
     def __init__(self, max_recursion_depth: int = 100):
-        self.scopes = Scopes()
+        self.scopes = Scopes(self)
         self._max_recursion_depth = max_recursion_depth
         self.curr_recursion = 1
 
@@ -66,10 +66,10 @@ class Interpreter(Visitor):
         }
 
     def visit_func_call(self, func_call: FunctionCall):
-        # curr_scope = self.get_active_scope()
+        curr_scope = self.scopes.curr_scope
         args = [arg.accept(self) for arg in func_call.args]
-        func_def: FuncDef = self.scopes.get_function_definition(func_call.name)
-        # self._change_scope_to_(func_def_scope)
+        func_def, func_scope_idx = self.scopes.get_function_definition_and_its_scope_idx(func_call.name)
+        self.scopes.curr_scope = func_scope_idx
         self.scopes.push_scope()
         for param, arg in zip(func_def.params, args):
             self.scopes.add_variable(param.name, param.type, param.is_mutable, arg)
@@ -79,9 +79,8 @@ class Interpreter(Visitor):
         rv = func_def.prog.accept(self)
         self.curr_recursion -= 1
         self.scopes.pop_scope()
-        # self._change_scope_to(curr_scope)
+        self.scopes.curr_scope = curr_scope
         return rv
-        # TODO ^^^ what if the scope difference is greater than 1
 
     def visit_obj_access(self, obj_access: ObjectAccess):
         symbol: Scopes.Symbol = None
