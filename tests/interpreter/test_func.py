@@ -29,7 +29,7 @@ def test_no_arg_function():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol('a').value == 1
+    assert i.scopes.get_symbol("a").value == 1
 
 
 def test_sum_of_two_no_arg_functions():
@@ -62,7 +62,7 @@ def test_sum_of_two_no_arg_functions():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol('a').value == 3
+    assert i.scopes.get_symbol("a").value == 3
 
 
 def test_func_with_one_arg():
@@ -329,7 +329,7 @@ def test_rec_fib(n, expected):
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol('a').value == expected
+    assert i.scopes.get_symbol("a").value == expected
 
 
 @pytest.mark.parametrize("n,expected", idx_fib_pairs)
@@ -383,7 +383,7 @@ def test_iter_fib(n, expected):
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol('a').value == expected
+    assert i.scopes.get_symbol("a").value == expected
 
 
 def test_return_inside_if_inside_while():
@@ -428,7 +428,7 @@ def test_return_inside_if_inside_while():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol('a').value == "BOOM"
+    assert i.scopes.get_symbol("a").value == "BOOM"
 
 
 def test_calling_scope_not_the_same_as_scope_of_called():
@@ -484,6 +484,32 @@ def test_variable_and_func_at_the_same_scope_but_variable_interpreted_before_fun
             VariableDeclaration("zero", "int", False, IntLiteral(0)),
             VariableDeclaration(
                 "b", "int", False, ObjectAccess([FunctionCall("one", [])])
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_symbol("b").value == 1
+
+
+def test_function_scope_is_different_than_calling_scope():
+    """a : int = 1; func(): int begin return a; end b : int; if 1 begin a : int = 5; b = func(); end"""
+    ast = Program(
+        [
+            VariableDeclaration("a", "int", False, IntLiteral(1)),
+            FuncDef("func", [], "int", Program([ReturnStatement(ObjectAccess(["a"]))])),
+            VariableDeclaration("b", "int", False),
+            IfStatement(
+                IntLiteral(1),
+                Program(
+                    [
+                        VariableDeclaration("a", "int", False, IntLiteral(5)),
+                        AssignmentStatement(
+                            ObjectAccess(["b"]),
+                            ObjectAccess([FunctionCall("func", [])]),
+                        ),
+                    ]
+                ),
             ),
         ]
     )
@@ -583,7 +609,7 @@ def test_complex_function_scope():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol('a').value == 20
+    assert i.scopes.get_symbol("a").value == 20
 
 
 def test_functional_call_without_assignment():
@@ -617,5 +643,3 @@ def test_max_recursion_depth():
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)
     assert str(e.value) == "Maximal recursion depth reached!"
-
-

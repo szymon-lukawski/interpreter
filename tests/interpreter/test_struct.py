@@ -77,6 +77,19 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
     assert str(e.value) == "Type 'A' not found in any scope"
 
 
+def test_struct_with_default_value():
+    """A : mut struct begin x: mut int = 1; end a : A;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", True, IntLiteral(1))]),
+            VariableDeclaration("a", "A", True),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["a", "x"])) == 1
+
+
 def test_assign_value_to_struct_instance_attr():
     """A : mut struct begin x: mut int; end a : A; a.x = 10;"""
     ast = Program(
@@ -178,3 +191,59 @@ def test_assignment_of_comlex_types_is_by_value():
         "A", True, {"x": Scopes.BuiltInSymbol("int", True, 12)}
     )
 
+
+def test_struct_type_factory_function():
+    """A : struct begin x: mut int; end A(x : int): A begin a : mut A; a.x = x; return a; end a :mut A=A(5);"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", True)]),
+            FuncDef(
+                "A",
+                [Param("x", "int", False)],
+                "A",
+                Program(
+                    [
+                        VariableDeclaration("a", "A", True),
+                        AssignmentStatement(
+                            ObjectAccess(["a", "x"]), ObjectAccess(["x"])
+                        ),
+                        ReturnStatement(ObjectAccess(["a"])),
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "a", "A", True, ObjectAccess([FunctionCall("A", [IntLiteral(5)])])
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["a"])) == Scopes.StructSymbol(
+        "A", True, {"x": Scopes.BuiltInSymbol("int", True, 5)}
+    )
+
+
+def test_struct_default_value():
+    """A : struct begin x: mut int = 5; y: mut str = 'BOOM'; end a : A;"""
+    ast = Program(
+        [
+            StructDef(
+                "A",
+                [
+                    VariableDeclaration("x", "int", True, IntLiteral(5)),
+                    VariableDeclaration("y", "str", True, StrLiteral("BOOM")),
+                ],
+            ),
+            VariableDeclaration("a", "A", False),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["a"])) == Scopes.StructSymbol(
+        "A",
+        True,
+        {
+            "x": Scopes.BuiltInSymbol("int", True, 5),
+            "y": Scopes.BuiltInSymbol("str", True, "BOOM"),
+        },
+    )
