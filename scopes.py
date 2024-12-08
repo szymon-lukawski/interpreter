@@ -16,7 +16,7 @@ class Scopes:
         def set_value(self, address: list[str], new_value):
             # check structure with coresponding value structure
             self.value = new_value
-        
+
         def get_value(self, address: list[str]):
             raise NotImplementedError
 
@@ -52,16 +52,16 @@ class Scopes:
 
         def set_value(self, address: list[str], new_value):
             if len(address) == 0:
-                self.value = new_value.value # TODO Add checking 
-                return 
+                self.value = new_value.value  # TODO Add checking
+                return
             first_address = address[0]
             rest_address = address[1:]
             if rv := self.value.get(first_address):
                 return rv.set_value(rest_address, new_value)
-            raise RuntimeError(f"Attribute '{first_address}' not found in type '{self.type}'")
-           
-                
-                
+            raise RuntimeError(
+                f"Attribute '{first_address}' not found in type '{self.type}'"
+            )
+
         def get_value(self, address: list[str]):
             if len(address) == 0:
                 return self
@@ -69,9 +69,9 @@ class Scopes:
             rest_address = address[1:]
             if rv := self.value.get(first_address):
                 return rv.get_value(rest_address)
-            raise RuntimeError(f"Attribute '{first_address}' not found in type '{self.type}'")
-            
-            
+            raise RuntimeError(
+                f"Attribute '{first_address}' not found in type '{self.type}'"
+            )
 
         def attrs(self):
             return self.value.keys()
@@ -79,7 +79,7 @@ class Scopes:
     class VariantSymbol(Symbol):
         def __init__(self, type_, is_mutable, value):
             super().__init__(type_, is_mutable, value)
-            self.curr_active : str = None
+            self.curr_active: str = None
 
         def accept(self, visitor):
             return visitor.visit_variant_instance(self)
@@ -87,16 +87,16 @@ class Scopes:
         def set_value(self, address: list[str], new_value):
             if len(address) == 0:
                 self.curr_active = new_value.type
-                self.value[new_value.type] = new_value.value # TODO Add checking 
-                return 
+                self.value[new_value.type] = new_value.value  # TODO Add checking
+                return
             first_address = address[0]
             rest_address = address[1:]
             if rv := self.value[self.curr_active].get(first_address):
                 return rv.set_value(rest_address, new_value)
-            raise RuntimeError(f"Attribute '{first_address}' not found in type '{self.type}'")
-           
-                
-                
+            raise RuntimeError(
+                f"Attribute '{first_address}' not found in type '{self.type}'"
+            )
+
         def get_value(self, address: list[str]):
             if len(address) == 0:
                 return self.value[self.curr_active]
@@ -104,9 +104,9 @@ class Scopes:
             rest_address = address[1:]
             if rv := self.value[self.curr_active].get(first_address):
                 return rv.get_value(rest_address)
-            raise RuntimeError(f"Attribute '{first_address}' not found in type '{self.value[self.curr_active].type}'")
-            
-            
+            raise RuntimeError(
+                f"Attribute '{first_address}' not found in type '{self.value[self.curr_active].type}'"
+            )
 
     def __init__(self):
         self.built_in_type_names = {"int", "float", "str", "null_type"}
@@ -139,7 +139,7 @@ class Scopes:
                 return scope[type_]
 
         raise RuntimeError(f"Type '{type_}' not found in any scope")
-    
+
     def get_named_types_for_(self, type_: str) -> list[NamedType]:
         for scope in reversed(self.variant_stack[: self.curr_scope + 1]):
             if type_ in scope:
@@ -158,10 +158,10 @@ class Scopes:
             if type_ in stack[i]:
                 return True
         return False
-    
+
     def is_struct_type_(self, type_):
         return self.is_type_in_stack(type_, self.struct_stack)
-    
+
     def is_variant_type_(self, type_):
         return self.is_type_in_stack(type_, self.variant_stack)
 
@@ -173,7 +173,6 @@ class Scopes:
         elif self.is_variant_type_(type_):
             return self.create_variant_symbol(type_, is_mutable)
         raise RuntimeError(f"Type '{type_}' not found in any scope")
-
 
     def create_built_in_symbol(self, type_, is_mutable):
         return Scopes.BuiltInSymbol(type_, is_mutable, None)
@@ -193,9 +192,8 @@ class Scopes:
         for named_type in named_types:
             variant_dict[named_type.name] = self.create_symbol(
                 named_type.type, True
-            ) # Variant is always mutable? 
+            )  # Variant is always mutable?
         return Scopes.VariantSymbol(type_, is_mutable, variant_dict)
-
 
     def add_variable(self, name, type_, is_mutable, init_value):
         if name in self.variable_stack[self.curr_scope]:
@@ -221,7 +219,7 @@ class Scopes:
         name = name_chain[0]
         for scope in reversed(self.variable_stack[: self.curr_scope + 1]):
             if name in scope:
-                symbol : Scopes.Symbol = scope[name]
+                symbol: Scopes.Symbol = scope[name]
                 symbol.set_value(name_chain[1:], value)
                 return
         raise RuntimeError(f"Variable '{name}' not found in any scope")

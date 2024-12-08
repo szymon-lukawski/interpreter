@@ -86,7 +86,7 @@ class Interpreter(Visitor):
     def visit_obj_access(self, obj_access: ObjectAccess):
         symbol: Scopes.Symbol = None
         obj_name = obj_access.name_chain[0]
-        rest_address = obj_access.name_chain[1:]     
+        rest_address = obj_access.name_chain[1:]
         if isinstance(obj_name, str):
             symbol = self.scopes.get_symbol(obj_access.name_chain[0])
         elif isinstance(obj_access.name_chain[0], FunctionCall):
@@ -94,7 +94,9 @@ class Interpreter(Visitor):
             if len(rest_address) == 0:
                 return deepcopy(symbol)
         else:
-            raise RuntimeError("Object access class should inly have str or func call in name chain")
+            raise RuntimeError(
+                "Object access class should inly have str or func call in name chain"
+            )
 
         # is simple type then return its value
         # is struct type then return copy of entire struct
@@ -108,7 +110,14 @@ class Interpreter(Visitor):
 
     def visit_var_dec(self, var_dec):
         self.scopes.add_variable(
-            var_dec.name, var_dec.type, var_dec.is_mutable, var_dec.default_value.accept(self) if var_dec.default_value is not None else None
+            var_dec.name,
+            var_dec.type,
+            var_dec.is_mutable,
+            (
+                var_dec.default_value.accept(self)
+                if var_dec.default_value is not None
+                else None
+            ),
         )
 
     def visit_struct_def(self, struct_def: StructDef):

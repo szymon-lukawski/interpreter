@@ -1,7 +1,8 @@
 import pytest
 from token_type import TokenType
-from interpreter import Interpreter, Symbol, StructSymbol, VariantSymbol, BuiltInSymbol
+from interpreter import Interpreter
 from AST import *
+from scopes import Scopes
 
 
 def test_getting_value_of_uninitialised_int():
@@ -43,4 +44,4 @@ def test_empty_struct():
     ast = Program([StructDef("A", []), VariableDeclaration("a", "A", False)])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol('a') == StructSymbol("A", False, None)
+    assert i.scopes.get_symbol('a') == Scopes.StructSymbol("A", False, {})
