@@ -8,6 +8,7 @@ class Scopes:
             self.type = type_
             self.is_mutable = is_mutable
             self.value = value
+
             # self.value = value -> self.build_up_symbol_structure then self.set_value
             # Build up symbol structure then compare this structure with `value` structure and update it accordingly
             # Type cycle ->   A : struct begin b : B; end B: struct begin a: A; end
@@ -15,7 +16,9 @@ class Scopes:
 
         def set_value(self, address: list[str], new_value):
             # check structure with coresponding value structure
-            self.value = new_value
+            if not self.is_mutable and self.value is not None:
+                raise RuntimeError("Trying to reassign value to non mutable variable")
+            self._set_value(address, new_value)
 
         def get_value(self, address: list[str]):
             raise NotImplementedError
@@ -34,9 +37,8 @@ class Scopes:
         def accept(self, visitor):
             return visitor.visit_built_in_instance(self)
 
-        def set_value(self, address: list[str], new_value):
-            # TODO just type check if compatible
-            self.value = new_value
+        def _set_value(self, address: list[str], new_value):
+            self.value = new_value.value
 
         def get_value(self, address: list[str]):
             if len(address) > 0:
@@ -50,7 +52,7 @@ class Scopes:
         def accept(self, visitor):
             return visitor.visit_struct_instance(self)
 
-        def set_value(self, address: list[str], new_value):
+        def _set_value(self, address: list[str], new_value):
             if len(address) == 0:
                 self.value = new_value.value  # TODO Add checking
                 return
@@ -84,7 +86,7 @@ class Scopes:
         def accept(self, visitor):
             return visitor.visit_variant_instance(self)
 
-        def set_value(self, address: list[str], new_value):
+        def _set_value(self, address: list[str], new_value):
             if len(address) == 0:
                 self.curr_active = new_value.type
                 self.value[new_value.type] = new_value.value  # TODO Add checking
@@ -202,6 +204,8 @@ class Scopes:
             )
         symbol = self.create_symbol(type_, is_mutable)
         if init_value is not None:
+            if self.is_literal(init_value):
+                init_value = self.convert_literal_to_symbol(init_value)
             symbol.set_value([], init_value)
         self.variable_stack[self.curr_scope][name] = symbol
 
@@ -220,9 +224,24 @@ class Scopes:
         for scope in reversed(self.variable_stack[: self.curr_scope + 1]):
             if name in scope:
                 symbol: Scopes.Symbol = scope[name]
+                if self.is_literal(value):
+                    value = self.convert_literal_to_symbol(value)
                 symbol.set_value(name_chain[1:], value)
                 return
         raise RuntimeError(f"Variable '{name}' not found in any scope")
+    
+    def is_literal(self, value):
+        return isinstance(value, int) or isinstance(value, float) or isinstance(value, str)
+
+    def convert_literal_to_symbol(self, literal):
+        if isinstance(literal, int):
+            return Scopes.BuiltInSymbol("int", False, literal)
+        if isinstance(literal, float):
+            return Scopes.BuiltInSymbol("float", False, literal)
+        if isinstance(literal, str):
+            return Scopes.BuiltInSymbol("str", False, literal)
+        raise NotImplementedError
+        
 
     def add_function(self, func_def: FuncDef):
         name = func_def.name

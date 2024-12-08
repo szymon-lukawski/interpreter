@@ -91,7 +91,40 @@ def test_variant_as_param_type():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol("y").value == 7
+    assert i.scopes.get_symbol("y").get_value([]) == 7
+
+
+def test_assignment_of_two_different_types_to_variant():
+    """int_or_float : variant begin x : int; y : float; end a : int_or_float = 1; b : int_or_float = 1.2;"""
+    ast = Program(
+        [
+            VariantDef(
+                "int_or_float", [NamedType("x", "int"), NamedType("y", "float")]
+            ),
+            VariableDeclaration("a", "int_or_float", False, IntLiteral(1)),
+            VariableDeclaration("b", "int_or_float", False, FloatLiteral(1.2)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_symbol("a").get_value([]) == 1
+    assert i.scopes.get_symbol("b").get_value([]) == 1.2
+
+
+def test_assignment_of_two_different_types_to_same_variable():
+    """int_or_float : variant begin x : int; y : float; end a : int_or_float = 1; a = 1.2;"""
+    ast = Program(
+        [
+            VariantDef(
+                "int_or_float", [NamedType("x", "int"), NamedType("y", "float")]
+            ),
+            VariableDeclaration("a", "int_or_float", False, IntLiteral(1)),
+            AssignmentStatement(ObjectAccess(["a"]), FloatLiteral(1.2)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_symbol("a").get_value([]) == 1.2
 
 
 def test_recurrent_variant_def():
@@ -108,7 +141,6 @@ def test_recurrent_variant_def():
     i = Interpreter()
     ast.accept(i)
     assert i.scopes.get_symbol("y").value == 1
-
 
 
 def test_binary_tree():

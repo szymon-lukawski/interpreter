@@ -78,11 +78,11 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
 
 
 def test_assign_value_to_struct_instance_attr():
-    """A : struct begin x: mut int; end a : A; a.x = 10;"""
+    """A : mut struct begin x: mut int; end a : A; a.x = 10;"""
     ast = Program(
         [
             StructDef("A", [VariableDeclaration("x", "int", True)]),
-            VariableDeclaration("a", "A", False),
+            VariableDeclaration("a", "A", True),
             AssignmentStatement(ObjectAccess(["a", "x"]), IntLiteral(10)),
         ]
     )
@@ -92,12 +92,12 @@ def test_assign_value_to_struct_instance_attr():
 
 
 def test_struct_inside_struct():
-    """A : struct begin x: int; end B : struct begin a : A; end b : B; b.a.x = 10;"""
+    """A : struct begin x: mut int; end B : struct begin a : mut A; end b : mut B; b.a.x = 10;"""
     ast = Program(
         [
-            StructDef("A", [VariableDeclaration("x", "int", False)]),
-            StructDef("B", [VariableDeclaration("a", "A", False)]),
-            VariableDeclaration("b", "B", False),
+            StructDef("A", [VariableDeclaration("x", "int", True)]),
+            StructDef("B", [VariableDeclaration("a", "A", True)]),
+            VariableDeclaration("b", "B", True),
             AssignmentStatement(ObjectAccess(["b", "a", "x"]), IntLiteral(10)),
         ]
     )
@@ -107,30 +107,30 @@ def test_struct_inside_struct():
 
 
 def test_struct_inside_struct_retriving_value_of_struct():
-    """A : struct begin x: int; end B : struct begin a : A; end b : B; b.a.x = 10;"""
+    """A : struct begin x: mut int; end B : struct begin a : mut A; end b : mut B; b.a.x = 10;"""
     ast = Program(
         [
-            StructDef("A", [VariableDeclaration("x", "int", False)]),
-            StructDef("B", [VariableDeclaration("a", "A", False)]),
-            VariableDeclaration("b", "B", False),
+            StructDef("A", [VariableDeclaration("x", "int", True)]),
+            StructDef("B", [VariableDeclaration("a", "A", True)]),
+            VariableDeclaration("b", "B", True),
             AssignmentStatement(ObjectAccess(["b", "a", "x"]), IntLiteral(10)),
         ]
     )
     i = Interpreter()
     ast.accept(i)
     assert i.visit_obj_access(ObjectAccess(["b", "a"])) == Scopes.StructSymbol(
-        "A", False, {"x": Scopes.BuiltInSymbol("int", False, 10)}
+        "A", True, {"x": Scopes.BuiltInSymbol("int", True, 10)}
     )
 
 
 def test_assignment_simple_struct_to_another_variable_of_the_same_type():
-    """A : struct begin x: int; end a : A; a.x = 10; b:A; b = a;"""
+    """A : struct begin x: mut int; end a : mut A; a.x = 10; b:mutA; b = a;"""
     ast = Program(
         [
-            StructDef("A", [VariableDeclaration("x", "int", False)]),
-            VariableDeclaration("a", "A", False),
+            StructDef("A", [VariableDeclaration("x", "int", True)]),
+            VariableDeclaration("a", "A", True),
             AssignmentStatement(ObjectAccess(["a", "x"]), IntLiteral(10)),
-            VariableDeclaration("b", "A", False),
+            VariableDeclaration("b", "A", True),
             AssignmentStatement(ObjectAccess(["b"]), ObjectAccess(["a"])),
         ]
     )
@@ -140,14 +140,14 @@ def test_assignment_simple_struct_to_another_variable_of_the_same_type():
 
 
 def test_assignment_of_complex_type():
-    """A : struct begin x: int; end B : struct begin a : A; end c : A; c.x = 12; b : B; b.a = c;"""
+    """A : struct begin x: mut int; end B : struct begin a : mut A; end c : mut A; c.x = 12; b : mut  B; b.a = c;"""
     ast = Program(
         [
-            StructDef("A", [VariableDeclaration("x", "int", False)]),
-            StructDef("B", [VariableDeclaration("a", "A", False)]),
-            VariableDeclaration("c", "A", False),
+            StructDef("A", [VariableDeclaration("x", "int", True)]),
+            StructDef("B", [VariableDeclaration("a", "A", True)]),
+            VariableDeclaration("c", "A", True),
             AssignmentStatement(ObjectAccess(["c", "x"]), IntLiteral(12)),
-            VariableDeclaration("b", "B", False),
+            VariableDeclaration("b", "B", True),
             AssignmentStatement(ObjectAccess(["b", "a"]), ObjectAccess(["c"])),
         ]
     )
@@ -155,19 +155,19 @@ def test_assignment_of_complex_type():
     ast.accept(i)
     result = i.visit_obj_access(ObjectAccess(["b", "a"]))
     assert result == Scopes.StructSymbol(
-        "A", False, {"x": Scopes.BuiltInSymbol("int", False, 12)}
+        "A", True, {"x": Scopes.BuiltInSymbol("int", True, 12)}
     )
 
 
 def test_assignment_of_comlex_types_is_by_value():
-    """A : struct begin x: int; end B : struct begin a : A; end c : A; c.x = 12; b : B; b.a = c; c.x = 10;"""
+    """A : struct begin x: mut int; end B : struct begin a : mut A; end c : mut A; c.x = 12; b : mut B; b.a = c; c.x = 10;"""
     ast = Program(
         [
-            StructDef("A", [VariableDeclaration("x", "int", False)]),
-            StructDef("B", [VariableDeclaration("a", "A", False)]),
-            VariableDeclaration("c", "A", False),
+            StructDef("A", [VariableDeclaration("x", "int", True)]),
+            StructDef("B", [VariableDeclaration("a", "A", True)]),
+            VariableDeclaration("c", "A", True),
             AssignmentStatement(ObjectAccess(["c", "x"]), IntLiteral(12)),
-            VariableDeclaration("b", "B", False),
+            VariableDeclaration("b", "B", True),
             AssignmentStatement(ObjectAccess(["b", "a"]), ObjectAccess(["c"])),
             AssignmentStatement(ObjectAccess(["c", "x"]), IntLiteral(10)),
         ]
@@ -175,6 +175,6 @@ def test_assignment_of_comlex_types_is_by_value():
     i = Interpreter()
     ast.accept(i)
     assert i.visit_obj_access(ObjectAccess(["b", "a"])) == Scopes.StructSymbol(
-        "A", False, {"x": Scopes.BuiltInSymbol("int", False, 12)}
+        "A", True, {"x": Scopes.BuiltInSymbol("int", True, 12)}
     )
 
