@@ -2,6 +2,7 @@ import pytest
 from token_type import TokenType
 from interpreter import Interpreter
 from AST import *
+from scopes import Scopes
 
 
 def test_new_struct_is_visable():
@@ -9,7 +10,7 @@ def test_new_struct_is_visable():
     ast = Program([StructDef("A", [])])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_type_definition("A") == []
+    assert i.scopes.get_var_defs_for_("A") == []
 
 
 def test_struct_with_one_attribute():
@@ -17,7 +18,7 @@ def test_struct_with_one_attribute():
     ast = ast = Program([StructDef("A", [VariableDeclaration("x", "int", False)])])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_type_definition("A") == [
+    assert i.scopes.get_var_defs_for_("A") == [
         VariableDeclaration("x", "int", False, None)
     ]
 
@@ -31,7 +32,7 @@ def test_struct_with_2_attributes():
     ast = Program([StructDef("A", variables)])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_type_definition("A") == variables
+    assert i.scopes.get_var_defs_for_("A") == variables
 
 
 def test_can_not_use_struct_type_before_it_was_defined():
@@ -117,9 +118,25 @@ def test_struct_inside_struct_retriving_value_of_struct():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["b", "a"])) == {
-        "x": {"is_mutable": False, "type": "int", "value": 10}
-    }
+    assert i.visit_obj_access(ObjectAccess(["b", "a"])) == Scopes.StructSymbol(
+        "A", False, {"x": Scopes.BuiltInSymbol("int", False, 10)}
+    )
+
+
+def test_assignment_simple_struct_to_another_variable_of_the_same_type():
+    """A : struct begin x: int; end a : A; a.x = 10; b:A; b = a;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a", "x"]), IntLiteral(10)),
+            VariableDeclaration("b", "A", False),
+            AssignmentStatement(ObjectAccess(["b"]), ObjectAccess(["a"])),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["b", "x"])) == 10
 
 
 def test_assignment_of_complex_type():
@@ -136,9 +153,10 @@ def test_assignment_of_complex_type():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["b", "a"])) == {
-        "x": {"is_mutable": False, "type": "int", "value": 12}
-    }
+    result = i.visit_obj_access(ObjectAccess(["b", "a"]))
+    assert result == Scopes.StructSymbol(
+        "A", False, {"x": Scopes.BuiltInSymbol("int", False, 12)}
+    )
 
 
 def test_assignment_of_comlex_types_is_by_value():
@@ -156,6 +174,7 @@ def test_assignment_of_comlex_types_is_by_value():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["b", "a"])) == {
-        "x": {"is_mutable": False, "type": "int", "value": 12}
-    }
+    assert i.visit_obj_access(ObjectAccess(["b", "a"])) == Scopes.StructSymbol(
+        "A", False, {"x": Scopes.BuiltInSymbol("int", False, 12)}
+    )
+

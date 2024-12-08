@@ -65,3 +65,126 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)
     assert str(e.value) == "Type 'A' not found in any scope"
+
+
+def test_variant_as_param_type():
+    """A : struct begin x : int; end V : variant begin a : A; end ret(v : V): int begin return v.x; end al : A; al.x = 7; y : int = ret(al);"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            VariantDef("V", [NamedType("a", "A")]),
+            FuncDef(
+                "ret",
+                [Param("v", "V", False)],
+                "int",
+                Program([ReturnStatement(ObjectAccess(["v", "x"]))]),
+            ),
+            VariableDeclaration("al", "A", False),
+            AssignmentStatement(ObjectAccess(["al", "x"]), IntLiteral(7)),
+            VariableDeclaration(
+                "y",
+                "int",
+                False,
+                ObjectAccess([FunctionCall("ret", [ObjectAccess(["al"])])]),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_symbol("y").value == 7
+
+
+def test_binary_tree():
+    """Leaf : struct begin value : int; end Node : struct begin left : Tree; right : Tree; end Tree : variant begin leaf : Leaf; node : Node; end sumTree(tree : Tree) : int begin visit tree begin case leaf begin return leaf.value; end case node begin return sumTree(node.left)+sumTree(node.right); end end end l : Leaf; l.value = 5; sum : int = sumTree(l);"""
+    ast = Program(
+        [
+            StructDef("Leaf", [VariableDeclaration("value", "int", False)]),
+            StructDef(
+                "Node",
+                [
+                    VariableDeclaration("left", "Tree", False),
+                    VariableDeclaration("right", "Tree", False),
+                ],
+            ),
+            VariantDef("Tree", [NamedType("leaf", "Leaf"), NamedType("node", "Node")]),
+            FuncDef(
+                "sumTree",
+                [Param("tree", "Tree", False)],
+                "int",
+                Program(
+                    [
+                        VisitStatement(
+                            ObjectAccess(["tree"]),
+                            [
+                                CaseSection(
+                                    "leaf",
+                                    Program(
+                                        [
+                                            ReturnStatement(
+                                                ObjectAccess(["leaf", "value"])
+                                            )
+                                        ]
+                                    ),
+                                ),
+                                CaseSection(
+                                    "node",
+                                    Program(
+                                        [
+                                            ReturnStatement(
+                                                AddExpr(
+                                                    [
+                                                        ObjectAccess(
+                                                            [
+                                                                FunctionCall(
+                                                                    "sumTree",
+                                                                    [
+                                                                        ObjectAccess(
+                                                                            [
+                                                                                "node",
+                                                                                "left",
+                                                                            ]
+                                                                        )
+                                                                    ],
+                                                                )
+                                                            ]
+                                                        ),
+                                                        ObjectAccess(
+                                                            [
+                                                                FunctionCall(
+                                                                    "sumTree",
+                                                                    [
+                                                                        ObjectAccess(
+                                                                            [
+                                                                                "node",
+                                                                                "right",
+                                                                            ]
+                                                                        )
+                                                                    ],
+                                                                )
+                                                            ]
+                                                        ),
+                                                    ],
+                                                    ["+"],
+                                                )
+                                            )
+                                        ]
+                                    ),
+                                ),
+                            ],
+                        )
+                    ]
+                ),
+            ),
+            VariableDeclaration("l", "Leaf", False),
+            AssignmentStatement(ObjectAccess(["l", "value"]), IntLiteral(5)),
+            VariableDeclaration(
+                "sum",
+                "int",
+                False,
+                ObjectAccess([FunctionCall("sumTree", [ObjectAccess(["l"])])]),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.scopes.get_symbol("sum").value == 5

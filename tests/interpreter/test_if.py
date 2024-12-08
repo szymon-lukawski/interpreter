@@ -20,14 +20,14 @@ def test_variable_before_if_is_visable_from_inside():
     ast = Program([VariableDeclaration('a', 'int', True, IntLiteral(1)), IfStatement(IntLiteral(1), Program([AssignmentStatement(ObjectAccess(['a']), IntLiteral(2))]))])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value('a') == 2
+    assert i.scopes.get_symbol('a').value == 2
 
 def test_can_create_same_name_variable_in_different_scopes():
     """a: mut int = 1; if 1 begin a: mut int = 1; end"""
     ast = Program([VariableDeclaration('a', 'int', True, IntLiteral(1)), IfStatement(IntLiteral(1), Program([VariableDeclaration('a', 'int', True, IntLiteral(2))]))])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value('a') == 1
+    assert i.scopes.get_symbol('a').value == 1
 
 def test_same_name_variable_in_else_as_in_main():
     """if 1 begin a: mut int = 1; end else begin a: mut int = 1; end"""

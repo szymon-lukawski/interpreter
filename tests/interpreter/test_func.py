@@ -29,7 +29,7 @@ def test_no_arg_function():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("a") == 1
+    assert i.scopes.get_symbol('a').value == 1
 
 
 def test_sum_of_two_no_arg_functions():
@@ -62,7 +62,7 @@ def test_sum_of_two_no_arg_functions():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("a") == 3
+    assert i.scopes.get_symbol('a').value == 3
 
 
 def test_func_with_one_arg():
@@ -105,7 +105,7 @@ def test_func_with_one_arg():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("b") == 3
+    assert i.scopes.get_symbol("b").value == 3
 
 
 def test_add_two_integers():
@@ -152,7 +152,7 @@ def test_add_two_integers():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("c") == 3
+    assert i.scopes.get_symbol("c").value == 3
 
 
 def test_add_three_integers():
@@ -210,7 +210,7 @@ def test_add_three_integers():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("d") == 6
+    assert i.scopes.get_symbol("d").value == 6
 
 
 def test_two_returns():
@@ -232,7 +232,7 @@ def test_two_returns():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("b") == 1
+    assert i.scopes.get_symbol("b").value == 1
 
 
 def test_return_in_if():
@@ -259,7 +259,7 @@ def test_return_in_if():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("b") == 2
+    assert i.scopes.get_symbol("b").value == 2
 
 
 idx_fib_pairs = list(zip(range(1, 7), [1, 2, 3, 5, 8, 13]))
@@ -329,7 +329,7 @@ def test_rec_fib(n, expected):
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("a") == expected
+    assert i.scopes.get_symbol('a').value == expected
 
 
 @pytest.mark.parametrize("n,expected", idx_fib_pairs)
@@ -383,7 +383,7 @@ def test_iter_fib(n, expected):
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("a") == expected
+    assert i.scopes.get_symbol('a').value == expected
 
 
 def test_return_inside_if_inside_while():
@@ -428,7 +428,7 @@ def test_return_inside_if_inside_while():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("a") == "BOOM"
+    assert i.scopes.get_symbol('a').value == "BOOM"
 
 
 def test_calling_scope_not_the_same_as_scope_of_called():
@@ -489,7 +489,7 @@ def test_variable_and_func_at_the_same_scope_but_variable_interpreted_before_fun
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("b") == 1
+    assert i.scopes.get_symbol("b").value == 1
 
 
 def test_complex_function_scope():
@@ -583,7 +583,7 @@ def test_complex_function_scope():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("a") == 20
+    assert i.scopes.get_symbol('a').value == 20
 
 
 def test_functional_call_without_assignment():
@@ -602,7 +602,7 @@ def test_functional_call_without_assignment():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variable_value("x") == 7
+    assert i.scopes.get_symbol("x").value == 7
 
 
 def test_max_recursion_depth():
@@ -617,3 +617,5 @@ def test_max_recursion_depth():
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)
     assert str(e.value) == "Maximal recursion depth reached!"
+
+
