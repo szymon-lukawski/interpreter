@@ -53,5 +53,5 @@ def test_setting_value_of_non_mutable_but_initialised_variable_int():
     i = Interpreter()
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)
-    assert str(e.value) == "Trying to reassign value to non mutable variable 'a'"
+    assert str(e.value) == "Trying to reassign value to non mutable variable"
 
