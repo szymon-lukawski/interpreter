@@ -110,27 +110,29 @@ class Scopes:
                 f"Attribute '{first_address}' not found in type '{self.value[self.curr_active].type}'"
             )
 
-    def __init__(self):
+    def __init__(self, interpreter):
         self.built_in_type_names = {"int", "float", "str", "null_type"}
         self.variable_stack = [{}]
         self.function_stack = [{}]
         self.struct_stack = [{}]
         self.variant_stack = [{}]  # ?
         self.curr_scope = 0
+        self.interpreter = interpreter
 
     def push_scope(self):
-        self.variable_stack.append({})
-        self.function_stack.append({})
-        self.struct_stack.append({})
-        self.variant_stack.append({})
+
         self.curr_scope += 1
+        self.variable_stack.insert(self.curr_scope, {})
+        self.function_stack.insert(self.curr_scope, {})
+        self.struct_stack.insert(self.curr_scope, {})
+        self.variant_stack.insert(self.curr_scope, {})
 
     def pop_scope(self):
         if len(self.variable_stack) > 1:
-            self.variable_stack.pop()
-            self.function_stack.pop()
-            self.struct_stack.pop()
-            self.variant_stack.pop()
+            self.variable_stack.pop(self.curr_scope)
+            self.function_stack.pop(self.curr_scope)
+            self.struct_stack.pop(self.curr_scope)
+            self.variant_stack.pop(self.curr_scope)
             self.curr_scope -= 1
         else:
             raise RuntimeError("Cannot pop the global scope")
@@ -251,11 +253,12 @@ class Scopes:
             )
         self.function_stack[self.curr_scope][name] = func_def
 
-    def get_function_definition(self, name):
-        for scope in reversed(self.function_stack[: self.curr_scope + 1]):
+    def get_function_definition_and_its_scope_idx(self, name):
+        for idx, scope in enumerate(reversed(self.function_stack[: self.curr_scope + 1])):
             if name in scope:
-                return scope[name]
+                return scope[name], len(self.function_stack) - idx - 1
         raise RuntimeError(f"Function '{name}' not found in any scope")
+
 
     def add_struct_type(self, name, attrs: List[VariableDeclaration]):
         if name in self.struct_stack[self.curr_scope]:
