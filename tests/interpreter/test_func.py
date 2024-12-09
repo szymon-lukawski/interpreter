@@ -643,3 +643,86 @@ def test_max_recursion_depth():
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)
     assert str(e.value) == "Maximal recursion depth reached!"
+
+
+def test_args_evaled_from_left_to_right():
+    """c : mut int = 0; increment_and_return(): int begin c = c + 1; return c; end Three_Ints : struct begin x: int; y: int; z:int; end Three_Ints(x: int, y: int, z: int): Three_Ints begin rv : mut Three_Ints; rv.x = x; rv.y = y; rv.z = z; return rv; end result : Three_Ints = Three_Ints( increment_and_return(), increment_and_return(), increment_and_return());"""
+    ast = Program(
+        [
+            VariableDeclaration("c", "int", True, IntLiteral(0)),
+            FuncDef(
+                "increment_and_return",
+                [],
+                "int",
+                Program(
+                    [
+                        AssignmentStatement(
+                            ObjectAccess(["c"]),
+                            AddExpr([ObjectAccess(["c"]), IntLiteral(1)], ["+"]),
+                        ),
+                        ReturnStatement(ObjectAccess(["c"])),
+                    ]
+                ),
+            ),
+            StructDef(
+                "Three_Ints",
+                [
+                    VariableDeclaration("x", "int", False),
+                    VariableDeclaration("y", "int", False),
+                    VariableDeclaration("z", "int", False),
+                ],
+            ),
+            FuncDef(
+                "Three_Ints",
+                [
+                    Param("x", "int", False),
+                    Param("y", "int", False),
+                    Param("z", "int", False),
+                ],
+                "Three_Ints",
+                Program(
+                    [
+                        VariableDeclaration("rv", "Three_Ints", True),
+                        AssignmentStatement(
+                            ObjectAccess(["rv", "x"]), ObjectAccess(["x"])
+                        ),
+                        AssignmentStatement(
+                            ObjectAccess(["rv", "y"]), ObjectAccess(["y"])
+                        ),
+                        AssignmentStatement(
+                            ObjectAccess(["rv", "z"]), ObjectAccess(["z"])
+                        ),
+                        ReturnStatement(ObjectAccess(["rv"])),
+                    ]
+                ),
+            ),
+            VariableDeclaration(
+                "result",
+                "Three_Ints",
+                True, # TODO  False should be able to work but does not
+                ObjectAccess(
+                    [
+                        FunctionCall(
+                            "Three_Ints",
+                            [
+                                ObjectAccess(
+                                    [FunctionCall("increment_and_return", [])]
+                                ),
+                                ObjectAccess(
+                                    [FunctionCall("increment_and_return", [])]
+                                ),
+                                ObjectAccess(
+                                    [FunctionCall("increment_and_return", [])]
+                                ),
+                            ],
+                        )
+                    ]
+                ),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["result", "x"])) == 1
+    assert i.visit_obj_access(ObjectAccess(["result", "y"])) == 2
+    assert i.visit_obj_access(ObjectAccess(["result", "z"])) == 3

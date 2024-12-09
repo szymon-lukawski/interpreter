@@ -71,20 +71,20 @@ def test_variant_as_param_type():
     """A : struct begin x : int; end V : variant begin a : A; end ret(v : V): int begin return v.x; end al : A; al.x = 7; y : int = ret(al);"""
     ast = Program(
         [
-            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            StructDef("A", [VariableDeclaration("x", "int", True)]),
             VariantDef("V", [NamedType("a", "A")]),
             FuncDef(
                 "ret",
-                [Param("v", "V", False)],
+                [Param("v", "V", True)],
                 "int",
                 Program([ReturnStatement(ObjectAccess(["v", "x"]))]),
             ),
-            VariableDeclaration("al", "A", False),
+            VariableDeclaration("al", "A", True),
             AssignmentStatement(ObjectAccess(["al", "x"]), IntLiteral(7)),
             VariableDeclaration(
                 "y",
                 "int",
-                False,
+                True,
                 ObjectAccess([FunctionCall("ret", [ObjectAccess(["al"])])]),
             ),
         ]
@@ -101,8 +101,8 @@ def test_assignment_of_two_different_types_to_variant():
             VariantDef(
                 "int_or_float", [NamedType("x", "int"), NamedType("y", "float")]
             ),
-            VariableDeclaration("a", "int_or_float", False, IntLiteral(1)),
-            VariableDeclaration("b", "int_or_float", False, FloatLiteral(1.2)),
+            VariableDeclaration("a", "int_or_float", True, IntLiteral(1)),
+            VariableDeclaration("b", "int_or_float", True, FloatLiteral(1.2)),
         ]
     )
     i = Interpreter()
@@ -118,7 +118,7 @@ def test_assignment_of_two_different_types_to_same_variable():
             VariantDef(
                 "int_or_float", [NamedType("x", "int"), NamedType("y", "float")]
             ),
-            VariableDeclaration("a", "int_or_float", False, IntLiteral(1)),
+            VariableDeclaration("a", "int_or_float", True, IntLiteral(1)),
             AssignmentStatement(ObjectAccess(["a"]), FloatLiteral(1.2)),
         ]
     )
@@ -134,7 +134,7 @@ def test_recurrent_variant_def():
             VariantDef(
                 "VariantList", [NamedType("vl", "VariantList"), NamedType("x", "int")]
             ),
-            VariableDeclaration("l", "VariantList", False),
+            VariableDeclaration("l", "VariantList", True),
             AssignmentStatement(ObjectAccess(["l"]), IntLiteral(1)),
         ]
     )
@@ -147,18 +147,18 @@ def test_binary_tree():
     """Leaf : struct begin value : int; end Node : struct begin left : Tree; right : Tree; end Tree : variant begin leaf : Leaf; node : Node; end sumTree(tree : Tree) : int begin visit tree begin case leaf begin return leaf.value; end case node begin return sumTree(node.left)+sumTree(node.right); end end end l : Leaf; l.value = 5; sum : int = sumTree(l);"""
     ast = Program(
         [
-            StructDef("Leaf", [VariableDeclaration("value", "int", False)]),
+            StructDef("Leaf", [VariableDeclaration("value", "int", True)]),
             StructDef(
                 "Node",
                 [
-                    VariableDeclaration("left", "Tree", False),
-                    VariableDeclaration("right", "Tree", False),
+                    VariableDeclaration("left", "Tree", True),
+                    VariableDeclaration("right", "Tree", True),
                 ],
             ),
             VariantDef("Tree", [NamedType("leaf", "Leaf"), NamedType("node", "Node")]),
             FuncDef(
                 "sumTree",
-                [Param("tree", "Tree", False)],
+                [Param("tree", "Tree", True)],
                 "int",
                 Program(
                     [
@@ -224,12 +224,12 @@ def test_binary_tree():
                     ]
                 ),
             ),
-            VariableDeclaration("l", "Leaf", False),
+            VariableDeclaration("l", "Leaf", True),
             AssignmentStatement(ObjectAccess(["l", "value"]), IntLiteral(5)),
             VariableDeclaration(
                 "sum",
                 "int",
-                False,
+                True,
                 ObjectAccess([FunctionCall("sumTree", [ObjectAccess(["l"])])]),
             ),
         ]
