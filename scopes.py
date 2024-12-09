@@ -110,14 +110,13 @@ class Scopes:
                 f"Attribute '{first_address}' not found in type '{self.value[self.curr_active].type}'"
             )
 
-    def __init__(self, interpreter):
+    def __init__(self):
         self.built_in_type_names = {"int", "float", "str", "null_type"}
         self.variable_stack = [{}]
         self.function_stack = [{}]
         self.struct_stack = [{}]
         self.variant_stack = [{}]  # ?
         self.curr_scope = 0
-        self.interpreter = interpreter
 
     def push_scope(self):
 
