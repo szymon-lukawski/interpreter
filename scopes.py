@@ -29,7 +29,7 @@ class Scopes:
             raise RuntimeError("Cannot pop the global scope")
 
     def reserve_place_for_(self, name : str, type_: str, is_mutable: bool):
-        if name not in self.variant_stack[self.curr_scope].keys():
+        if name not in self.variable_stack[self.curr_scope].keys():
             self.variable_stack[self.curr_scope][name] = Variable(type_, is_mutable, None)
             return 
         raise RuntimeError(f"Variable '{name}' already declared in the current scope")

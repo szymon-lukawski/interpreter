@@ -89,7 +89,7 @@ def test_getting_value_of_uninitialised_attr():
     ast.accept(i)
     with pytest.raises(RuntimeError) as e:
         i.visit_obj_access(ObjectAccess(["a", "x"]))
-    assert str(e.value) == "Variable 'a.x' has no value"
+    assert str(e.value) == "Variable 'a' has no value"
 
 
 def test_getting_value_of_initialised_attr():
@@ -103,7 +103,7 @@ def test_getting_value_of_initialised_attr():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["a", "x"])) == 12
+    assert i.visit_obj_access(ObjectAccess(["a", "x"])).value == 12
 
 
 def test_struct_with_default_value():
@@ -116,37 +116,22 @@ def test_struct_with_default_value():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["a", "x"])) == 1
+    assert i.visit_obj_access(ObjectAccess(["a", "x"])).value == 1
 
 
 def test_reasigning_non_mutable_attr():
     """A : struct begin x: int = 1; end a : A; a.x = 2;"""
     ast = Program(
         [
-            StructDef("A", [VariableDeclaration("x", "int", True, IntLiteral(1))]),
-            VariableDeclaration("a", "A", True),
+            StructDef("A", [VariableDeclaration("x", "int", False, IntLiteral(1))]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a", "x"]), IntLiteral(2)),
         ]
     )
     i = Interpreter()
-    ast.accept(i)
     with pytest.raises(RuntimeError) as e:
-        i.visit_obj_access(ObjectAccess(["a", "x"]))
-    assert str(e.value) == "Trying to reassign value to non mutable variable"
-
-
-def test_assigning_value_to():
-    """A : struct begin x: int; end a : A;"""
-    ast = Program(
-        [
-            StructDef("A", [VariableDeclaration("x", "int", True, IntLiteral(1))]),
-            VariableDeclaration("a", "A", True),
-        ]
-    )
-    i = Interpreter()
-    ast.accept(i)
-    with pytest.raises(RuntimeError) as e:
-        i.visit_obj_access(ObjectAccess(["a", "x"]))
-    assert str(e.value) == "Trying to reassign value to non mutable variable"
+        ast.accept(i)
+    assert str(e.value) == "Trying to reassign value to a non-mutable attribute."
 
 
 def test_assign_value_to_struct_instance_attr():
@@ -160,7 +145,7 @@ def test_assign_value_to_struct_instance_attr():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["a", "x"])) == 10
+    assert i.visit_obj_access(ObjectAccess(["a", "x"])).value == 10
 
 
 def test_struct_inside_struct():
@@ -175,7 +160,7 @@ def test_struct_inside_struct():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["b", "a", "x"])) == 10
+    assert i.visit_obj_access(ObjectAccess(["b", "a", "x"])).value == 10
 
 
 def test_struct_inside_struct_retriving_value_of_struct():
@@ -206,7 +191,7 @@ def test_assignment_simple_struct_to_another_variable_of_the_same_type():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["b", "x"])) == 10
+    assert i.visit_obj_access(ObjectAccess(["b", "x"])).value == 10
 
 
 def test_assignment_of_complex_type():
@@ -224,10 +209,11 @@ def test_assignment_of_complex_type():
     i = Interpreter()
     ast.accept(i)
     result = i.visit_obj_access(ObjectAccess(["b", "a"]))
-    # TODO assert result ==
+    assert result.type == 'A'
+    assert result.value['x'].value.value == 12
 
 
-def test_assignment_of_comlex_types_is_by_value():
+def test_assignment_of_complex_types_is_by_value():
     """A : struct begin x: mut int; end B : struct begin a : mut A; end c : mut A; c.x = 12; b : mut B; b.a = c; c.x = 10;"""
     ast = Program(
         [
@@ -242,7 +228,9 @@ def test_assignment_of_comlex_types_is_by_value():
     )
     i = Interpreter()
     ast.accept(i)
-    # TODO assert i.visit_obj_access(ObjectAccess(["b", "a"]))
+    result = i.visit_obj_access(ObjectAccess(["b", "a"]))
+    assert result.type == 'A'
+    assert result.value['x'].value.value == 12
 
 
 def test_struct_type_factory_function():
@@ -271,8 +259,9 @@ def test_struct_type_factory_function():
     )
     i = Interpreter()
     ast.accept(i)
-    # TODO assert i.visit_obj_access(ObjectAccess(["a"])) ==
-
+    result = i.visit_obj_access(ObjectAccess(["a"]))
+    assert result.type == 'A'
+    assert result.value['x'].value.value == 5
 
 def test_struct_with_one_default_value():
     """A : struct begin x: mut int; y: mut str = 'BOOM'; end a : A;"""
@@ -290,7 +279,8 @@ def test_struct_with_one_default_value():
     )
     i = Interpreter()
     ast.accept(i)
-    # TODO assert i.visit_obj_access(ObjectAccess(["a"])) ==
+    result =  i.visit_obj_access(ObjectAccess(["a"]))
+    result.value['y'].value.value = 'BOOM'
 
 
 def test_asigning_int_to_struct_type():

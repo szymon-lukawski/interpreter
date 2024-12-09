@@ -29,16 +29,42 @@ class Interpreter(Visitor):
             value = self._convert_to_(variable.type, assignment.expr.accept(self))
             self.scopes.set_(name, value)
             return
-        value: Value | None = variable.value  # Caution: value might be None
-        for attr_name in name_chain[1:-1]:
-            # if value is None: raise Attribute Error
-            value = value[attr_name]  # value.get_attr(attr_name)
-        value = self._convert_to_(
-            value[name_chain[-1]].type, assignment.expr.accept(self)
-        )
+        for attr_name in name_chain[1:]:
+            if not variable.can_variable_be_updated():
+                raise RuntimeError("Trying to reassign value to a non-mutable attribute.")
+            if not variable.is_initialised():
+                # determine which value type should be initialised with using variable.type lets assume it is always struct
+                variable.value = StructValue(variable.type, dict())
+            attr_def = self.get_attr_def_from_type_(attr_name, variable.type)
+            if self.variable_needs_extending(variable, attr_name):
+                self.extend_(variable, attr_def)
+            variable = variable.value.value[attr_name]
 
-        # value.set_attr(name_chain[-1], value)
-        value[name_chain[-1]] = value
+        variable.value = assignment.expr.accept(self)
+
+
+
+    def variable_needs_extending(self, variable : Variable, attr_name: str):
+        return attr_name not in variable.value.value.keys()
+
+    def extend_(self, variable : Variable, attr_def : VariableDeclaration):
+        variable.value.add_attr(attr_def.name, Variable(attr_def.type, attr_def.is_mutable, None))
+
+
+
+    def get_attr_def_from_type_(self, attr_name, type_):
+        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
+        for var_def in var_defs:
+            if attr_name == var_def.name:
+                return var_def
+
+    def check_attr_name_in_(self, type_, attr_name):
+        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
+        for var_def in var_defs:
+            if attr_name == var_def.name:
+                return True
+        raise RuntimeError(f"Attribute '{attr_name}' not found in type '{type_}'")
+
 
     def visit_param(self, param: Param):
         return super().visit_param(param)
@@ -60,7 +86,7 @@ class Interpreter(Visitor):
         evaled_condition = if_stmt.cond.accept(self)
         # evalued_condition = self._convert_to_int(evaled_condition)
         rv = None
-        if evaled_condition:
+        if evaled_condition.value:
             self.scopes.push_scope()
             rv = if_stmt.prog.accept(self)
             self.scopes.pop_scope()
@@ -152,7 +178,7 @@ class Interpreter(Visitor):
             return self._get_default_value_for_struct_(type_)
         if self.scopes.is_variant_type_(type_):
             return self._get_default_value_for_variant_(type_)
-        raise RuntimeError(f"Type {type_} not found in any scope")
+        raise RuntimeError(f"Type '{type_}' not found in any scope")
 
     def _get_default_value_for_struct_(self, type_: str):
         """Struct value is not None when at least one of its attributes have non none value"""
