@@ -11,7 +11,9 @@ class Value:
     def __init__(self, type_, value):
         self.type = type_
         self.value = value
-        
+
+class BuiltInValue(Value):
+    pass
 
 class StructValue(Value):
     pass
