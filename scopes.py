@@ -1,5 +1,5 @@
 from AST import *
-
+from interpreter_types import Variable, Value
 
 class Scopes:
 
@@ -137,6 +137,26 @@ class Scopes:
         else:
             raise RuntimeError("Cannot pop the global scope")
 
+    def reserve_place_for_(self, name : str):
+        if not self.variable_stack[self.curr_scope].get(name):
+            self.variable_stack[self.curr_scope][name] = 123
+        raise RuntimeError(f"Variable '{name}' already declared in the current scope")
+    
+    def set_(self, name : str, value : Variable):
+        for scope in reversed(self.variable_stack[: self.curr_scope + 1]):
+            if name in scope:
+                scope[name] = value
+                return
+        raise RuntimeError(f"Variable '{name}' not found in any scope")
+    
+    def get_variable(self, name) -> Variable:
+        for scope in reversed(self.variable_stack[: self.curr_scope + 1]):
+            if name in scope:
+                return scope[name]
+        raise RuntimeError(f"Variable '{name}' not found in any scope")
+
+
+
     def get_var_defs_for_(self, type_: str) -> list[VariableDeclaration]:
         for scope in reversed(self.struct_stack[: self.curr_scope + 1]):
             if type_ in scope:
@@ -231,9 +251,11 @@ class Scopes:
                 symbol.set_value(name_chain[1:], value)
                 return
         raise RuntimeError(f"Variable '{name}' not found in any scope")
-    
+
     def is_literal(self, value):
-        return isinstance(value, int) or isinstance(value, float) or isinstance(value, str)
+        return (
+            isinstance(value, int) or isinstance(value, float) or isinstance(value, str)
+        )
 
     def convert_literal_to_symbol(self, literal):
         if isinstance(literal, int):
@@ -243,7 +265,6 @@ class Scopes:
         if isinstance(literal, str):
             return Scopes.BuiltInSymbol("str", False, literal)
         raise NotImplementedError
-        
 
     def add_function(self, func_def: FuncDef):
         name = func_def.name
@@ -254,11 +275,12 @@ class Scopes:
         self.function_stack[self.curr_scope][name] = func_def
 
     def get_function_definition_and_its_scope_idx(self, name):
-        for idx, scope in enumerate(reversed(self.function_stack[: self.curr_scope + 1])):
+        for idx, scope in enumerate(
+            reversed(self.function_stack[: self.curr_scope + 1])
+        ):
             if name in scope:
                 return scope[name], len(self.function_stack) - idx - 1
         raise RuntimeError(f"Function '{name}' not found in any scope")
-
 
     def add_struct_type(self, name, attrs: List[VariableDeclaration]):
         if name in self.struct_stack[self.curr_scope]:
