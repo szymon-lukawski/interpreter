@@ -137,15 +137,19 @@ class Scopes:
         else:
             raise RuntimeError("Cannot pop the global scope")
 
-    def reserve_place_for_(self, name : str):
-        if not self.variable_stack[self.curr_scope].get(name):
-            self.variable_stack[self.curr_scope][name] = 123
+    def reserve_place_for_(self, name : str, type_: str, is_mutable: bool):
+        if name not in self.variant_stack[self.curr_scope].keys():
+            self.variable_stack[self.curr_scope][name] = Variable(type_, is_mutable, None)
+            return 
         raise RuntimeError(f"Variable '{name}' already declared in the current scope")
     
-    def set_(self, name : str, value : Variable):
+    def set_(self, name : str, value):
         for scope in reversed(self.variable_stack[: self.curr_scope + 1]):
             if name in scope:
-                scope[name] = value
+                if scope[name].is_mutable or scope[name].value is None:
+                    scope[name].value = value
+                else:
+                    raise RuntimeError("Trying to reassign value to non mutable variable")
                 return
         raise RuntimeError(f"Variable '{name}' not found in any scope")
     

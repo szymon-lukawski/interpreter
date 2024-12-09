@@ -19,7 +19,7 @@ class Interpreter(Visitor):
             if rv:
                 return rv
 
-    def visit_assignment(self, assignment: AssignmentStatement):
+    def visit_assignment_1(self, assignment: AssignmentStatement):
         # 1 bez .
         # sprawdz czy jest i ew zwróć referencję do struktury opisującej tą nazwę.
         # sprawdz czy reszta dostępu (reszta object_accessu) pasuje do zwróconej struktury i zwróć referencję do pola które nalezy przypisać.
@@ -29,7 +29,7 @@ class Interpreter(Visitor):
         # porównaj typy. Jesli sa zgodne lub kompatybilne to przypisz wartość
         self.scopes.set_variable_value(assignment.obj_access.name_chain, value)
 
-    def visit_assignment_2(self, assignment: AssignmentStatement):
+    def visit_assignment(self, assignment: AssignmentStatement):
         name_chain = assignment.obj_access.name_chain
         name = name_chain[0]
         variable = self.scopes.get_variable(name)
@@ -106,7 +106,7 @@ class Interpreter(Visitor):
         self.scopes.curr_scope = curr_scope
         return rv
 
-    def visit_obj_access(self, obj_access: ObjectAccess):
+    def visit_obj_access_1(self, obj_access: ObjectAccess):
         symbol: Scopes.Symbol = None
         obj_name = obj_access.name_chain[0]
         rest_address = obj_access.name_chain[1:]
@@ -131,20 +131,25 @@ class Interpreter(Visitor):
             )
         return deepcopy(rv)
 
-    def visit_obj_access_2(self, obj_access: ObjectAccess):
+    def visit_obj_access(self, obj_access: ObjectAccess):
         # Gets value of symbol, it needs to return VariantSymbol not The currently active on for visit_visit
-        symbol: Scopes.Symbol = None
+        value : Value = None
         obj_name = obj_access.name_chain[0]
         if isinstance(obj_name, str):
-            symbol = self.scopes.get_symbol(obj_name)
+            variable = self.scopes.get_variable(obj_name)
+            value = variable.value
         elif isinstance(obj_access.name_chain[0], FunctionCall):
-            symbol = obj_name.accept(self)
+            value = obj_name.accept(self)
         rest_address = obj_access.name_chain[1:]
+        if value is None:
+            raise RuntimeError(f"Variable '{obj_name}' has no value")
         for attr_name in rest_address:
-            symbol = symbol[attr_name]  # This should raise NotInitialised error if None
-        return deepcopy(symbol)  # deepcopy when getting the value of struct or variant
+            value = value[attr_name]
+            if value is None:
+                raise RuntimeError(f"Variable '{".".join(obj_access.name_chain)}' has no value")
+        return deepcopy(value)  # deepcopy when getting the value of struct or variant
 
-    def visit_var_dec(self, var_dec):
+    def visit_var_dec_1(self, var_dec):
         self.scopes.add_variable(
             var_dec.name,
             var_dec.type,
@@ -156,12 +161,13 @@ class Interpreter(Visitor):
             ),
         )
 
-    def visit_var_dec_2(self, var_dec: VariableDeclaration):
-        name = var_dec.name
-        type_ = var_dec.type
-        value = var_dec.default_value
+    def visit_var_dec(self, var_dec: VariableDeclaration):
+        name : str = var_dec.name
+        type_ : str = var_dec.type
+        is_mutable : bool = var_dec.is_mutable
+        value : ASTNode = var_dec.default_value
         self.scopes.reserve_place_for_(
-            name
+            name, type_, is_mutable
         )  # raises Error if the same var name has been in current scope
         default_value = self._get_default_value(
             type_, value
@@ -274,10 +280,10 @@ class Interpreter(Visitor):
         return None
 
     def visit_int_literal(self, int_literal):
-        return int_literal.value
+        return Value('int', int_literal.value)
 
     def visit_float_literal(self, float_literal):
-        return float_literal.value
+        return Value('float', float_literal.value)
 
     def visit_str_literal(self, str_literal):
-        return str_literal.value
+        return Value('str', str_literal.value)
