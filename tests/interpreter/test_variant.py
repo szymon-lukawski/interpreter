@@ -9,7 +9,7 @@ def test_new_variant_is_visable():
     ast = Program([VariantDef("A", [])])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variant_definition("A") == []
+    assert i.scopes.get_named_types_for_("A") == []
 
 
 def test_variant_with_one_named_type():
@@ -17,7 +17,7 @@ def test_variant_with_one_named_type():
     ast = Program([VariantDef("A", [NamedType("x", "int")])])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variant_definition("A") == [NamedType("x", "int")]
+    assert i.scopes.get_named_types_for_("A") == [NamedType("x", "int")]
 
 
 def test_variant_with_2_named_types():
@@ -25,7 +25,7 @@ def test_variant_with_2_named_types():
     ast = Program([VariantDef("A", [NamedType("x", "int"), NamedType("y", "float")])])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_variant_definition("A") == [
+    assert i.scopes.get_named_types_for_("A") == [
         NamedType("x", "int"),
         NamedType("y", "float"),
     ]
@@ -91,7 +91,7 @@ def test_variant_as_param_type():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol("y").get_value([]) == 7
+    assert i.visit_obj_access(ObjectAccess(["y"])).value == 7
 
 
 def test_assignment_of_two_different_types_to_variant():
@@ -107,8 +107,8 @@ def test_assignment_of_two_different_types_to_variant():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol("a").get_value([]) == 1
-    assert i.scopes.get_symbol("b").get_value([]) == 1.2
+    assert i.visit_obj_access(ObjectAccess(["a"])).value == 1
+    assert i.visit_obj_access(ObjectAccess(["b"])).value == 1.2
 
 
 def test_assignment_of_two_different_types_to_same_variable():
@@ -124,7 +124,7 @@ def test_assignment_of_two_different_types_to_same_variable():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol("a").get_value([]) == 1.2
+    assert i.visit_obj_access(ObjectAccess(["a"])).value == 1.2
 
 
 def test_recurrent_variant_def():
@@ -140,7 +140,7 @@ def test_recurrent_variant_def():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol("y").value == 1
+    assert i.visit_obj_access(ObjectAccess(["l"])).value == 1
 
 
 def test_binary_tree():
@@ -236,4 +236,4 @@ def test_binary_tree():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol("sum").value == 5
+    assert i.visit_obj_access(ObjectAccess(["sum"])).value == 5

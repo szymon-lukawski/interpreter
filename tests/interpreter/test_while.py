@@ -109,6 +109,6 @@ def test_fib():
     i = Interpreter()
     ast.accept(i)
     # 0 1 1 2 3 5 8 13 21 34 55 89 143
-    assert i.scopes.get_symbol("n").value == 0
-    assert i.scopes.get_symbol("a").value == 55
-    assert i.scopes.get_symbol("b").value == 89
+    assert i.visit_obj_access(ObjectAccess(["n"])).value == 0
+    assert i.visit_obj_access(ObjectAccess(["a"])).value == 55
+    assert i.visit_obj_access(ObjectAccess(["b"])).value == 89

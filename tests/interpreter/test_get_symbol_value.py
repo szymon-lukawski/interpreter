@@ -3,6 +3,7 @@ from token_type import TokenType
 from interpreter import Interpreter
 from AST import *
 from scopes import Scopes
+from interpreter_types import StructValue
 
 
 def test_getting_value_of_uninitialised_int():
@@ -20,7 +21,7 @@ def test_getting_value_of_initialised_int():
     ast = Program([VariableDeclaration("a", "int", False, IntLiteral(123))])
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(['a'])).value == 123
+    assert i.visit_obj_access(ObjectAccess(["a"])).value == 123
 
 
 def test_getting_value_of_initialised_float():
@@ -28,7 +29,7 @@ def test_getting_value_of_initialised_float():
     ast = Program([VariableDeclaration("a", "float", False, FloatLiteral(123.4))])
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(['a'])).value == 123.4
+    assert i.visit_obj_access(ObjectAccess(["a"])).value == 123.4
 
 
 def test_getting_value_of_initialised_str():
@@ -36,7 +37,7 @@ def test_getting_value_of_initialised_str():
     ast = Program([VariableDeclaration("a", "str", False, StrLiteral("BOOM"))])
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(['a'])).value == "BOOM"
+    assert i.visit_obj_access(ObjectAccess(["a"])).value == "BOOM"
 
 
 def test_empty_struct():
@@ -44,4 +45,6 @@ def test_empty_struct():
     ast = Program([StructDef("A", []), VariableDeclaration("a", "A", False)])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol('a') == Scopes.StructSymbol("A", False, {})
+    with pytest.raises(RuntimeError) as e:
+        i.visit_obj_access(ObjectAccess(["a"]))
+    assert str(e.value) == "Variable 'a' has no value"
