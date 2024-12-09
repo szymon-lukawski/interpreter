@@ -628,7 +628,7 @@ def test_functional_call_without_assignment():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_symbol("x").value == 7
+    assert i.visit_obj_access(ObjectAccess(["x"])).value == 7
 
 
 def test_max_recursion_depth():
@@ -723,6 +723,6 @@ def test_args_evaled_from_left_to_right():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["result", "x"])) == 1
-    assert i.visit_obj_access(ObjectAccess(["result", "y"])) == 2
-    assert i.visit_obj_access(ObjectAccess(["result", "z"])) == 3
+    assert i.visit_obj_access(ObjectAccess(["result", "x"])).value == 1
+    assert i.visit_obj_access(ObjectAccess(["result", "y"])).value == 2
+    assert i.visit_obj_access(ObjectAccess(["result", "z"])).value == 3
