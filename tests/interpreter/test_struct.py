@@ -209,8 +209,8 @@ def test_assignment_of_complex_type():
     i = Interpreter()
     ast.accept(i)
     result = i.visit_obj_access(ObjectAccess(["b", "a"]))
-    assert result.type == 'A'
-    assert result.value['x'].value.value == 12
+    assert result.type == "A"
+    assert result.value["x"].value.value == 12
 
 
 def test_assignment_of_complex_types_is_by_value():
@@ -229,8 +229,8 @@ def test_assignment_of_complex_types_is_by_value():
     i = Interpreter()
     ast.accept(i)
     result = i.visit_obj_access(ObjectAccess(["b", "a"]))
-    assert result.type == 'A'
-    assert result.value['x'].value.value == 12
+    assert result.type == "A"
+    assert result.value["x"].value.value == 12
 
 
 def test_struct_type_factory_function():
@@ -260,8 +260,9 @@ def test_struct_type_factory_function():
     i = Interpreter()
     ast.accept(i)
     result = i.visit_obj_access(ObjectAccess(["a"]))
-    assert result.type == 'A'
-    assert result.value['x'].value.value == 5
+    assert result.type == "A"
+    assert result.value["x"].value.value == 5
+
 
 def test_struct_with_one_default_value():
     """A : struct begin x: mut int; y: mut str = 'BOOM'; end a : A;"""
@@ -279,8 +280,8 @@ def test_struct_with_one_default_value():
     )
     i = Interpreter()
     ast.accept(i)
-    result =  i.visit_obj_access(ObjectAccess(["a"]))
-    result.value['y'].value.value = 'BOOM'
+    result = i.visit_obj_access(ObjectAccess(["a"]))
+    result.value["y"].value.value = "BOOM"
 
 
 def test_asigning_int_to_struct_type():
@@ -318,3 +319,35 @@ def test_asigning_A_to_B():
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)  # Type error
     assert "Type" in str(e.value)
+
+
+def test_assignment_of_nested_types_using_one_statement():
+    """A : struct begin x: int; end B : struct begin a: A; end C : struct begin b: B; end c : C; c.b.a.x = 123;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            StructDef("B", [VariableDeclaration("a", "A", False)]),
+            StructDef("C", [VariableDeclaration("b", "B", False)]),
+            VariableDeclaration("c", "C", False),
+            AssignmentStatement(ObjectAccess(["c", "b", "a", "x"]), IntLiteral(123)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["c", "b", "a", "x"])).value == 123
+
+
+def test_struct_value_has_value_when_any_attribute_has_value():
+    """A : struct begin x: int; end B : struct begin a: A; end C : struct begin b: B; end c : C; c.b.a.x = 123;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False, IntLiteral(1234))]),
+            StructDef("B", [VariableDeclaration("a", "A", False)]),
+            StructDef("C", [VariableDeclaration("b", "B", False)]),
+            VariableDeclaration("c", "C", False),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["c", "b", "a", "x"])).value == 1234
+    

@@ -40,4 +40,7 @@ class StructValue(Value):
 
 
 class VariantValue(Value):
-    pass
+    def __init__(self, type_ : str, value, name):
+        super().__init__(type_, value)
+        self.name = name
+

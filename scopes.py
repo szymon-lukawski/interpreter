@@ -37,7 +37,7 @@ class Scopes:
     def set_(self, name : str, value):
         for scope in reversed(self.variable_stack[: self.curr_scope + 1]):
             if name in scope:
-                if scope[name].is_mutable or scope[name].value is None:
+                if scope[name].can_variable_be_updated():
                     scope[name].value = value
                 else:
                     raise RuntimeError("Trying to reassign value to non mutable variable")

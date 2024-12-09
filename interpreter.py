@@ -33,14 +33,20 @@ class Interpreter(Visitor):
             if not variable.can_variable_be_updated():
                 raise RuntimeError("Trying to reassign value to a non-mutable attribute.")
             if not variable.is_initialised():
-                # determine which value type should be initialised with using variable.type lets assume it is always struct
-                variable.value = StructValue(variable.type, dict())
+                if self.scopes.is_built_in_type_(variable.type):
+                    raise RuntimeError("Simple types do not have attributes!")
+                if self.scopes.is_struct_type_(variable.type):
+                    variable.value = StructValue(variable.type, dict())
+                elif self.scopes.is_variant_type_(variable.type):
+                    variable.value = VariantValue(variable.value, None, None)
+                else: 
+                    raise RuntimeError(f"Type '{variable.type}' not found")
             attr_def = self.get_attr_def_from_type_(attr_name, variable.type)
             if self.variable_needs_extending(variable, attr_name):
                 self.extend_(variable, attr_def)
             variable = variable.value.value[attr_name]
 
-        variable.value = assignment.expr.accept(self)
+        variable.value = self._convert_to_(variable.type, assignment.expr.accept(self))
 
 
 
@@ -70,7 +76,15 @@ class Interpreter(Visitor):
         return super().visit_param(param)
 
     def visit_visit(self, visit_statement: VisitStatement):
-        return super().visit_visit(visit_statement)
+        variant_value = visit_statement.obj.accept(self)
+        # validate variant_value is of type variant
+        for cs in visit_statement.case_sections:
+            if cs.type == variant_value.curr_active.type:
+                self.scopes.push_scope()
+                self.scopes.add_variable(variant_value.name, variant_value.type, False, variant_value.value)
+                rv = cs.program.accept()
+                self.scopes.pop_scope()
+                return rv
 
     def visit_while(self, while_stmt: WhileStatement):
         rv = None
@@ -198,12 +212,13 @@ class Interpreter(Visitor):
 
     def _get_default_value_for_variant_(self, type_: str):
         """Variant value is the first named type to have it. If none of the them have it then varaint has no value."""
-        named_types: List[NamedType] = self.scopes.get_named_types_for_(type_)
-        for named_type in named_types:
-            default_value = self._get_default_value(named_type.type, None)
-            if default_value:
-                return VariantValue(type_, default_value)
         return None
+        # named_types: List[NamedType] = self.scopes.get_named_types_for_(type_)
+        # for named_type in named_types:
+        #     default_value = self._get_default_value(named_type.type, None)
+        #     if default_value:
+        #         return VariantValue(type_, default_value)
+        # return None
 
     def visit_struct_def(self, struct_def: StructDef):
         self.scopes.add_struct_type(struct_def.name, struct_def.attributes)
