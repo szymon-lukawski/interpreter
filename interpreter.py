@@ -5,6 +5,7 @@ from visitor import Visitor
 from scopes import Scopes
 from interpreter_types import Variable, Value
 
+
 class Interpreter(Visitor):
 
     def __init__(self, max_recursion_depth: int = 100):
@@ -35,12 +36,14 @@ class Interpreter(Visitor):
         if len(name_chain) == 1:
             value = self._convert_to_(variable.type, assignment.expr.accept(self))
             self.scopes.set_(name, value)
-            return 
-        value : Value | None = variable.value # Caution: value might be None
+            return
+        value: Value | None = variable.value  # Caution: value might be None
         for attr_name in name_chain[1:-1]:
             # if value is None: raise Attribute Error
-            value = value[attr_name] # value.get_attr(attr_name)
-        value = self._convert_to_(value[name_chain[-1]].type, assignment.expr.accept(self))
+            value = value[attr_name]  # value.get_attr(attr_name)
+        value = self._convert_to_(
+            value[name_chain[-1]].type, assignment.expr.accept(self)
+        )
 
         # value.set_attr(name_chain[-1], value)
         value[name_chain[-1]] = value
@@ -53,7 +56,9 @@ class Interpreter(Visitor):
 
     def visit_while(self, while_stmt: WhileStatement):
         rv = None
-        while rv is None and while_stmt.cond.accept(self): # evalued_condition = self._convert_to_int(evaled_condition)
+        while rv is None and while_stmt.cond.accept(
+            self
+        ):  # evalued_condition = self._convert_to_int(evaled_condition)
             self.scopes.push_scope()
             rv = while_stmt.prog.accept(self)
             self.scopes.pop_scope()
@@ -85,7 +90,9 @@ class Interpreter(Visitor):
     def visit_func_call(self, func_call: FunctionCall):
         curr_scope = self.scopes.curr_scope
         args = [arg.accept(self) for arg in func_call.args]
-        func_def, func_scope_idx = self.scopes.get_function_definition_and_its_scope_idx(func_call.name)
+        func_def, func_scope_idx = (
+            self.scopes.get_function_definition_and_its_scope_idx(func_call.name)
+        )
         self.scopes.curr_scope = func_scope_idx
         self.scopes.push_scope()
         for param, arg in zip(func_def.params, args):
@@ -123,7 +130,7 @@ class Interpreter(Visitor):
                 f"Variable '{".".join(obj_access.name_chain)}' has no value"
             )
         return deepcopy(rv)
-    
+
     def visit_obj_access_2(self, obj_access: ObjectAccess):
         # Gets value of symbol, it needs to return VariantSymbol not The currently active on for visit_visit
         symbol: Scopes.Symbol = None
@@ -134,8 +141,8 @@ class Interpreter(Visitor):
             symbol = obj_name.accept(self)
         rest_address = obj_access.name_chain[1:]
         for attr_name in rest_address:
-            symbol = symbol[attr_name] # This should raise NotInitialised error if None 
-        return deepcopy(symbol) # deepcopy when getting the value of struct or variant
+            symbol = symbol[attr_name]  # This should raise NotInitialised error if None
+        return deepcopy(symbol)  # deepcopy when getting the value of struct or variant
 
     def visit_var_dec(self, var_dec):
         self.scopes.add_variable(
@@ -149,41 +156,50 @@ class Interpreter(Visitor):
             ),
         )
 
-    def visit_var_dec_2(self, var_dec : VariableDeclaration):
+    def visit_var_dec_2(self, var_dec: VariableDeclaration):
         name = var_dec.name
         type_ = var_dec.type
         value = var_dec.default_value
-        self.scopes.reserve_place_for_(name) # raises Error if the same var name has been in current scope
-        default_value = self._get_default_value(type_, value) # raises error when error in var_dec attributes
-        converted = self._convert_to_(type_, default_value) # raises error when value has been of not compatible types
+        self.scopes.reserve_place_for_(
+            name
+        )  # raises Error if the same var name has been in current scope
+        default_value = self._get_default_value(
+            type_, value
+        )  # raises error when error in var_dec attributes
+        converted = self._convert_to_(
+            type_, default_value
+        )  # raises error when value has been of not compatible types
         self.scopes.set_(name, converted)
 
-
-    def _convert_to_(self, target_type : str, value : Scopes.Symbol):
+    def _convert_to_(self, target_type: str, value: Scopes.Symbol):
         # if value of Built in Types and target is {int, float, str} then easy
         # if value of Struct Type and target is {int, float, str} then raise error
-        # if value of Variant Type and target is {int, float, str} then 
+        # if value of Variant Type and target is {int, float, str} then
         return value
 
-    def _get_default_value(self, type_ : str, value : ASTNode):
+    def _get_default_value(self, type_: str, value: ASTNode):
         if value is not None:
             return value.accept(self)
         return self._get_default_value_for_(type_)
-    
-    def _get_default_value_for_(self, type_ : str):
-        pass
 
+    def _get_default_value_for_(self, type_: str):
+        if self.scopes.is_built_in_type_(type_):
+            return None
+        if self.scopes.is_struct_type_(type_):
+            return self._get_default_value_for_struct_(type_)
+        if self.scopes.is_variant_type_(type_):
+            raise NotImplementedError
+        raise RuntimeError(f"Type {type_} not found in any scope")
 
-
-    def _get_default_value_for_struct_(self, type_ : str):
-        var_defs : List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
-        attr_dict : Dict[str, Variable] = dict()
+    def _get_default_value_for_struct_(self, type_: str):
+        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
+        attr_dict: Dict[str, Variable] = dict()
         for var_def in var_defs:
             default_value = self._get_default_value(var_def.type, var_def.default_value)
-            attr_dict[var_def.name] = Variable(var_def.type, var_def.is_mutable, default_value)
+            attr_dict[var_def.name] = Variable(
+                var_def.type, var_def.is_mutable, default_value
+            )
         return Scopes.StructSymbol(type_, None, attr_dict)
-    
-
 
     def visit_struct_def(self, struct_def: StructDef):
         self.scopes.add_struct_type(struct_def.name, struct_def.attributes)
