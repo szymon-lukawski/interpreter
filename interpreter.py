@@ -3,13 +3,13 @@ from typing import Dict, Callable
 from AST import *
 from visitor import Visitor
 from scopes import Scopes
-from interpreter_types import Variable, Value
+from interpreter_types import Variable, Value, StructValue, VariantValue
 
 
 class Interpreter(Visitor):
 
     def __init__(self, max_recursion_depth: int = 100):
-        self.scopes = Scopes(self)
+        self.scopes = Scopes()
         self._max_recursion_depth = max_recursion_depth
         self.curr_recursion = 1
 
@@ -194,18 +194,33 @@ class Interpreter(Visitor):
         if self.scopes.is_struct_type_(type_):
             return self._get_default_value_for_struct_(type_)
         if self.scopes.is_variant_type_(type_):
-            raise NotImplementedError
+            return self._get_default_value_for_variant_(type_)
         raise RuntimeError(f"Type {type_} not found in any scope")
 
     def _get_default_value_for_struct_(self, type_: str):
+        """Struct value is not None when at least one of its attributes have non none value"""
         var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
         attr_dict: Dict[str, Variable] = dict()
+        not_none = False
         for var_def in var_defs:
             default_value = self._get_default_value(var_def.type, var_def.default_value)
+            if default_value:
+                not_none = True
             attr_dict[var_def.name] = Variable(
                 var_def.type, var_def.is_mutable, default_value
             )
-        return Scopes.StructSymbol(type_, None, attr_dict)
+        if not_none:
+            return StructValue(type_, attr_dict)
+        return None
+    
+    def _get_default_value_for_variant_(self, type_: str):
+        """Variant value is the first named type to have it. If none of the them have it then varaint has no value."""
+        named_types: List[NamedType] = self.scopes.get_named_types_for_(type_)
+        for named_type in named_types:
+            default_value = self._get_default_value(named_type.type, None)
+            if default_value:
+                return VariantValue(type_, default_value)
+        return None
 
     def visit_struct_def(self, struct_def: StructDef):
         self.scopes.add_struct_type(struct_def.name, struct_def.attributes)

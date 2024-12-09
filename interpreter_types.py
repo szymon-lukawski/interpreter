@@ -12,3 +12,9 @@ class Value:
         self.type = type_
         self.value = value
         
+
+class StructValue(Value):
+    pass
+
+class VariantValue(Value):
+    pass
