@@ -3,7 +3,9 @@ from typing import Dict, Callable
 from AST import *
 from visitor import Visitor
 from scopes import Scopes
-from interpreter_types import Variable, Value, StructValue, VariantValue
+from interpreter_types import Variable, Value, StructValue, VariantValue, BuiltInValue
+from multipledispatch import dispatch
+from operations import *
 
 
 class Interpreter(Visitor):
@@ -18,16 +20,6 @@ class Interpreter(Visitor):
             rv = statement.accept(self)
             if rv:
                 return rv
-
-    def visit_assignment_1(self, assignment: AssignmentStatement):
-        # 1 bez .
-        # sprawdz czy jest i ew zwróć referencję do struktury opisującej tą nazwę.
-        # sprawdz czy reszta dostępu (reszta object_accessu) pasuje do zwróconej struktury i zwróć referencję do pola które nalezy przypisać.
-        #
-        # sprawdz czy zmienna jest niemutowalna i nie ma wartości.
-        value = assignment.expr.accept(self)
-        # porównaj typy. Jesli sa zgodne lub kompatybilne to przypisz wartość
-        self.scopes.set_variable_value(assignment.obj_access.name_chain, value)
 
     def visit_assignment(self, assignment: AssignmentStatement):
         name_chain = assignment.obj_access.name_chain
@@ -56,8 +48,8 @@ class Interpreter(Visitor):
 
     def visit_while(self, while_stmt: WhileStatement):
         rv = None
-        while rv is None and while_stmt.cond.accept(
-            self
+        while (
+            rv is None and while_stmt.cond.accept(self).value
         ):  # evalued_condition = self._convert_to_int(evaled_condition)
             self.scopes.push_scope()
             rv = while_stmt.prog.accept(self)
@@ -106,34 +98,9 @@ class Interpreter(Visitor):
         self.scopes.curr_scope = curr_scope
         return rv
 
-    def visit_obj_access_1(self, obj_access: ObjectAccess):
-        symbol: Scopes.Symbol = None
-        obj_name = obj_access.name_chain[0]
-        rest_address = obj_access.name_chain[1:]
-        if isinstance(obj_name, str):
-            symbol = self.scopes.get_symbol(obj_access.name_chain[0])
-        elif isinstance(obj_access.name_chain[0], FunctionCall):
-            symbol = obj_access.name_chain[0].accept(self)
-            if len(rest_address) == 0:
-                return deepcopy(symbol)
-        else:
-            raise RuntimeError(
-                "Object access class should inly have str or func call in name chain"
-            )
-
-        # is simple type then return its value
-        # is struct type then return copy of entire struct
-        # is variant type then return copy of entire variant
-        rv = symbol.get_value(rest_address)
-        if rv is None:
-            raise RuntimeError(
-                f"Variable '{".".join(obj_access.name_chain)}' has no value"
-            )
-        return deepcopy(rv)
-
     def visit_obj_access(self, obj_access: ObjectAccess):
         # Gets value of symbol, it needs to return VariantSymbol not The currently active on for visit_visit
-        value : Value = None
+        value: Value = None
         obj_name = obj_access.name_chain[0]
         if isinstance(obj_name, str):
             variable = self.scopes.get_variable(obj_name)
@@ -146,26 +113,16 @@ class Interpreter(Visitor):
         for attr_name in rest_address:
             value = value[attr_name]
             if value is None:
-                raise RuntimeError(f"Variable '{".".join(obj_access.name_chain)}' has no value")
+                raise RuntimeError(
+                    f"Variable '{".".join(obj_access.name_chain)}' has no value"
+                )
         return deepcopy(value)  # deepcopy when getting the value of struct or variant
 
-    def visit_var_dec_1(self, var_dec):
-        self.scopes.add_variable(
-            var_dec.name,
-            var_dec.type,
-            var_dec.is_mutable,
-            (
-                var_dec.default_value.accept(self)
-                if var_dec.default_value is not None
-                else None
-            ),
-        )
-
     def visit_var_dec(self, var_dec: VariableDeclaration):
-        name : str = var_dec.name
-        type_ : str = var_dec.type
-        is_mutable : bool = var_dec.is_mutable
-        value : ASTNode = var_dec.default_value
+        name: str = var_dec.name
+        type_: str = var_dec.type
+        is_mutable: bool = var_dec.is_mutable
+        value: ASTNode = var_dec.default_value
         self.scopes.reserve_place_for_(
             name, type_, is_mutable
         )  # raises Error if the same var name has been in current scope
@@ -177,7 +134,7 @@ class Interpreter(Visitor):
         )  # raises error when value has been of not compatible types
         self.scopes.set_(name, converted)
 
-    def _convert_to_(self, target_type: str, value: Scopes.Symbol):
+    def _convert_to_(self, target_type: str, value: Value):
         # if value of Built in Types and target is {int, float, str} then easy
         # if value of Struct Type and target is {int, float, str} then raise error
         # if value of Variant Type and target is {int, float, str} then
@@ -212,7 +169,7 @@ class Interpreter(Visitor):
         if not_none:
             return StructValue(type_, attr_dict)
         return None
-    
+
     def _get_default_value_for_variant_(self, type_: str):
         """Variant value is the first named type to have it. If none of the them have it then varaint has no value."""
         named_types: List[NamedType] = self.scopes.get_named_types_for_(type_)
@@ -249,40 +206,39 @@ class Interpreter(Visitor):
     def visit_rel(self, rel_expr):
         left = rel_expr.left.accept(self)
         right = rel_expr.right.accept(self)
-        # TODO dodaj sprawdzenie typów kompatybilnych do kazdej z tych operacji porównania
         match rel_expr.operator:
             case "==":
-                return bool(left == right)
+                return eq(left, right)
             case "!=":
-                return bool(left != right)
+                return ieq(left, right)
             case "<":
-                return bool(left < right)
+                return lt(left, right)
             case ">":
-                return bool(left > right)
+                return gt(left, right)
             case "<=":
-                return bool(left <= right)
+                return lteq(left, right)
             case ">=":
-                return bool(left >= right)
+                return gteq(left, right)
 
     def visit_add(self, add_expr):
         result = add_expr.children[0].accept(self)
         for i, op in enumerate(add_expr.operations):
             if op == "+":
-                result += add_expr.children[i + 1].accept(self)
+                result = add(result, add_expr.children[i + 1].accept(self))
             elif op == "-":
-                result -= add_expr.children[i + 1].accept(self)
+                result = sub(result, add_expr.children[i + 1].accept(self))
         return result
 
     def visit_multi(self, multi_expr):
         result = multi_expr.children[0].accept(self)
         for i, op in enumerate(multi_expr.operations):
             if op == "*":
-                result *= multi_expr.children[i + 1].accept(self)
+                result = mul(result, multi_expr.children[i + 1].accept(self))
             elif op == "/":
                 right = multi_expr.children[i + 1].accept(self)
-                if right == 0:
+                if right.value == 0:
                     raise RuntimeError("Dzielenie przez  0 kwiatuszku!")
-                result /= right
+                result = div(result, multi_expr.children[i + 1].accept(self))
         return result
 
     def visit_unary(self, unary_expr):
@@ -295,10 +251,10 @@ class Interpreter(Visitor):
         return None
 
     def visit_int_literal(self, int_literal):
-        return Value('int', int_literal.value)
+        return BuiltInValue("int", int_literal.value)
 
     def visit_float_literal(self, float_literal):
-        return Value('float', float_literal.value)
+        return BuiltInValue("float", float_literal.value)
 
     def visit_str_literal(self, str_literal):
-        return Value('str', str_literal.value)
+        return BuiltInValue("str", str_literal.value)
