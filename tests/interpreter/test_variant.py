@@ -91,7 +91,7 @@ def test_variant_as_param_type():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["y"])).value == 7
+    assert i.visit_obj_access(ObjectAccess(["y"])).value.value == 7
 
 
 def test_assignment_of_two_different_types_to_variant():
