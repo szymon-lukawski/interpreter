@@ -142,9 +142,7 @@ class Interpreter(Visitor):
 
     def visit_while(self, while_stmt: WhileStatement):
         rv = None
-        while (
-            rv is None and while_stmt.cond.accept(self).bool()
-        ): 
+        while rv is None and while_stmt.cond.accept(self).bool():
             self.scopes.push_scope()
             rv = while_stmt.prog.accept(self)
             self.scopes.pop_scope()
@@ -187,7 +185,8 @@ class Interpreter(Visitor):
         self.curr_recursion += 1
         if self.curr_recursion > self._max_recursion_depth:
             raise RuntimeError("Maximal recursion depth reached!")
-        rv = func_def.prog.accept(self)
+        rv = self._convert_to_(func_def.type, func_def.prog.accept(self))
+
         self.curr_recursion -= 1
         self.scopes.pop_scope()
         self.scopes.curr_scope = curr_scope
@@ -217,43 +216,42 @@ class Interpreter(Visitor):
         type_: str = var_dec.type
         is_mutable: bool = var_dec.is_mutable
         value: ASTNode = var_dec.default_value
-        self.scopes.reserve_place_for_(
-            name, type_, is_mutable
-        )  # raises Error if the same var name has been in current scope
-        default_value = self._get_default_value(
-            type_, value
-        )  # raises error when error in var_dec attributes
-        converted = self._convert_to_(
-            type_, default_value
-        )  # raises error when value has been of not compatible types
-        self.scopes.set_(name, converted)
+        self.scopes.reserve_place_for_(name, type_, is_mutable)
+        if default_value := self._get_default_value(type_, value):
+            converted = self._convert_to_(type_, default_value)
+            self.scopes.set_(name, converted)
 
     def _convert_to_(self, target_type: str, value: Value):
-        # if value of Built in Types and target is {int, float, str} then easy
-        # if value of Struct Type and target is {int, float, str} then raise error
-        # if value of Variant Type and target is {int, float, str} then
-        if value is None:
+        if value is None and target_type == "null_type":
             return None
+        if value is None:
+            raise RuntimeError("Can not convert no value to something else!")
         if value.type == target_type:
             return value
         if self.scopes.is_variant_type_(value.type):
             return self._convert_to_(target_type, value.value)
         if self.scopes.is_struct_type_(value.type):
             if self.scopes.is_struct_type_(target_type):
-                raise RuntimeError(f"Can not convert struct type '{value.type}' to struct type '{target_type}'")
+                raise RuntimeError(
+                    f"Can not convert struct type '{value.type}' to struct type '{target_type}'"
+                )
             if self.scopes.is_built_in_type_(target_type):
-                raise RuntimeError(f"Can not convert struct type '{value.type}' to builtin type '{target_type}'")
+                raise RuntimeError(
+                    f"Can not convert struct type '{value.type}' to builtin type '{target_type}'"
+                )
             if self.scopes.is_variant_type_(target_type):
                 named_types = self.scopes.get_named_types_for_(target_type)
                 for named_type in named_types:
                     if value.type == named_type.type:
-                        return VariantValue(named_type.type, value, named_type.name)
-                raise RuntimeError(f"No matching struct variant option while converting from struct '{value.type}' to variant type '{target_type}'")
+                        return VariantValue(target_type, value, named_type.name)
+                raise RuntimeError(
+                    f"No matching struct variant option while converting from struct '{value.type}' to variant type '{target_type}'"
+                )
         if self.scopes.is_built_in_type_(value.type):
             if target_type == "str":
-                if value.type == 'int':
+                if value.type == "int":
                     value.value = str(value.value)
-                elif value.type == 'float':
+                elif value.type == "float":
                     value.value = f"{value.value:.4f}"
                 else:
                     raise RuntimeError(
@@ -277,7 +275,7 @@ class Interpreter(Visitor):
                     )
                 value.type = "int"
                 return value
-            if target_type == 'float':
+            if target_type == "float":
                 if value.type == "int":
                     value.value = float(value.value)
                 if value.type == "str":
@@ -287,20 +285,29 @@ class Interpreter(Visitor):
                         raise RuntimeError(
                             f"Can not convert '{value.value}' str into float"
                         )
-                value.type = 'float'
+                value.type = "float"
                 return value
             if self.scopes.is_variant_type_(target_type):
                 # TODO add compatible types - for example traverse named types second time - if there is no direct type then pick first built in
                 named_types = self.scopes.get_named_types_for_(target_type)
                 built_in_named_type = None
                 for named_type in named_types:
-                    if built_in_named_type is not None and self.scopes.is_built_in_type_(named_type.type):
+                    if (
+                        built_in_named_type is not None
+                        and self.scopes.is_built_in_type_(named_type.type)
+                    ):
                         built_in_named_type = named_type
                     if value.type == named_type.type:
                         return VariantValue(named_type.type, value, named_type.name)
                 if built_in_named_type:
-                    return VariantValue(built_in_named_type.type, self._convert_to_(built_in_named_type.type, value), built_in_named_type.name)
-                raise RuntimeError(f"There is no built in type in named types of variant '{target_type}' so can not convert built in of type '{value.type}'")
+                    return VariantValue(
+                        built_in_named_type.type,
+                        self._convert_to_(built_in_named_type.type, value),
+                        built_in_named_type.name,
+                    )
+                raise RuntimeError(
+                    f"There is no built in type in named types of variant '{target_type}' so can not convert built in of type '{value.type}'"
+                )
             if self.scopes.is_struct_type_(target_type):
                 raise RuntimeError("Can not convert built in type into struct type. ")
             raise RuntimeError("Hmmm sth went wrong?")
