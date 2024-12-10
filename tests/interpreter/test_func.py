@@ -758,5 +758,8 @@ def test_function_call_does_not_mess_correct_variable_visability():
     i = Interpreter()
     ast.accept(i)
     with pytest.raises(RuntimeError) as e:
-        i.visit_obj_access(ObjectAccess(['a']))
+        i.visit_obj_access(ObjectAccess(["a"]))
     assert str(e.value) == "Variable 'a' not found in any scope"
+
+
+

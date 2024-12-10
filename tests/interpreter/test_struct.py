@@ -350,3 +350,60 @@ def test_struct_value_has_value_when_any_attribute_has_value():
     i = Interpreter()
     ast.accept(i)
     assert i.visit_obj_access(ObjectAccess(["c", "b", "a", "x"])).value == 1234
+
+
+def test_cyclic_struct_no_default_value_for_expression():
+    """CyclicStruct : struct begin cs : CyclicStruct; end cs : CyclicStruct;"""
+    ast = Program(
+        [
+            StructDef(
+                "CyclicStruct", [VariableDeclaration("cs", "CyclicStruct", False)]
+            ),
+            VariableDeclaration("cs", "CyclicStruct", False),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "Max struct depth reached. Probably you have cycle dependency in type 'CyclicStruct'"
+    )
+
+
+def test_A_depends_on_B_but_B_depends_on_A():
+    """A : struct begin b : B; end B : struct begin a: A; end x : A;"""
+    ast = Program(
+        [
+            StructDef(
+                "CyclicStruct", [VariableDeclaration("cs", "CyclicStruct", False)]
+            ),
+            VariableDeclaration("cs", "CyclicStruct", False),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert (
+        "Max struct depth reached. Probably you have cycle dependency in type"
+        in str(e.value)
+    )
+
+
+def test_A_depends_on_B_depends_on_C_depends_on_A():
+    """A : struct begin b : B; end B : struct begin c: C; end C : struct begin a : A; end x : A;"""
+    ast = Program(
+        [
+            StructDef(
+                "CyclicStruct", [VariableDeclaration("cs", "CyclicStruct", False)]
+            ),
+            VariableDeclaration("cs", "CyclicStruct", False),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert (
+        "Max struct depth reached. Probably you have cycle dependency in type"
+        in str(e.value)
+    )

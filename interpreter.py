@@ -10,10 +10,11 @@ from operations import *
 
 class Interpreter(Visitor):
 
-    def __init__(self, max_recursion_depth: int = 100):
+    def __init__(self, max_recursion_depth: int = 100, max_struct_depth : int = 100):
         self.scopes = Scopes()
         self._max_recursion_depth = max_recursion_depth
         self.curr_recursion = 1
+        self.max_struct_depth = max_struct_depth
 
     def visit_program(self, program):
         for statement in program.children:
@@ -122,7 +123,7 @@ class Interpreter(Visitor):
         raise RuntimeError(f"Attribute '{attr_name}' not found in type '{type_}'")
 
     def visit_param(self, param: Param):
-        return super().visit_param(param)
+        pass
 
     def visit_visit(self, visit_statement: VisitStatement):
         variant_value = visit_statement.obj.accept(self)
@@ -166,10 +167,7 @@ class Interpreter(Visitor):
         return return_stmt.expr.accept(self)
 
     def visit_case_section(self, case_section: CaseSection):
-        return {
-            "type": case_section.type,
-            "program": case_section.program,
-        }
+        pass
 
     def visit_func_call(self, func_call: FunctionCall):
         curr_scope = self.scopes.curr_scope
@@ -196,13 +194,12 @@ class Interpreter(Visitor):
         return rv
 
     def visit_obj_access(self, obj_access: ObjectAccess):
-        # Gets value of symbol, it needs to return VariantSymbol not The currently active on for visit_visit
         value: Value = None
         obj_name = obj_access.name_chain[0]
         if isinstance(obj_name, str):
             variable = self.scopes.get_variable(obj_name)
             value = variable.value
-        elif isinstance(obj_access.name_chain[0], FunctionCall):
+        elif isinstance(obj_name, FunctionCall):
             value = obj_name.accept(self)
         rest_address = obj_access.name_chain[1:]
         if value is None:
@@ -213,7 +210,7 @@ class Interpreter(Visitor):
                 raise RuntimeError(
                     f"Variable '{".".join(obj_access.name_chain)}' has no value"
                 )
-        return deepcopy(value)  # deepcopy when getting the value of struct or variant
+        return deepcopy(value)
 
     def visit_var_dec(self, var_dec: VariableDeclaration):
         name: str = var_dec.name
@@ -237,6 +234,11 @@ class Interpreter(Visitor):
         # if value of Variant Type and target is {int, float, str} then
         if value is None:
             return None
+        if self.scopes.is_built_in_type_(value.type):
+            if target_type == "str":
+                value.type = 'str'
+                value.value = str(value.value)
+                return value
         if self.scopes.is_variant_type_(target_type):
             named_types = self.scopes.get_named_types_for_(target_type)
             for named_type in named_types:
@@ -244,27 +246,29 @@ class Interpreter(Visitor):
                     return VariantValue(named_type.type, value, named_type.name)
         return value
 
-    def _get_default_value(self, type_: str, value: ASTNode):
+    def _get_default_value(self, type_: str, value: ASTNode, depth = 0):
         if value is not None:
             return value.accept(self)
-        return self._get_default_value_for_(type_)
+        return self._get_default_value_for_(type_, depth)
 
-    def _get_default_value_for_(self, type_: str):
+    def _get_default_value_for_(self, type_: str, depth : int = 0):
         if self.scopes.is_built_in_type_(type_):
             return None
         if self.scopes.is_struct_type_(type_):
-            return self._get_default_value_for_struct_(type_)
+            return self._get_default_value_for_struct_(type_, depth)
         if self.scopes.is_variant_type_(type_):
             return self._get_default_value_for_variant_(type_)
         raise RuntimeError(f"Type '{type_}' not found in any scope")
 
-    def _get_default_value_for_struct_(self, type_: str):
+    def _get_default_value_for_struct_(self, type_: str, depth = 0):
         """Struct value is not None when at least one of its attributes have non none value"""
+        if depth > self.max_struct_depth:
+            raise RuntimeError(f"Max struct depth reached. Probably you have cycle dependency in type '{type_}'")
         var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
         attr_dict: Dict[str, Variable] = dict()
         not_none = False
         for var_def in var_defs:
-            default_value = self._get_default_value(var_def.type, var_def.default_value)
+            default_value = self._get_default_value(var_def.type, var_def.default_value, depth + 1)
             if default_value:
                 not_none = True
             attr_dict[var_def.name] = Variable(
@@ -275,14 +279,7 @@ class Interpreter(Visitor):
         return None
 
     def _get_default_value_for_variant_(self, type_: str):
-        """Variant value is the first named type to have it. If none of the them have it then varaint has no value."""
         return None
-        # named_types: List[NamedType] = self.scopes.get_named_types_for_(type_)
-        # for named_type in named_types:
-        #     default_value = self._get_default_value(named_type.type, None)
-        #     if default_value:
-        #         return VariantValue(type_, default_value)
-        # return None
 
     def visit_struct_def(self, struct_def: StructDef):
         self.scopes.add_struct_type(struct_def.name, struct_def.attributes)
