@@ -98,11 +98,7 @@ class Interpreter(Visitor):
         return False
 
     def variable_needs_extending(self, variable: Variable, attr_name: str):
-        if self.scopes.is_struct_type_(variable.type):
-            return attr_name not in variable.value.value.keys()
-        elif self.scopes.is_variant_type_(variable.type):
-            return attr_name not in variable.value.value.value.keys()
-        raise NotImplementedError
+        return not variable.value.is_attr_in_(attr_name)
 
     def extend_(self, variable: Variable, attr_name):
         attr_def = None

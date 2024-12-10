@@ -42,6 +42,9 @@ class StructValue(Value):
     
     def get_inner_variable(self, attr_name):
         return self.value[attr_name]
+    
+    def is_attr_in_(self, attr_name):
+        return attr_name in self.value.keys()
 
 
 class VariantValue(Value):
@@ -57,3 +60,6 @@ class VariantValue(Value):
 
     def get_inner_variable(self, attr_name):
         return self.value.get_inner_variable(attr_name)
+    
+    def is_attr_in_(self, attr_name):
+        return self.value.is_attr_in_(attr_name)
