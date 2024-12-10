@@ -21,38 +21,79 @@ class Interpreter(Visitor):
             if rv:
                 return rv
 
+    def simple_assignment(self, name, target_type, expr):
+        value = self._convert_to_(target_type, expr.accept(self))
+        self.scopes.set_(name, value)
+        return
+
+    def is_simple_assignment(self, name_chain):
+        return len(name_chain) == 1
+
+    def complex_assignment(
+        self, variable: Variable, rest_addres: list[str], expr: Expr
+    ):
+        for attr_name in rest_addres:
+            variable = self.get_inner_variable(variable, attr_name)
+        variable.value = self._convert_to_(variable.type, expr.accept(self))
+
+    def get_inner_variable(self, variable: Variable, attr_name: str):
+        attr_def = None
+        if not variable.can_variable_be_updated():
+            raise RuntimeError("Trying to reassign value to a non-mutable attribute.")
+        if not variable.is_initialised():
+            if self.scopes.is_built_in_type_(variable.type):
+                raise RuntimeError("Simple types do not have attributes!")
+            if self.scopes.is_struct_type_(variable.type):
+                variable.value = StructValue(variable.type, dict())
+                attr_def = self.get_attr_def_from_type_(attr_name, variable.type)
+            elif self.scopes.is_variant_type_(variable.type):
+                named_types = self.scopes.get_named_types_for_(variable.type)
+                for named_type in named_types:
+                    if self.scopes.is_struct_type_(named_type.type):
+                        if attr_def := self.check_attr_name_in_struct_type(
+                            attr_name, named_type.type
+                        ):
+                            variable.value = VariantValue(
+                                variable.type,
+                                StructValue(named_type.type, dict()),
+                                named_type.name,
+                            )
+                            break
+            else:
+                raise RuntimeError(f"Type '{variable.type}' not found")
+
+        if self.variable_needs_extending(variable, attr_name):
+            self.extend_(variable, attr_def)
+
+        if self.scopes.is_struct_type_(variable.type):
+            variable = variable.value.value[attr_name]
+        elif self.scopes.is_variant_type_(variable.type):
+            variable = variable.value.value.value[attr_name]
+        return variable
+
     def visit_assignment(self, assignment: AssignmentStatement):
         name_chain = assignment.obj_access.name_chain
         name = name_chain[0]
         variable = self.scopes.get_variable(name)
-        if len(name_chain) == 1:
-            value = self._convert_to_(variable.type, assignment.expr.accept(self))
-            self.scopes.set_(name, value)
+        if self.is_simple_assignment(name_chain):
+            self.simple_assignment(name, variable.type, assignment.expr)
             return
-        for attr_name in name_chain[1:]:
-            if not variable.can_variable_be_updated():
-                raise RuntimeError(
-                    "Trying to reassign value to a non-mutable attribute."
-                )
-            if not variable.is_initialised():
-                if self.scopes.is_built_in_type_(variable.type):
-                    raise RuntimeError("Simple types do not have attributes!")
-                if self.scopes.is_struct_type_(variable.type):
-                    variable.value = StructValue(variable.type, dict())
-                elif self.scopes.is_variant_type_(variable.type):
-                    raise NotImplementedError
-                    variable.value = VariantValue(variable.value, None, None)
-                else:
-                    raise RuntimeError(f"Type '{variable.type}' not found")
-            attr_def = self.get_attr_def_from_type_(attr_name, variable.type)
-            if self.variable_needs_extending(variable, attr_name):
-                self.extend_(variable, attr_def)
-            variable = variable.value.value[attr_name]
+        self.complex_assignment(variable, name_chain[1:], assignment.expr)
 
-        variable.value = self._convert_to_(variable.type, assignment.expr.accept(self))
+    def check_attr_name_in_struct_type(self, attr_name: str, struct_type: str):
+        if self.scopes.is_struct_type_(struct_type):
+            attr_defs = self.scopes.get_var_defs_for_(struct_type)
+            for attr_def in attr_defs:
+                if attr_name == attr_def.name:
+                    return attr_def
+        return False
 
     def variable_needs_extending(self, variable: Variable, attr_name: str):
-        return attr_name not in variable.value.value.keys()
+        if self.scopes.is_struct_type_(variable.type):
+            return attr_name not in variable.value.value.keys()
+        elif self.scopes.is_variant_type_(variable.type):
+            return attr_name not in variable.value.value.value.keys()
+        raise NotImplementedError
 
     def extend_(self, variable: Variable, attr_def: VariableDeclaration):
         variable.value.add_attr(

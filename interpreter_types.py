@@ -47,3 +47,6 @@ class VariantValue(Value):
 
     def __getitem__(self, attr_name):
         return self.value.value[attr_name]
+    
+    def add_attr(self, attr_name, variable):
+        self.value.value[attr_name] = variable
