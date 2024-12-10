@@ -36,34 +36,46 @@ class Interpreter(Visitor):
             variable = self.get_inner_variable(variable, attr_name)
         variable.value = self._convert_to_(variable.type, expr.accept(self))
 
+    def find_matching_named_type_with_(
+        self, attr_name: str, named_types: list[NamedType], variant_type: str
+    ):
+        for named_type in named_types:
+            if self.scopes.is_struct_type_(
+                named_type.type
+            ) and self.check_attr_name_in_struct_type(attr_name, named_type.type):
+                return named_type
+        raise RuntimeError(
+            f"No matching struct type with attribute '{attr_name}' in variant '{variant_type}'"
+        )
+
+    def initialise_empty_complex_variable(self, variable: Variable, attr_name: str):
+        if self.scopes.is_built_in_type_(variable.type):
+            raise RuntimeError("Simple types do not have attributes!")
+        if self.scopes.is_struct_type_(variable.type):
+            variable.value = StructValue(variable.type, dict())
+            return
+        elif self.scopes.is_variant_type_(variable.type):
+            named_types = self.scopes.get_named_types_for_(variable.type)
+            matched_named_type = self.find_matching_named_type_with_(
+                attr_name, named_types, variable.type
+            )
+            variable.value = VariantValue(
+                variable.type,
+                StructValue(matched_named_type.type, dict()),
+                matched_named_type.name,
+            )
+            return
+
+        raise RuntimeError(f"Type '{variable.type}' not found")
+
     def get_inner_variable(self, variable: Variable, attr_name: str):
-        attr_def = None
         if not variable.can_variable_be_updated():
             raise RuntimeError("Trying to reassign value to a non-mutable attribute.")
         if not variable.is_initialised():
-            if self.scopes.is_built_in_type_(variable.type):
-                raise RuntimeError("Simple types do not have attributes!")
-            if self.scopes.is_struct_type_(variable.type):
-                variable.value = StructValue(variable.type, dict())
-                attr_def = self.get_attr_def_from_type_(attr_name, variable.type)
-            elif self.scopes.is_variant_type_(variable.type):
-                named_types = self.scopes.get_named_types_for_(variable.type)
-                for named_type in named_types:
-                    if self.scopes.is_struct_type_(named_type.type):
-                        if attr_def := self.check_attr_name_in_struct_type(
-                            attr_name, named_type.type
-                        ):
-                            variable.value = VariantValue(
-                                variable.type,
-                                StructValue(named_type.type, dict()),
-                                named_type.name,
-                            )
-                            break
-            else:
-                raise RuntimeError(f"Type '{variable.type}' not found")
+            self.initialise_empty_complex_variable(variable, attr_name)
 
         if self.variable_needs_extending(variable, attr_name):
-            self.extend_(variable, attr_def)
+            self.extend_(variable, attr_name)
 
         if self.scopes.is_struct_type_(variable.type):
             variable = variable.value.value[attr_name]
@@ -95,7 +107,12 @@ class Interpreter(Visitor):
             return attr_name not in variable.value.value.value.keys()
         raise NotImplementedError
 
-    def extend_(self, variable: Variable, attr_def: VariableDeclaration):
+    def extend_(self, variable: Variable, attr_name):
+        attr_def = None
+        if self.scopes.is_struct_type_(variable.type):
+            attr_def = self.get_attr_def_from_type_(attr_name, variable.type)
+        elif self.scopes.is_variant_type_(variable.type):
+            attr_def = self.get_attr_def_from_type_(attr_name, variable.value.value.type)
         variable.value.add_attr(
             attr_def.name, Variable(attr_def.type, attr_def.is_mutable, None)
         )
