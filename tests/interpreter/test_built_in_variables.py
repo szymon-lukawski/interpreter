@@ -33,16 +33,16 @@ def test_getting_value_of_initialised_variable_float():
     ast = Program([VariableDeclaration("a", "int", False, FloatLiteral(1.2))])
     i = Interpreter()
     ast.accept(i)
-    assert 1.2 == i.visit_obj_access(ObjectAccess(["a"])).value
+    assert 1 == i.visit_obj_access(ObjectAccess(["a"])).value
 
 
 def test_getting_value_of_initialised_variable_str():
     """a : int = 'Ala';"""
     ast = Program([VariableDeclaration("a", "int", False, StrLiteral("Ala"))])
     i = Interpreter()
-    ast.accept(i)
-    assert "Ala" == i.visit_obj_access(ObjectAccess(["a"])).value
-
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert str(e.value) == "Can not convert 'Ala' str into int"
 
 def test_setting_value_of_non_mutable_variable_int():
     """a : int; a = 1;"""

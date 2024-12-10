@@ -287,21 +287,12 @@ def test_struct_with_one_default_value():
 def test_asigning_int_to_struct_type():
     """A : struct begin end a : A = 1;"""
     ast = Program(
-        [
-            StructDef(
-                "A",
-                [
-                    VariableDeclaration("x", "int", True),
-                    VariableDeclaration("y", "str", True, StrLiteral("BOOM")),
-                ],
-            ),
-            VariableDeclaration("a", "A", False),
-        ]
+        [StructDef("A", []), VariableDeclaration("a", "A", False, IntLiteral(1))]
     )
     i = Interpreter()
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)  # Type error
-    assert "Type" in str(e.value)
+    assert str(e.value)=="Can not convert built in type into struct type. "
 
 
 def test_asigning_A_to_B():
@@ -318,7 +309,7 @@ def test_asigning_A_to_B():
     i = Interpreter()
     with pytest.raises(RuntimeError) as e:
         ast.accept(i)  # Type error
-    assert "Type" in str(e.value)
+    assert str(e.value) == "Can not convert struct type 'B' to struct type 'A'"
 
 
 def test_assignment_of_nested_types_using_one_statement():
