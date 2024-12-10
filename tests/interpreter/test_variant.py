@@ -239,3 +239,19 @@ def test_binary_tree():
     i = Interpreter()
     ast.accept(i)
     assert i.visit_obj_access(ObjectAccess(["sum"])).value == 5
+
+
+# if there is a struct type in variant option then in order to assign to attr value first assign initialised struct
+def test_assignment_to_not_initialised_variant_sub_attr_sub_attribute_matches():
+    """A: struct begin x: int; end V : variant begin a : A; end v : V; v.x = 123;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            VariantDef("V", [NamedType("a", "A")]),
+            VariableDeclaration("v", "V", False),
+            AssignmentStatement(ObjectAccess(["v", "x"]), IntLiteral(123)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["v", "x"])).value.value == 123
