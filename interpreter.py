@@ -238,8 +238,15 @@ class Interpreter(Visitor):
             return value
         if self.scopes.is_built_in_type_(value.type):
             if target_type == "str":
+                if value.type == 'int':
+                    value.value = str(value.value)
+                elif value.type == 'float':
+                    value.value = f"{value.value:.4f}"
+                else:
+                    raise RuntimeError(
+                        f"Hmmm something went wrong when converting from {value.type} into str"
+                    )
                 value.type = "str"
-                value.value = str(value.value)
                 return value
             if target_type == "int":
                 if value.type == "float":
