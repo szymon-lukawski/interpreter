@@ -253,7 +253,7 @@ class Interpreter(Visitor):
                     value.value = int(value.value)
                 elif value.type == "str":
                     try:
-                        value.value = str(value.value)
+                        value.value = int(float(value.value))
                     except Exception:
                         raise RuntimeError(
                             f"Can not convert '{value.value}' str into int"
@@ -264,6 +264,19 @@ class Interpreter(Visitor):
                     )
                 value.type = "int"
                 return value
+            if target_type == 'float':
+                if value.type == "int":
+                    value.value = float(value.value)
+                if value.type == "str":
+                    try:
+                        value.value = float(value.value)
+                    except Exception:
+                        raise RuntimeError(
+                            f"Can not convert '{value.value}' str into float"
+                        )
+                value.type = 'float'
+                return value
+            raise RuntimeError("Can not convert built in type into not built in type")
 
         if self.scopes.is_variant_type_(target_type):
             named_types = self.scopes.get_named_types_for_(target_type)
