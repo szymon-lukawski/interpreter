@@ -91,7 +91,7 @@ def test_variant_as_param_type():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["y"])).value.value == 7
+    assert i.visit_obj_access(ObjectAccess(["y"])).value == 7
 
 
 def test_assignment_of_two_different_types_to_variant():
@@ -241,7 +241,6 @@ def test_binary_tree():
     assert i.visit_obj_access(ObjectAccess(["sum"])).value == 5
 
 
-# if there is a struct type in variant option then in order to assign to attr value first assign initialised struct
 def test_assignment_to_not_initialised_variant_sub_attr_sub_attribute_matches():
     """A: struct begin x: int; end V : variant begin a : A; end v : V; v.x = 123;"""
     ast = Program(
@@ -254,4 +253,21 @@ def test_assignment_to_not_initialised_variant_sub_attr_sub_attribute_matches():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["v", "x"])).value.value == 123
+    assert i.visit_obj_access(ObjectAccess(["v", "x"])).value == 123
+
+
+def test_complex_assignment_both_coukd_match_matched_first():
+    """A: struct begin x: int; end B: struct begin x: int; end V : variant begin a : A; b : B; end v : V; v.x = 123;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            VariantDef("V", [NamedType("a", "A")]),
+            VariableDeclaration("v", "V", False),
+            AssignmentStatement(ObjectAccess(["v", "x"]), IntLiteral(123)),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["v", "x"])).value == 123
+    assert i.visit_obj_access(ObjectAccess(["v"])).get_concrete_type() == 'A'
+

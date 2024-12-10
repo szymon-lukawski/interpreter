@@ -39,13 +39,12 @@ class StructValue(Value):
     def add_attr(self, attr_name, variable):
         self.value[attr_name] = variable
 
-    
     def get_inner_variable(self, attr_name):
         return self.value[attr_name]
-    
+
     def is_attr_in_(self, attr_name):
         return attr_name in self.value.keys()
-    
+
     def get_concrete_type(self):
         return self.type
 
@@ -56,14 +55,14 @@ class VariantValue(Value):
         self.name = name
 
     def __getitem__(self, attr_name):
-        return self.value.value[attr_name]
-    
+        return self.value[attr_name]
+
     def add_attr(self, attr_name, variable):
         self.value.value[attr_name] = variable
 
     def get_inner_variable(self, attr_name):
         return self.value.get_inner_variable(attr_name)
-    
+
     def is_attr_in_(self, attr_name):
         return self.value.is_attr_in_(attr_name)
 

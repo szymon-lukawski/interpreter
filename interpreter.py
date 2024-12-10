@@ -101,7 +101,9 @@ class Interpreter(Visitor):
         return not variable.value.is_attr_in_(attr_name)
 
     def extend_(self, variable: Variable, attr_name):
-        attr_def = self.get_attr_def_from_type_(attr_name, variable.value.get_concrete_type())
+        attr_def = self.get_attr_def_from_type_(
+            attr_name, variable.value.get_concrete_type()
+        )
         variable.value.add_attr(
             attr_def.name, Variable(attr_def.type, attr_def.is_mutable, None)
         )
