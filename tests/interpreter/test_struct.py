@@ -350,4 +350,3 @@ def test_struct_value_has_value_when_any_attribute_has_value():
     i = Interpreter()
     ast.accept(i)
     assert i.visit_obj_access(ObjectAccess(["c", "b", "a", "x"])).value == 1234
-    

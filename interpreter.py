@@ -31,7 +31,9 @@ class Interpreter(Visitor):
             return
         for attr_name in name_chain[1:]:
             if not variable.can_variable_be_updated():
-                raise RuntimeError("Trying to reassign value to a non-mutable attribute.")
+                raise RuntimeError(
+                    "Trying to reassign value to a non-mutable attribute."
+                )
             if not variable.is_initialised():
                 if self.scopes.is_built_in_type_(variable.type):
                     raise RuntimeError("Simple types do not have attributes!")
@@ -40,7 +42,7 @@ class Interpreter(Visitor):
                 elif self.scopes.is_variant_type_(variable.type):
                     raise NotImplementedError
                     variable.value = VariantValue(variable.value, None, None)
-                else: 
+                else:
                     raise RuntimeError(f"Type '{variable.type}' not found")
             attr_def = self.get_attr_def_from_type_(attr_name, variable.type)
             if self.variable_needs_extending(variable, attr_name):
@@ -49,15 +51,13 @@ class Interpreter(Visitor):
 
         variable.value = self._convert_to_(variable.type, assignment.expr.accept(self))
 
-
-
-    def variable_needs_extending(self, variable : Variable, attr_name: str):
+    def variable_needs_extending(self, variable: Variable, attr_name: str):
         return attr_name not in variable.value.value.keys()
 
-    def extend_(self, variable : Variable, attr_def : VariableDeclaration):
-        variable.value.add_attr(attr_def.name, Variable(attr_def.type, attr_def.is_mutable, None))
-
-
+    def extend_(self, variable: Variable, attr_def: VariableDeclaration):
+        variable.value.add_attr(
+            attr_def.name, Variable(attr_def.type, attr_def.is_mutable, None)
+        )
 
     def get_attr_def_from_type_(self, attr_name, type_):
         var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
@@ -72,7 +72,6 @@ class Interpreter(Visitor):
                 return True
         raise RuntimeError(f"Attribute '{attr_name}' not found in type '{type_}'")
 
-
     def visit_param(self, param: Param):
         return super().visit_param(param)
 
@@ -82,7 +81,9 @@ class Interpreter(Visitor):
         for cs in visit_statement.case_sections:
             if cs.type == variant_value.name:
                 self.scopes.push_scope()
-                self.scopes.add_variable(variant_value.name, variant_value.type, False, variant_value.value)
+                self.scopes.add_variable(
+                    variant_value.name, variant_value.type, False, variant_value.value
+                )
                 rv = cs.program.accept(self)
                 self.scopes.pop_scope()
                 return rv
@@ -130,7 +131,12 @@ class Interpreter(Visitor):
         self.scopes.curr_scope = func_scope_idx
         self.scopes.push_scope()
         for param, arg in zip(func_def.params, args):
-            self.scopes.add_variable(param.name, param.type, param.is_mutable, self._convert_to_(param.type, arg))
+            self.scopes.add_variable(
+                param.name,
+                param.type,
+                param.is_mutable,
+                self._convert_to_(param.type, arg),
+            )
         self.curr_recursion += 1
         if self.curr_recursion > self._max_recursion_depth:
             raise RuntimeError("Maximal recursion depth reached!")

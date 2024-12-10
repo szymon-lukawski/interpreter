@@ -26,7 +26,8 @@ class BuiltInValue(Value):
 
 class StructValue(Value):
     """Holds only initialised attributes"""
-    def __init__(self, type_ : str, value : dict[str, Variable]):
+
+    def __init__(self, type_: str, value: dict[str, Variable]):
         super().__init__(type_, value)
 
     def __getitem__(self, attr_name):
@@ -40,7 +41,9 @@ class StructValue(Value):
 
 
 class VariantValue(Value):
-    def __init__(self, type_ : str, value, name):
+    def __init__(self, type_: str, value, name):
         super().__init__(type_, value)
         self.name = name
 
+    def __getitem__(self, attr_name):
+        return self.value.value[attr_name]
