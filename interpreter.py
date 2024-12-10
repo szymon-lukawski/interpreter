@@ -10,7 +10,7 @@ from operations import *
 
 class Interpreter(Visitor):
 
-    def __init__(self, max_recursion_depth: int = 100, max_struct_depth : int = 100):
+    def __init__(self, max_recursion_depth: int = 100, max_struct_depth: int = 100):
         self.scopes = Scopes()
         self._max_recursion_depth = max_recursion_depth
         self.curr_recursion = 1
@@ -234,11 +234,30 @@ class Interpreter(Visitor):
         # if value of Variant Type and target is {int, float, str} then
         if value is None:
             return None
+        if value.type == target_type:
+            return value
         if self.scopes.is_built_in_type_(value.type):
             if target_type == "str":
-                value.type = 'str'
+                value.type = "str"
                 value.value = str(value.value)
                 return value
+            if target_type == "int":
+                if value.type == "float":
+                    value.value = int(value.value)
+                elif value.type == "str":
+                    try:
+                        value.value = str(value.value)
+                    except Exception:
+                        raise RuntimeError(
+                            f"Can not convert '{value.value}' str into int"
+                        )
+                else:
+                    raise RuntimeError(
+                        f"Hmmm something went wrong when converting from {value.type} into int"
+                    )
+                value.type = "int"
+                return value
+
         if self.scopes.is_variant_type_(target_type):
             named_types = self.scopes.get_named_types_for_(target_type)
             for named_type in named_types:
@@ -246,12 +265,12 @@ class Interpreter(Visitor):
                     return VariantValue(named_type.type, value, named_type.name)
         return value
 
-    def _get_default_value(self, type_: str, value: ASTNode, depth = 0):
+    def _get_default_value(self, type_: str, value: ASTNode, depth=0):
         if value is not None:
             return value.accept(self)
         return self._get_default_value_for_(type_, depth)
 
-    def _get_default_value_for_(self, type_: str, depth : int = 0):
+    def _get_default_value_for_(self, type_: str, depth: int = 0):
         if self.scopes.is_built_in_type_(type_):
             return None
         if self.scopes.is_struct_type_(type_):
@@ -260,15 +279,19 @@ class Interpreter(Visitor):
             return self._get_default_value_for_variant_(type_)
         raise RuntimeError(f"Type '{type_}' not found in any scope")
 
-    def _get_default_value_for_struct_(self, type_: str, depth = 0):
+    def _get_default_value_for_struct_(self, type_: str, depth=0):
         """Struct value is not None when at least one of its attributes have non none value"""
         if depth > self.max_struct_depth:
-            raise RuntimeError(f"Max struct depth reached. Probably you have cycle dependency in type '{type_}'")
+            raise RuntimeError(
+                f"Max struct depth reached. Probably you have cycle dependency in type '{type_}'"
+            )
         var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
         attr_dict: Dict[str, Variable] = dict()
         not_none = False
         for var_def in var_defs:
-            default_value = self._get_default_value(var_def.type, var_def.default_value, depth + 1)
+            default_value = self._get_default_value(
+                var_def.type, var_def.default_value, depth + 1
+            )
             if default_value:
                 not_none = True
             attr_dict[var_def.name] = Variable(

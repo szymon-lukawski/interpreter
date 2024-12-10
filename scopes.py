@@ -42,7 +42,7 @@ class Scopes:
                 else:
                     raise RuntimeError("Trying to reassign value to non mutable variable")
                 return
-        raise RuntimeError(f"Variable '{name}' not found in any scope")
+        raise RuntimeError(f"Trying to assign value to not defined variable '{name}'")
     
     def add_variable(self, name, type_, is_mutable, value):
         self.reserve_place_for_(name, type_, is_mutable)
