@@ -127,7 +127,8 @@ class Interpreter(Visitor):
 
     def visit_visit(self, visit_statement: VisitStatement):
         variant_value = visit_statement.obj.accept(self)
-        # validate variant_value is of type variant
+        if not self.scopes.is_variant_type_(variant_value.type):
+            raise RuntimeError("There is no variant type in visit")
         for cs in visit_statement.case_sections:
             if cs.type == variant_value.name:
                 self.scopes.push_scope()
