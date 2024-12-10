@@ -94,18 +94,14 @@ class Interpreter(Visitor):
             attr_defs = self.scopes.get_var_defs_for_(struct_type)
             for attr_def in attr_defs:
                 if attr_name == attr_def.name:
-                    return attr_def
+                    return True
         return False
 
     def variable_needs_extending(self, variable: Variable, attr_name: str):
         return not variable.value.is_attr_in_(attr_name)
 
     def extend_(self, variable: Variable, attr_name):
-        attr_def = None
-        if self.scopes.is_struct_type_(variable.type):
-            attr_def = self.get_attr_def_from_type_(attr_name, variable.type)
-        elif self.scopes.is_variant_type_(variable.type):
-            attr_def = self.get_attr_def_from_type_(attr_name, variable.value.value.type)
+        attr_def = self.get_attr_def_from_type_(attr_name, variable.value.get_concrete_type())
         variable.value.add_attr(
             attr_def.name, Variable(attr_def.type, attr_def.is_mutable, None)
         )

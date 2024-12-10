@@ -45,6 +45,9 @@ class StructValue(Value):
     
     def is_attr_in_(self, attr_name):
         return attr_name in self.value.keys()
+    
+    def get_concrete_type(self):
+        return self.type
 
 
 class VariantValue(Value):
@@ -63,3 +66,6 @@ class VariantValue(Value):
     
     def is_attr_in_(self, attr_name):
         return self.value.is_attr_in_(attr_name)
+
+    def get_concrete_type(self):
+        return self.value.get_concrete_type()
