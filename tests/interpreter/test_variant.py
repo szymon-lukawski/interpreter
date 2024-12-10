@@ -107,8 +107,10 @@ def test_assignment_of_two_different_types_to_variant():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["a"])).value == 1
-    assert i.visit_obj_access(ObjectAccess(["b"])).value == 1.2
+    assert i.visit_obj_access(ObjectAccess(["a"])).value.value == 1
+    assert i.visit_obj_access(ObjectAccess(["a"])).name == 'x'
+    assert i.visit_obj_access(ObjectAccess(["b"])).value.value == 1.2
+    assert i.visit_obj_access(ObjectAccess(["b"])).name == 'y'
 
 
 def test_assignment_of_two_different_types_to_same_variable():
@@ -124,7 +126,7 @@ def test_assignment_of_two_different_types_to_same_variable():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["a"])).value == 1.2
+    assert i.visit_obj_access(ObjectAccess(["a"])).value.value == 1.2
 
 
 def test_recurrent_variant_def():
@@ -140,7 +142,7 @@ def test_recurrent_variant_def():
     )
     i = Interpreter()
     ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["l"])).value == 1
+    assert i.visit_obj_access(ObjectAccess(["l"])).value.value == 1
 
 
 def test_binary_tree():

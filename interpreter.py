@@ -38,6 +38,7 @@ class Interpreter(Visitor):
                 if self.scopes.is_struct_type_(variable.type):
                     variable.value = StructValue(variable.type, dict())
                 elif self.scopes.is_variant_type_(variable.type):
+                    raise NotImplementedError
                     variable.value = VariantValue(variable.value, None, None)
                 else: 
                     raise RuntimeError(f"Type '{variable.type}' not found")
@@ -79,12 +80,13 @@ class Interpreter(Visitor):
         variant_value = visit_statement.obj.accept(self)
         # validate variant_value is of type variant
         for cs in visit_statement.case_sections:
-            if cs.type == variant_value.curr_active.type:
+            if cs.type == variant_value.name:
                 self.scopes.push_scope()
                 self.scopes.add_variable(variant_value.name, variant_value.type, False, variant_value.value)
-                rv = cs.program.accept()
+                rv = cs.program.accept(self)
                 self.scopes.pop_scope()
                 return rv
+        raise NotImplementedError
 
     def visit_while(self, while_stmt: WhileStatement):
         rv = None
@@ -128,7 +130,7 @@ class Interpreter(Visitor):
         self.scopes.curr_scope = func_scope_idx
         self.scopes.push_scope()
         for param, arg in zip(func_def.params, args):
-            self.scopes.add_variable(param.name, param.type, param.is_mutable, arg)
+            self.scopes.add_variable(param.name, param.type, param.is_mutable, self._convert_to_(param.type, arg))
         self.curr_recursion += 1
         if self.curr_recursion > self._max_recursion_depth:
             raise RuntimeError("Maximal recursion depth reached!")
@@ -178,6 +180,13 @@ class Interpreter(Visitor):
         # if value of Built in Types and target is {int, float, str} then easy
         # if value of Struct Type and target is {int, float, str} then raise error
         # if value of Variant Type and target is {int, float, str} then
+        if value is None:
+            return None
+        if self.scopes.is_variant_type_(target_type):
+            named_types = self.scopes.get_named_types_for_(target_type)
+            for named_type in named_types:
+                if value.type == named_type.type:
+                    return VariantValue(named_type.type, value, named_type.name)
         return value
 
     def _get_default_value(self, type_: str, value: ASTNode):
