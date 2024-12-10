@@ -726,3 +726,37 @@ def test_args_evaled_from_left_to_right():
     assert i.visit_obj_access(ObjectAccess(["result", "x"])).value == 1
     assert i.visit_obj_access(ObjectAccess(["result", "y"])).value == 2
     assert i.visit_obj_access(ObjectAccess(["result", "z"])).value == 3
+
+
+def test_function_call_does_not_mess_correct_variable_visability():
+    """func_that_opens_scope() : int begin if 1 begin return 1; end end if 1 begin a : int = 2; func_that_opens_scope(); end"""
+    ast = Program(
+        [
+            FuncDef(
+                "func_that_opens_scope",
+                [],
+                "int",
+                Program(
+                    [
+                        IfStatement(
+                            IntLiteral(1), Program([ReturnStatement(IntLiteral(1))])
+                        )
+                    ]
+                ),
+            ),
+            IfStatement(
+                IntLiteral(1),
+                Program(
+                    [
+                        VariableDeclaration("a", "int", False, IntLiteral(2)),
+                        FunctionCall("func_that_opens_scope", []),
+                    ]
+                ),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    with pytest.raises(RuntimeError) as e:
+        i.visit_obj_access(ObjectAccess(['a']))
+    assert str(e.value) == "Variable 'a' not found in any scope"
