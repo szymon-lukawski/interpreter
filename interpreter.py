@@ -77,10 +77,7 @@ class Interpreter(Visitor):
         if self.variable_needs_extending(variable, attr_name):
             self.extend_(variable, attr_name)
 
-        if self.scopes.is_struct_type_(variable.type):
-            variable = variable.value.value[attr_name]
-        elif self.scopes.is_variant_type_(variable.type):
-            variable = variable.value.value.value[attr_name]
+        variable = variable.value.get_inner_variable(attr_name)
         return variable
 
     def visit_assignment(self, assignment: AssignmentStatement):

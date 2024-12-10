@@ -39,6 +39,10 @@ class StructValue(Value):
     def add_attr(self, attr_name, variable):
         self.value[attr_name] = variable
 
+    
+    def get_inner_variable(self, attr_name):
+        return self.value[attr_name]
+
 
 class VariantValue(Value):
     def __init__(self, type_: str, value, name):
@@ -50,3 +54,6 @@ class VariantValue(Value):
     
     def add_attr(self, attr_name, variable):
         self.value.value[attr_name] = variable
+
+    def get_inner_variable(self, attr_name):
+        return self.value.get_inner_variable(attr_name)
