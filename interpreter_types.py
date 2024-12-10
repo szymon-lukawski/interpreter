@@ -19,9 +19,13 @@ class Value:
         self.type = type_
         self.value = value
 
+    def bool(self):
+        raise NotImplementedError
+
 
 class BuiltInValue(Value):
-    pass
+    def bool(self):
+        return bool(self.value)
 
 
 class StructValue(Value):
@@ -48,6 +52,9 @@ class StructValue(Value):
     def get_concrete_type(self):
         return self.type
 
+    def bool(self):
+        return True
+
 
 class VariantValue(Value):
     def __init__(self, type_: str, value, name):
@@ -68,3 +75,6 @@ class VariantValue(Value):
 
     def get_concrete_type(self):
         return self.value.get_concrete_type()
+
+    def bool(self):
+        return True

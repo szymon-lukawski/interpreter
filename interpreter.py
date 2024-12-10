@@ -142,8 +142,8 @@ class Interpreter(Visitor):
     def visit_while(self, while_stmt: WhileStatement):
         rv = None
         while (
-            rv is None and while_stmt.cond.accept(self).value
-        ):  # evalued_condition = self._convert_to_int(evaled_condition)
+            rv is None and while_stmt.cond.accept(self).bool()
+        ): 
             self.scopes.push_scope()
             rv = while_stmt.prog.accept(self)
             self.scopes.pop_scope()
@@ -151,9 +151,8 @@ class Interpreter(Visitor):
 
     def visit_if(self, if_stmt):
         evaled_condition = if_stmt.cond.accept(self)
-        # evalued_condition = self._convert_to_int(evaled_condition)
         rv = None
-        if evaled_condition.value:
+        if evaled_condition.bool():
             self.scopes.push_scope()
             rv = if_stmt.prog.accept(self)
             self.scopes.pop_scope()
