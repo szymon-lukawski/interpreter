@@ -5,7 +5,7 @@ from interpreter_errors import InterpreterError
 
 class PrintProg:
     def accept(self, interpreter):
-        text = interpreter.scopes.get_variable("text").value.value
+        text = interpreter.scopes.get_variable("text", (1,1)).value.value
         print(f"interpreter  >>> {text}")
 
 
