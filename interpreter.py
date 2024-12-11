@@ -5,7 +5,6 @@ from visitor import Visitor
 from scopes import Scopes
 from interpreter_types import Variable, Value, StructValue, VariantValue, BuiltInValue
 from multipledispatch import dispatch
-from operations import *
 from interpreter_errors import InterpreterError, NotSupportedOperation, DivisionByZero, NumberTooBig
 
 
@@ -389,6 +388,7 @@ class Interpreter(Visitor):
             raise InterpreterError(pos,f"Variant option '{named_type.name}' can no be of type variant")
 
     def visit_func_def(self, func_def):
+        
         self.scopes.add_function(func_def)
 
     def visit_or(self, or_expr):

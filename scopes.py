@@ -110,6 +110,7 @@ class Scopes:
 
     def add_function(self, func_def: FuncDef):
         name = func_def.name
+        self.validate_type_name(func_def.type, func_def.pos)
         if name in self.function_stack[self.curr_scope]:
             raise InterpreterError(
                 func_def.pos, f"Function '{name}' already declared in the current scope"
