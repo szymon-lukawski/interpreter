@@ -5,6 +5,7 @@ from AST import *
 from multiprocessing import Process
 from interpreter_errors import InterpreterError
 
+
 def test_sanity():
     """."""
     assert 1 == True
@@ -444,7 +445,11 @@ def test_calling_scope_not_the_same_as_scope_of_called():
                     [
                         ReturnStatement(
                             AddExpr(
-                                [ObjectAccess(["a"]), ObjectAccess(["zero"], pos=(123,122))], ["+"]
+                                [
+                                    ObjectAccess(["a"]),
+                                    ObjectAccess(["zero"], pos=(123, 122)),
+                                ],
+                                ["+"],
                             )
                         )
                     ]
@@ -459,7 +464,10 @@ def test_calling_scope_not_the_same_as_scope_of_called():
     i = Interpreter()
     with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "InterpreterError: row: 123, column: 122, Variable 'zero' not found in any scope"
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 123, column: 122, Variable 'zero' not found in any scope"
+    )
 
 
 def test_variable_and_func_at_the_same_scope_but_variable_interpreted_before_function_call():
@@ -635,14 +643,23 @@ def test_max_recursion_depth():
     """a() : null_type begin a(); end a();"""
     ast = Program(
         [
-            FuncDef("a", [], "null_type", Program([FunctionCall("a", [], pos=(2,1))]),pos=(1,1)),
-            FunctionCall("a", [], pos=(3,1)),
+            FuncDef(
+                "a",
+                [],
+                "null_type",
+                Program([FunctionCall("a", [], pos=(2, 1))]),
+                pos=(1, 1),
+            ),
+            FunctionCall("a", [], pos=(3, 1)),
         ]
     )
     i = Interpreter()
     with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "InterpreterError: row: 2, column: 1, Maximal recursion depth reached!"
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 2, column: 1, Maximal recursion depth reached!"
+    )
 
 
 def test_args_evaled_from_left_to_right():
@@ -758,8 +775,23 @@ def test_function_call_does_not_mess_correct_variable_visability():
     i = Interpreter()
     ast.accept(i)
     with pytest.raises(InterpreterError) as e:
-        i.visit_obj_access(ObjectAccess(["a"], pos=(32,1)))
-    assert str(e.value) == "InterpreterError: row: 32, column: 1, Variable 'a' not found in any scope"
+        i.visit_obj_access(ObjectAccess(["a"], pos=(32, 1)))
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 32, column: 1, Variable 'a' not found in any scope"
+    )
 
 
-
+def test_printing_entire_variant_struct():
+    """A : struct begin x : int; end V : variant begin a : A; y:int; end v:V; v.x = '1.2'; print(v);"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False)]),
+            VariantDef("V", [NamedType("a", "A"), NamedType("y", "int")]),
+            VariableDeclaration("v", "V", False),
+            AssignmentStatement(ObjectAccess(["v", "x"]), StrLiteral("1.2")),
+            FunctionCall("print", [ObjectAccess(["v"])]),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)

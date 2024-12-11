@@ -187,8 +187,8 @@ class Interpreter(Visitor):
                 param.name,
                 param.type,
                 param.is_mutable,
-                self._convert_to_(param.type, arg, param.pos),
-                param.pos
+                self._convert_to_(param.type, arg, func_call.pos),
+                func_call.pos
             )
         self.curr_recursion += 1
         if self.curr_recursion > self._max_recursion_depth:

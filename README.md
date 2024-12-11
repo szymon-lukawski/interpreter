@@ -124,7 +124,7 @@ Znienna typu `str` z przypisaną wartością pustego stringa jest czym innym niz
      + azeby przypisac wartosc do zmiennej wariantowej nalezy uzyć wartości która ma typ jednego z typów składowych wariantu. 
      + wyjątkiem jest przypisanie wartości typu wbudowanego. Jeśli wariant nie ma bezpośredniej zgodności typów to szuka czy jeden z jego wariantów jest typem wbudowanym. Jeśli tak to następuje próba konwersji wartości na typ wbudowany znaleziony jako pierwszy w dostępnych typach wariantu. Uwaga: ta operacja konwersji moze się nie udać dlatego najlepiej jest przypisywać wartości odpowiedniego typu do typu wariantowego... 
      + variant nie ma wartości domyślnej - pomimo ze typy składowe mogą ją mieć
-     + w przeciwieństwie do `struct`, gdy zmienna variantowa nie ma wartości, nie mozna przypisać do atrybutu struktury składowej. # TODO przejrzyj wszystkie named_types które mają strukturę 
+     + w przeciwieństwie do `struct`, gdy zmienna variantowa nie ma wartości, nie mozna przypisać do atrybutu struktury składowej.
 
 Definicja struktury jest zawarta między słowami kluczowymi `begin` oraz `end`.
 Definicja struktury składa się z zera lub więcej definicji zmiennych - pól w tej strukturze - chociaz uzyteczność zmiennej tego typu jest wątpliwa - nie mozna przypisać wartości do takiej zmiennej.
@@ -132,7 +132,7 @@ Definicja struktury składa się z zera lub więcej definicji zmiennych - pól w
 cos : Cos;
 Cos : struct begin end;
 ```
-Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zwróci błąd `UndefinedTypeError: 'Cos'`.
+Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zwróci błąd
 ```
 Kod_pocztowy : struct
 begin
