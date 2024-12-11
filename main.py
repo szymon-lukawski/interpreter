@@ -5,7 +5,8 @@ from io import StringIO
 from lexer import Lexer
 from my_parser import Parser
 from interpreter import Interpreter
-
+import warnings
+warnings.filterwarnings("ignore")
 
 def main():
     parser = argparse.ArgumentParser()

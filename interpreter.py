@@ -500,13 +500,13 @@ class Interpreter(Visitor):
         right = self._convert_to_('int', BuiltInValue('str', right), pos)
         return self.mul(BuiltInValue('int', left), right, pos)
 
-    @dispatch(BuiltInValue, StructValue, object)
+    @dispatch(object, StructValue, object)
     def mul(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '*' a builtin and struct.")
+        raise NotSupportedOperation(pos, "Can not '*' a  struct.")
     
-    @dispatch(StructValue, BuiltInValue, object)
+    @dispatch(StructValue, object, object)
     def mul(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '*' a struct and builtin.")
+        raise NotSupportedOperation(pos, "Can not '*' a struct.")
 
     @dispatch(BuiltInValue, VariantValue, object)
     def mul(self, left, right, pos):
@@ -515,6 +515,10 @@ class Interpreter(Visitor):
     @dispatch(VariantValue, BuiltInValue, object)
     def mul(self, left, right, pos):
         return self.mul(left.value, right, pos)
+    
+    @dispatch(VariantValue, VariantValue, object)
+    def mul(self, left, right, pos):
+        return self.mul(left.value, right.value, pos)
 
     @dispatch(float, int, object)
     def mul(self, left, right, pos):
@@ -548,6 +552,10 @@ class Interpreter(Visitor):
     @dispatch(BuiltInValue, BuiltInValue, object)
     def div(self, left, right, pos):
         return self.div(left.value, right.value, pos)
+    
+    @dispatch(VariantValue, VariantValue, object)
+    def div(self, left, right, pos):
+        return self.div(left.value, right.value, pos)
 
     @dispatch(int, int, object)
     def div(self, left, right, pos):
@@ -570,13 +578,13 @@ class Interpreter(Visitor):
         return BuiltInValue('int', int(left / right.value))
     
 
-    @dispatch(BuiltInValue, StructValue, object)
+    @dispatch(object, StructValue, object)
     def div(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '/' a builtin and struct.")
+        raise NotSupportedOperation(pos, "Can not '/' struct.")
     
-    @dispatch(StructValue, BuiltInValue, object)
+    @dispatch(StructValue, object, object)
     def div(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '/' a struct and builtin.")
+        raise NotSupportedOperation(pos, "Can not '/' struct.")
 
     @dispatch(BuiltInValue, VariantValue, object)
     def div(self, left, right, pos):
@@ -617,6 +625,10 @@ class Interpreter(Visitor):
     @dispatch(BuiltInValue, BuiltInValue, object)
     def add(self, left, right, pos):
         return self.add(left.value, right.value, pos)
+    
+    @dispatch(VariantValue, VariantValue, object)
+    def add(self, left, right, pos):
+        return self.add(left.value, right.value, pos)
 
     @dispatch(int, int, object)
     def add(self, left, right, pos):
@@ -635,13 +647,13 @@ class Interpreter(Visitor):
         return BuiltInValue('int', int(left + right.value))
     
 
-    @dispatch(BuiltInValue, StructValue, object)
+    @dispatch(object, StructValue, object)
     def add(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '+' a builtin and struct.")
+        raise NotSupportedOperation(pos, "Can not '+' struct.")
     
-    @dispatch(StructValue, BuiltInValue, object)
+    @dispatch(StructValue, object, object)
     def add(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '+' a struct and builtin.")
+        raise NotSupportedOperation(pos, "Can not '+' struct.")
 
     @dispatch(BuiltInValue, VariantValue, object)
     def add(self, left, right, pos):
@@ -683,6 +695,10 @@ class Interpreter(Visitor):
     @dispatch(BuiltInValue, BuiltInValue, object)
     def sub(self, left, right, pos):
         return self.sub(left.value, right.value, pos)
+    
+    @dispatch(VariantValue, VariantValue, object)
+    def sub(self, left, right, pos):
+        return self.sub(left.value, right.value, pos)
 
     @dispatch(int, int, object)
     def sub(self, left, right, pos):
@@ -701,11 +717,11 @@ class Interpreter(Visitor):
 
     @dispatch(BuiltInValue, StructValue, object)
     def sub(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '-' a builtin and struct.")
+        raise NotSupportedOperation(pos, "Can not '-' struct.")
     
     @dispatch(StructValue, BuiltInValue, object)
     def sub(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '-' a struct and builtin.")
+        raise NotSupportedOperation(pos, "Can not '-' struct.")
 
     @dispatch(BuiltInValue, VariantValue, object)
     def sub(self, left, right, pos):
@@ -751,6 +767,10 @@ class Interpreter(Visitor):
     @dispatch(BuiltInValue, BuiltInValue, object)
     def eq(self, left, right, pos):
         return self.eq(left.value, right.value, pos)
+    
+    @dispatch(VariantValue, VariantValue, object)
+    def eq(self, left, right, pos):
+        return self.eq(left.value, right.value, pos)
 
     @dispatch(int, int, object)
     def eq(self, left, right, pos):
@@ -767,13 +787,13 @@ class Interpreter(Visitor):
         return self.eq(BuiltInValue('int', left), right, pos)
     
 
-    @dispatch(BuiltInValue, StructValue, object)
+    @dispatch(object, StructValue, object)
     def eq(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '==' '!=' a builtin and struct.")
+        raise NotSupportedOperation(pos, "Can not '==' '!=' struct.")
     
-    @dispatch(StructValue, BuiltInValue, object)
+    @dispatch(StructValue, object, object)
     def eq(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '==' '!=' a struct and builtin.")
+        raise NotSupportedOperation(pos, "Can not '==' '!=' struct.")
 
     @dispatch(BuiltInValue, VariantValue, object)
     def eq(self, left, right, pos):
@@ -828,6 +848,10 @@ class Interpreter(Visitor):
     @dispatch(BuiltInValue, BuiltInValue, object)
     def lt(self, left, right, pos):
         return self.lt(left.value, right.value, pos)
+    
+    @dispatch(VariantValue, VariantValue, object)
+    def lt(self, left, right, pos):
+        return self.lt(left.value, right.value, pos)
 
     @dispatch(int, int, object)
     def lt(self, left, right, pos):
@@ -844,13 +868,13 @@ class Interpreter(Visitor):
         return self.lt(BuiltInValue('int', left), right, pos)
     
 
-    @dispatch(BuiltInValue, StructValue, object)
+    @dispatch(object, StructValue, object)
     def lt(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '<' '>' '>=' '<=' a builtin and struct.")
+        raise NotSupportedOperation(pos, "Can not '<' '>' '>=' '<=' a struct.")
     
-    @dispatch(StructValue, BuiltInValue, object)
+    @dispatch(StructValue, object, object)
     def lt(self, left, right, pos):
-        raise NotSupportedOperation(pos, "Can not '<' '>' '>=' '<=' a struct and builtin.")
+        raise NotSupportedOperation(pos, "Can not '<' '>' '>=' '<=' a struct.")
 
     @dispatch(BuiltInValue, VariantValue, object)
     def lt(self, left, right, pos):
