@@ -46,7 +46,7 @@ class CharReader(ABC):
 
 
 class TextIOReader(CharReader):
-    """CharReader that source is text python's string literal"""
+    """CharReader that works with any TextIOBase"""
 
     def __init__(self, text_io: TextIOBase):
         super().__init__()

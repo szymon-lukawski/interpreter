@@ -80,7 +80,7 @@ class Interpreter(Visitor):
         if self.variable_needs_extending(variable, attr_name):
             self.extend_(variable, attr_name)
 
-        variable = variable.value.get_inner_variable(attr_name)
+        variable = variable.value.get_inner_variable(attr_name) # this name might be confusing, it is not recursion
         return variable
 
     def visit_assignment(self, assignment: AssignmentStatement):
