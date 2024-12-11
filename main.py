@@ -28,11 +28,15 @@ def main():
             print(f"Error: The specified source path does not exist: {args.source}")
             return
         with open(args.source, "r", encoding="ascii") as sf:
-            reader = TextIOReader(sf)
-            lexer = Lexer(reader)
-            parser = Parser(lexer)
-            ast = parser.parse_program()
-            ast.accept(interpreter)
+            try:
+                reader = TextIOReader(sf)
+                lexer = Lexer(reader)
+                parser = Parser(lexer)
+                ast = parser.parse_program()
+                ast.accept(interpreter)
+            except Exception as e:
+                print(e)
+                return
     else:
         print("No source specified.")
 
@@ -40,11 +44,14 @@ def main():
         print("Interactive mode enabled. Type q to quit")
         interactive_expr_code = input("Type expr : ")
         while interactive_expr_code != 'q':
-            reader = TextIOReader(StringIO(interactive_expr_code))
-            lexer = Lexer(reader)
-            parser = Parser(lexer)
-            ast = parser._parse_expr()
-            ast.accept(interpreter) # add printing expr
+            try:
+                reader = TextIOReader(StringIO(interactive_expr_code))
+                lexer = Lexer(reader)
+                parser = Parser(lexer)
+                ast = parser._parse_expr()
+                ast.accept(interpreter) # add printing expr
+            except Exception as e:
+                print(e)
             interactive_expr_code = input("Type expr : ")
     else:
         print("Interactive mode disabled.")
