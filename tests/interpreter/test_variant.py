@@ -60,7 +60,7 @@ def test_can_not_use_variant_type_before_it_was_defined():
     i = Interpreter()
     with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "InterpreterError: row: 1, column: 1, Type 'A' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 1, column: 1, Type 'A' not found"
 
 
 def test_declarations_in_inner_scope_not_visable_in_outer():
@@ -84,7 +84,7 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
     i = Interpreter()
     with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "InterpreterError: row: 43, column: 1, Type 'A' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 43, column: 1, Type 'A' not found"
 
 
 def test_variant_as_param_type():

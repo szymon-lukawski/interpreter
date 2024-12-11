@@ -168,7 +168,7 @@ def test_multiplication_int_struct():
         ast.accept(i)
     assert (
         str(e.value)
-        == "NotSupportedOperation: row: 32, column: 1, Can not '*' a builtin and struct."
+        == "NotSupportedOperation: row: 32, column: 1, Can not '*' a  struct."
     )
 
 
@@ -272,7 +272,7 @@ def test_multiplication_float_struct():
         ast.accept(i)
     assert (
         str(e.value)
-        == "NotSupportedOperation: row: 32, column: 1, Can not '*' a builtin and struct."
+        == "NotSupportedOperation: row: 32, column: 1, Can not '*' a  struct."
     )
 
 
