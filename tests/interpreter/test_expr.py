@@ -7,7 +7,7 @@ import pytest
 from token_type import TokenType
 from interpreter import Interpreter
 from AST import *
-from interpreter_errors import NotSupportedOperation
+from interpreter_errors import InterpreterError, NotSupportedOperation
 
 
 def test_sanity():
@@ -109,7 +109,9 @@ def test_unary_variant_with_not_supported_operation():
             VariantDef("A", [NamedType("x", "int"), NamedType("y", "str")]),
             VariableDeclaration("a", "A", False),
             AssignmentStatement(ObjectAccess(["a"]), StrLiteral("Ala")),
-            VariableDeclaration("result", "int", False, UnaryExpr(ObjectAccess(["a"]), pos=(109,32))),
+            VariableDeclaration(
+                "result", "int", False, UnaryExpr(ObjectAccess(["a"]), pos=(109, 32))
+            ),
         ]
     )
     i = Interpreter()
@@ -121,11 +123,225 @@ def test_unary_variant_with_not_supported_operation():
     )
 
 
-def test_multiplication_two_integers():
+def test_multiplication_int_int():
     """2*3"""
     ast = MultiExpr([IntLiteral(2), IntLiteral(3)], ["*"])
     i = Interpreter()
     assert ast.accept(i).value == 6
+
+
+def test_multiplication_int_float():
+    """2*3.2"""
+    ast = MultiExpr([IntLiteral(2), FloatLiteral(3.2)], ["*"])
+    i = Interpreter()
+    assert ast.accept(i).value == 6
+
+
+def test_multiplication_int_str():
+    """2*'Ala'"""
+    ast = MultiExpr([IntLiteral(2), StrLiteral("Ala")], ["*"], pos=(109, 32))
+    i = Interpreter()
+    with pytest.raises(InterpreterError) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 109, column: 32, Can not convert 'Ala' str into int"
+    )
+
+
+def test_multiplication_int_struct():
+    """A : struct begin x: int=10; end a : A; result : int = 2 * a;"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False, IntLiteral(10))]),
+            VariableDeclaration("a", "A", False),
+            VariableDeclaration(
+                "result",
+                "int",
+                False,
+                MultiExpr([IntLiteral(2), ObjectAccess(["a"])], ["*"], pos=(32, 1)),
+            ),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(NotSupportedOperation) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "NotSupportedOperation: row: 32, column: 1, Can not '*' a builtin and struct."
+    )
+
+
+def test_multiplication_int_variant_compatible():
+    """A : variant begin x: int; y : str; end a : A; a = 2; result : int = 2 * a;"""
+    ast = Program(
+        [
+            VariantDef("A", [NamedType("x", "int"), NamedType("y", "str")]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a"]), IntLiteral(2)),
+            VariableDeclaration(
+                "result",
+                "int",
+                False,
+                MultiExpr([IntLiteral(2), ObjectAccess(["a"])], ["*"]),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["result"])).value == 4
+
+
+def test_multiplication_int_variant_not_compatible():
+    """A : variant begin x: int; y : str; end a : A; a = 'Ala'; result : int = 2 * a;"""
+    ast = Program(
+        [
+            VariantDef("A", [NamedType("x", "int"), NamedType("y", "str")]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a"]), StrLiteral("Ala")),
+            VariableDeclaration(
+                "result",
+                "int",
+                False,
+                MultiExpr([IntLiteral(2), ObjectAccess(["a"])], ["*"], pos=(22, 33)),
+            ),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(InterpreterError) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 22, column: 33, Can not convert 'Ala' str into int"
+    )
+
+
+def test_multiplication_float_int():
+    """3.2*3"""
+    ast = MultiExpr([FloatLiteral(3.2), IntLiteral(3)], ["*"])
+    i = Interpreter()
+    assert abs(ast.accept(i).value - 9.6) < 10**-9
+
+
+def test_multiplication_float_float():
+    """3.2*3.14"""
+    ast = MultiExpr([FloatLiteral(3.2), FloatLiteral(3.14)], ["*"])
+    i = Interpreter()
+    assert abs(ast.accept(i).value - 10.048) < 10**-9
+
+
+def test_multiplication_float_str_not_compatible():
+    """3.2*3.14"""
+    ast = MultiExpr([FloatLiteral(3.2), StrLiteral("Ala")], ["*"], pos=(22, 33))
+    i = Interpreter()
+    with pytest.raises(InterpreterError) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 22, column: 33, Can not convert 'Ala' str into float"
+    )
+
+
+def test_multiplication_float_str_compatible():
+    """3.2*'3.14'"""
+    ast = MultiExpr([FloatLiteral(3.2), StrLiteral("3.14")], ["*"])
+    i = Interpreter()
+    assert abs(ast.accept(i).value - 10.048) < 10**-9
+
+
+def test_multiplication_float_struct():
+    """A : struct begin x: float = 10.1; end a : A; result : float = 3.14 * a;"""
+    ast = Program(
+        [
+            StructDef(
+                "A", [VariableDeclaration("x", "float", False, FloatLiteral(10.1))]
+            ),
+            VariableDeclaration("a", "A", False),
+            VariableDeclaration(
+                "result",
+                "float",
+                False,
+                MultiExpr(
+                    [FloatLiteral(3.14), ObjectAccess(["a"])], ["*"], pos=(32, 1)
+                ),
+            ),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(NotSupportedOperation) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "NotSupportedOperation: row: 32, column: 1, Can not '*' a builtin and struct."
+    )
+
+
+def test_multiplication_float_variant_compatible():
+    """A : variant begin x: int; y : str; end a : A; a = 3.2; result : float = 3.14 * a;"""
+    ast = Program(
+        [
+            VariantDef("A", [NamedType("x", "int"), NamedType("y", "str")]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a"]), FloatLiteral(3.2)),
+            VariableDeclaration(
+                "result",
+                "float",
+                False,
+                MultiExpr([FloatLiteral(3.14), ObjectAccess(["a"])], ["*"]),
+            ),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert abs(i.visit_obj_access(ObjectAccess(["result"])).value - (3.14 * 3)) < 10**-9
+
+
+def test_multiplication_float_variant_not_compatible():
+    """A : variant begin x: int; y : str; end a : A; a = 'Ala'; result : float = 3.14 * a;"""
+    ast = Program(
+        [
+            VariantDef("A", [NamedType("x", "int"), NamedType("y", "str")]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a"]), StrLiteral("Ala")),
+            VariableDeclaration(
+                "result",
+                "float",
+                False,
+                MultiExpr(
+                    [FloatLiteral(3.14), ObjectAccess(["a"])], ["*"], pos=(101, 202)
+                ),
+            ),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(InterpreterError) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 101, column: 202, Can not convert 'Ala' str into float"
+    )
+
+def test_multiplication_str_int():
+    """'Ala'*2"""
+    ast = MultiExpr([StrLiteral('Ala'), IntLiteral(2)], ["*"])
+    i = Interpreter()
+    assert ast.accept(i).value == 'AlaAla'
+
+
+def test_multiplication_str_float():
+    """'Ala'*3.14"""
+    ast = MultiExpr([StrLiteral('Ala'), FloatLiteral(3.14)], ["*"])
+    i = Interpreter()
+    assert ast.accept(i).value == 'AlaAlaAla'
+
+def test_multiplication_str_str():
+    """'ABC'*'12345'"""
+    ast = MultiExpr([StrLiteral('ABC'), StrLiteral('12345')], ["*"])
+    i = Interpreter()
+    assert ast.accept(i).value == 'A1B2C3'
+
+
+
 
 
 # def test_multiplication_three_integers():

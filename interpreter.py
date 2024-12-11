@@ -305,7 +305,7 @@ class Interpreter(Visitor):
                 built_in_named_type = None
                 for named_type in named_types:
                     if (
-                        built_in_named_type is not None
+                        built_in_named_type is None
                         and self.scopes.is_built_in_type_(named_type.type)
                     ):
                         built_in_named_type = named_type
@@ -432,7 +432,7 @@ class Interpreter(Visitor):
         result = multi_expr.children[0].accept(self)
         for i, op in enumerate(multi_expr.operations):
             if op == "*":
-                result = mul(result, multi_expr.children[i + 1].accept(self))
+                result = self.mul(result, multi_expr.children[i + 1].accept(self), multi_expr.pos)
             elif op == "/":
                 right = multi_expr.children[i + 1].accept(self)
                 result = div(result, right)
@@ -480,3 +480,67 @@ class Interpreter(Visitor):
     def minus(self, value, pos):
         value.value = self.minus(value.value, pos)
         return value
+    
+    @dispatch(BuiltInValue, BuiltInValue, object)
+    def mul(self, left, right, pos):
+        return self.mul(left.value, right.value, pos)
+
+    @dispatch(int, int, object)
+    def mul(self, left, right, pos):
+        return BuiltInValue('int', left * right)
+    
+    @dispatch(int, float, object)
+    def mul(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('float', right), pos)
+        return self.mul(BuiltInValue('int', left), right, pos)
+
+    @dispatch(int, str, object)
+    def mul(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('str', right), pos)
+        return self.mul(BuiltInValue('int', left), right, pos)
+
+    @dispatch(BuiltInValue, StructValue, object)
+    def mul(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '*' a builtin and struct.")
+    
+    @dispatch(StructValue, BuiltInValue, object)
+    def mul(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '*' a struct and builtin.")
+
+    @dispatch(BuiltInValue, VariantValue, object)
+    def mul(self, left, right, pos):
+        return self.mul(left, right.value, pos)
+    
+    @dispatch(VariantValue, BuiltInValue, object)
+    def mul(self, left, right, pos):
+        return self.mul(left.value, right, pos)
+
+    @dispatch(float, int, object)
+    def mul(self, left, right, pos):
+        return BuiltInValue('float', left * float(right))
+    
+    @dispatch(float, float, object)
+    def mul(self, left, right, pos):
+        return BuiltInValue('float', left * right)
+    
+    @dispatch(float, str, object)
+    def mul(self, left, right, pos):
+        right = self._convert_to_('float', BuiltInValue('str', right), pos)
+        return self.mul(BuiltInValue('float', left), right, pos)
+    
+    @dispatch(str, int, object)
+    def mul(self, left, right, pos):
+        return BuiltInValue('str', left*right) # reapeating right times left value.
+    
+    @dispatch(str, float, object)
+    def mul(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('float', right), pos)
+        return self.mul(BuiltInValue('str', left), right, pos)
+
+    @dispatch(str, str, object)
+    def mul(self, left, right, pos):
+        result = []
+        for l, r in zip(left,right):
+            result.append((l+r))
+        return BuiltInValue('str', "".join(result))
+    
