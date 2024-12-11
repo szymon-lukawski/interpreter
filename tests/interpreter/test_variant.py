@@ -4,20 +4,22 @@ from interpreter import Interpreter
 from AST import *
 
 
-def test_new_variant_is_visable():
+def test_variant_should_have_more_than_zero_options():
     """A : variant begin end; a : A;"""
     ast = Program([VariantDef("A", [])])
     i = Interpreter()
-    ast.accept(i)
-    assert i.scopes.get_named_types_for_("A") == []
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert str(e.value) == "Variant 'A' should have more than 1 variant options"
 
 
 def test_variant_with_one_named_type():
     """A : variant begin x : int; end; a : A;"""
     ast = Program([VariantDef("A", [NamedType("x", "int")])])
     i = Interpreter()
-    ast.accept(i)
-    assert i.scopes.get_named_types_for_("A") == [NamedType("x", "int")]
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert str(e.value) == "Variant 'A' should have more than 1 variant options"
 
 
 def test_variant_with_2_named_types():
@@ -29,6 +31,15 @@ def test_variant_with_2_named_types():
         NamedType("x", "int"),
         NamedType("y", "float"),
     ]
+
+
+def test_variant_with_variant_option():
+    """A : variant begin x : A; y : float; end a : A;"""
+    ast = Program([VariantDef("A", [NamedType("x", "A"), NamedType("y", "float")])])
+    i = Interpreter()
+    with pytest.raises(RuntimeError) as e:
+        ast.accept(i)
+    assert str(e.value) == "Variant option 'x' can no be of type variant"
 
 
 def test_can_not_use_variant_type_before_it_was_defined():
@@ -46,7 +57,7 @@ def test_can_not_use_variant_type_before_it_was_defined():
 
 
 def test_declarations_in_inner_scope_not_visable_in_outer():
-    """a: int = 1; if a begin A : variant begin end end b : A;"""
+    """a: int = 1; if a begin A : variant begin x : A; y : float; end end b : A;"""
     ast = Program(
         [
             VariableDeclaration("a", "int", False, IntLiteral(1)),
@@ -56,7 +67,9 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
                         "a",
                     ]
                 ),
-                Program([VariantDef("A", [])]),
+                Program(
+                    [VariantDef("A", [NamedType("x", "int"), NamedType("y", "float")])]
+                ),
             ),
             VariableDeclaration("b", "A", False),
         ]
@@ -68,11 +81,11 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
 
 
 def test_variant_as_param_type():
-    """A : struct begin x : int; end V : variant begin a : A; end ret(v : V): int begin return v.x; end al : A; al.x = 7; y : int = ret(al);"""
+    """A : struct begin x : int; end V : variant begin a : A;  y : float; end ret(v : V): int begin return v.x; end al : A; al.x = 7; y : int = ret(al);"""
     ast = Program(
         [
             StructDef("A", [VariableDeclaration("x", "int", True)]),
-            VariantDef("V", [NamedType("a", "A")]),
+            VariantDef("V", [NamedType("a", "A"), NamedType("y", "float")]),
             FuncDef(
                 "ret",
                 [Param("v", "V", True)],
@@ -242,11 +255,11 @@ def test_binary_tree():
 
 
 def test_assignment_to_not_initialised_variant_sub_attr_sub_attribute_matches():
-    """A: struct begin x: int; end V : variant begin a : A; end v : V; v.x = 123;"""
+    """A: struct begin x: int; end V : variant begin a : A; x : int; end v : V; v.x = 123;"""
     ast = Program(
         [
             StructDef("A", [VariableDeclaration("x", "int", False)]),
-            VariantDef("V", [NamedType("a", "A")]),
+            VariantDef("V", [NamedType("a", "A"), NamedType("x", "int")]),
             VariableDeclaration("v", "V", False),
             AssignmentStatement(ObjectAccess(["v", "x"]), IntLiteral(123)),
         ]
@@ -261,7 +274,8 @@ def test_complex_assignment_both_coukd_match_matched_first():
     ast = Program(
         [
             StructDef("A", [VariableDeclaration("x", "int", False)]),
-            VariantDef("V", [NamedType("a", "A")]),
+            StructDef("B", [VariableDeclaration("x", "int", False)]),
+            VariantDef("V", [NamedType("a", "A"), NamedType("b", "B")]),
             VariableDeclaration("v", "V", False),
             AssignmentStatement(ObjectAccess(["v", "x"]), IntLiteral(123)),
         ]
@@ -269,5 +283,4 @@ def test_complex_assignment_both_coukd_match_matched_first():
     i = Interpreter()
     ast.accept(i)
     assert i.visit_obj_access(ObjectAccess(["v", "x"])).value == 123
-    assert i.visit_obj_access(ObjectAccess(["v"])).get_concrete_type() == 'A'
-
+    assert i.visit_obj_access(ObjectAccess(["v"])).get_concrete_type() == "A"

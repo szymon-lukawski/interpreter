@@ -138,7 +138,6 @@ class Interpreter(Visitor):
                 rv = cs.program.accept(self)
                 self.scopes.pop_scope()
                 return rv
-        raise NotImplementedError
 
     def visit_while(self, while_stmt: WhileStatement):
         rv = None
@@ -362,9 +361,15 @@ class Interpreter(Visitor):
 
     def visit_variant_def(self, variant_def: VariantDef):
         self.scopes.add_variant_type(variant_def.name, variant_def.named_types)
+        if len(variant_def.named_types) <= 1: 
+            raise RuntimeError(f"Variant '{variant_def.name}' should have more than 1 variant options")
+        for named_type in variant_def.named_types:
+            named_type.accept(self)
+        
 
     def visit_named_type(self, named_type):
-        pass
+        if self.scopes.is_variant_type_(named_type.type):
+            raise RuntimeError(f"Variant option '{named_type.name}' can no be of type variant")
 
     def visit_func_def(self, func_def):
         self.scopes.add_function(func_def)
@@ -414,9 +419,7 @@ class Interpreter(Visitor):
                 result = mul(result, multi_expr.children[i + 1].accept(self))
             elif op == "/":
                 right = multi_expr.children[i + 1].accept(self)
-                if right.value == 0:
-                    raise RuntimeError("Dzielenie przez  0 kwiatuszku!")
-                result = div(result, multi_expr.children[i + 1].accept(self))
+                result = div(result, right)
         return result
 
     def visit_unary(self, unary_expr):
@@ -436,3 +439,7 @@ class Interpreter(Visitor):
 
     def visit_str_literal(self, str_literal):
         return BuiltInValue("str", str_literal.value)
+    
+    @dispatch(BuiltInValue, BuiltInValue) 
+    def cos(self, left, right):
+        return add(left.value, right.value)
