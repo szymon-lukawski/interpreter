@@ -3,7 +3,7 @@ from token_type import TokenType
 from interpreter import Interpreter
 from AST import *
 from multiprocessing import Process
-
+from interpreter_errors import InterpreterError
 
 def test_sanity():
     """."""
@@ -444,7 +444,7 @@ def test_calling_scope_not_the_same_as_scope_of_called():
                     [
                         ReturnStatement(
                             AddExpr(
-                                [ObjectAccess(["a"]), ObjectAccess(["zero"])], ["+"]
+                                [ObjectAccess(["a"]), ObjectAccess(["zero"], pos=(123,122))], ["+"]
                             )
                         )
                     ]
@@ -457,9 +457,9 @@ def test_calling_scope_not_the_same_as_scope_of_called():
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Variable 'zero' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 123, column: 122, Variable 'zero' not found in any scope"
 
 
 def test_variable_and_func_at_the_same_scope_but_variable_interpreted_before_function_call():
@@ -635,14 +635,14 @@ def test_max_recursion_depth():
     """a() : null_type begin a(); end a();"""
     ast = Program(
         [
-            FuncDef("a", [], "null_type", Program([FunctionCall("a", [])])),
-            FunctionCall("a", []),
+            FuncDef("a", [], "null_type", Program([FunctionCall("a", [], pos=(2,1))]),pos=(1,1)),
+            FunctionCall("a", [], pos=(3,1)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Maximal recursion depth reached!"
+    assert str(e.value) == "InterpreterError: row: 2, column: 1, Maximal recursion depth reached!"
 
 
 def test_args_evaled_from_left_to_right():
@@ -757,9 +757,9 @@ def test_function_call_does_not_mess_correct_variable_visability():
     )
     i = Interpreter()
     ast.accept(i)
-    with pytest.raises(RuntimeError) as e:
-        i.visit_obj_access(ObjectAccess(["a"]))
-    assert str(e.value) == "Variable 'a' not found in any scope"
+    with pytest.raises(InterpreterError) as e:
+        i.visit_obj_access(ObjectAccess(["a"], pos=(32,1)))
+    assert str(e.value) == "InterpreterError: row: 32, column: 1, Variable 'a' not found in any scope"
 
 
 

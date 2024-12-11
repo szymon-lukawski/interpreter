@@ -2,24 +2,31 @@ import pytest
 from token_type import TokenType
 from interpreter import Interpreter
 from AST import *
+from interpreter_errors import InterpreterError
 
 
 def test_variant_should_have_more_than_zero_options():
     """A : variant begin end; a : A;"""
-    ast = Program([VariantDef("A", [])])
+    ast = Program([VariantDef("A", [], pos=(1, 1))])
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Variant 'A' should have more than 1 variant options"
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 1, column: 1, Variant 'A' should have more than 1 variant options"
+    )
 
 
 def test_variant_with_one_named_type():
     """A : variant begin x : int; end; a : A;"""
-    ast = Program([VariantDef("A", [NamedType("x", "int")])])
+    ast = Program([VariantDef("A", [NamedType("x", "int")], pos=(0, 1))])
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Variant 'A' should have more than 1 variant options"
+    assert (
+        str(e.value)
+        == "InterpreterError: row: 0, column: 1, Variant 'A' should have more than 1 variant options"
+    )
 
 
 def test_variant_with_2_named_types():
@@ -27,7 +34,7 @@ def test_variant_with_2_named_types():
     ast = Program([VariantDef("A", [NamedType("x", "int"), NamedType("y", "float")])])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_named_types_for_("A") == [
+    assert i.scopes.get_named_types_for_("A", pos=(1,1)) == [
         NamedType("x", "int"),
         NamedType("y", "float"),
     ]
@@ -35,25 +42,25 @@ def test_variant_with_2_named_types():
 
 def test_variant_with_variant_option():
     """A : variant begin x : A; y : float; end a : A;"""
-    ast = Program([VariantDef("A", [NamedType("x", "A"), NamedType("y", "float")])])
+    ast = Program([VariantDef("A", [NamedType("x", "A", pos=(2,1)), NamedType("y", "float")],pos=(1,1))])
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Variant option 'x' can no be of type variant"
+    assert str(e.value) == "InterpreterError: row: 2, column: 1, Variant option 'x' can no be of type variant"
 
 
 def test_can_not_use_variant_type_before_it_was_defined():
     """a : A; A : variant begin x : int; y : float; end"""
     ast = Program(
         [
-            VariableDeclaration("a", "A", False),
+            VariableDeclaration("a", "A", False, pos=(1,1)),
             VariantDef("A", [NamedType("x", "int"), NamedType("y", "float")]),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Type 'A' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 1, column: 1, Type 'A' not found in any scope"
 
 
 def test_declarations_in_inner_scope_not_visable_in_outer():
@@ -71,13 +78,13 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
                     [VariantDef("A", [NamedType("x", "int"), NamedType("y", "float")])]
                 ),
             ),
-            VariableDeclaration("b", "A", False),
+            VariableDeclaration("b", "A", False, pos=(43,1)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Type 'A' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 43, column: 1, Type 'A' not found in any scope"
 
 
 def test_variant_as_param_type():
@@ -147,15 +154,17 @@ def test_recurrent_variant_def():
     ast = Program(
         [
             VariantDef(
-                "VariantList", [NamedType("vl", "VariantList"), NamedType("x", "int")]
+                "VariantList", [NamedType("vl", "VariantList", pos=(91,1)), NamedType("x", "int")]
             ),
             VariableDeclaration("l", "VariantList", True),
             AssignmentStatement(ObjectAccess(["l"]), IntLiteral(1)),
         ]
     )
     i = Interpreter()
-    ast.accept(i)
-    assert i.visit_obj_access(ObjectAccess(["l"])).value.value == 1
+
+    with pytest.raises(InterpreterError) as e:
+        ast.accept(i)
+    assert str(e.value) == "InterpreterError: row: 91, column: 1, Variant option 'vl' can no be of type variant"
 
 
 def test_binary_tree():

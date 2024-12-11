@@ -3,6 +3,7 @@ from token_type import TokenType
 from interpreter import Interpreter
 from AST import *
 from multiprocessing import Process
+from interpreter_errors import InterpreterError
 
 
 def test_sanity():
@@ -69,13 +70,13 @@ def test_can_not_refer_to_variable_after_poped_scope():
                     ]
                 ),
             ),
-            AssignmentStatement(ObjectAccess(["b"]), IntLiteral(1)),
+            AssignmentStatement(ObjectAccess(["b"]), IntLiteral(1), pos=(1,2)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Variable 'b' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 1, column: 2, Variable 'b' not found in any scope"
 
 
 def test_fib():

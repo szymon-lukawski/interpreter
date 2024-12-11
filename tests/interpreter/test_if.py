@@ -2,7 +2,7 @@ import pytest
 from token_type import TokenType
 from interpreter import Interpreter
 from AST import *
-
+from interpreter_errors import InterpreterError
 
 def test_sanity():
     """."""
@@ -73,13 +73,13 @@ def test_same_name_variable_in_else():
                 Program(
                     [
                         VariableDeclaration("a", "int", True, IntLiteral(1)),
-                        VariableDeclaration("a", "int", True, IntLiteral(1)),
+                        VariableDeclaration("a", "int", True, IntLiteral(1), pos=(5,1)),
                     ]
                 ),
             )
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Variable 'a' already declared in the current scope"
+    assert str(e.value) == "InterpreterError: row: 5, column: 1, Variable 'a' already declared in the current scope"

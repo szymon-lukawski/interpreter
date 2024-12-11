@@ -3,6 +3,7 @@ from token_type import TokenType
 from interpreter import Interpreter
 from AST import *
 from scopes import Scopes
+from interpreter_errors import InterpreterError
 
 
 def test_new_struct_is_visable():
@@ -10,7 +11,7 @@ def test_new_struct_is_visable():
     ast = Program([StructDef("A", [])])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_var_defs_for_("A") == []
+    assert i.scopes.get_var_defs_for_("A", pos=(1, 1)) == []
 
 
 def test_struct_with_one_attribute():
@@ -18,7 +19,7 @@ def test_struct_with_one_attribute():
     ast = ast = Program([StructDef("A", [VariableDeclaration("x", "int", False)])])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_var_defs_for_("A") == [
+    assert i.scopes.get_var_defs_for_("A", pos=(1, 1)) == [
         VariableDeclaration("x", "int", False, None)
     ]
 
@@ -32,14 +33,14 @@ def test_struct_with_2_attributes():
     ast = Program([StructDef("A", variables)])
     i = Interpreter()
     ast.accept(i)
-    assert i.scopes.get_var_defs_for_("A") == variables
+    assert i.scopes.get_var_defs_for_("A", pos=(1, 1)) == variables
 
 
 def test_can_not_use_struct_type_before_it_was_defined():
     """a : A; A : struct begin x : int; y : float; end"""
     ast = Program(
         [
-            VariableDeclaration("a", "A", False),
+            VariableDeclaration("a", "A", False, pos=(1,1)),
             StructDef(
                 "A",
                 [
@@ -50,9 +51,9 @@ def test_can_not_use_struct_type_before_it_was_defined():
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Type 'A' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 1, column: 1, Type 'A' not found in any scope"
 
 
 def test_declarations_in_inner_scope_not_visable_in_outer():
@@ -68,13 +69,13 @@ def test_declarations_in_inner_scope_not_visable_in_outer():
                 ),
                 Program([StructDef("A", [])]),
             ),
-            VariableDeclaration("b", "A", False),
+            VariableDeclaration("b", "A", False, pos=(43,1)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Type 'A' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 43, column: 1, Type 'A' not found in any scope"
 
 
 def test_getting_value_of_uninitialised_attr():
@@ -87,9 +88,9 @@ def test_getting_value_of_uninitialised_attr():
     )
     i = Interpreter()
     ast.accept(i)
-    with pytest.raises(RuntimeError) as e:
-        i.visit_obj_access(ObjectAccess(["a", "x"]))
-    assert str(e.value) == "Variable 'a' has no value"
+    with pytest.raises(InterpreterError) as e:
+        i.visit_obj_access(ObjectAccess(["a", "x"], pos=(91,3)))
+    assert str(e.value) == "InterpreterError: row: 91, column: 3, Variable 'a' has no value"
 
 
 def test_getting_value_of_initialised_attr():
@@ -125,13 +126,13 @@ def test_reasigning_non_mutable_attr():
         [
             StructDef("A", [VariableDeclaration("x", "int", False, IntLiteral(1))]),
             VariableDeclaration("a", "A", False),
-            AssignmentStatement(ObjectAccess(["a", "x"]), IntLiteral(2)),
+            AssignmentStatement(ObjectAccess(["a", "x"]), IntLiteral(2), pos=(21,655)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Trying to reassign value to a non-mutable attribute."
+    assert str(e.value) == "InterpreterError: row: 21, column: 655, Trying to reassign value to a non-mutable attribute."
 
 
 def test_assign_value_to_struct_instance_attr():
@@ -287,12 +288,12 @@ def test_struct_with_one_default_value():
 def test_asigning_int_to_struct_type():
     """A : struct begin end a : A = 1;"""
     ast = Program(
-        [StructDef("A", []), VariableDeclaration("a", "A", False, IntLiteral(1))]
+        [StructDef("A", []), VariableDeclaration("a", "A", False, IntLiteral(1), pos=(91,12))]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)  # Type error
-    assert str(e.value)=="Can not convert built in type into struct type. "
+    assert str(e.value) == "InterpreterError: row: 91, column: 12, Can not convert built in type into struct type. "
 
 
 def test_asigning_A_to_B():
@@ -303,13 +304,13 @@ def test_asigning_A_to_B():
             StructDef("B", [VariableDeclaration("x", "int", False, IntLiteral(1))]),
             VariableDeclaration("a", "A", True),
             VariableDeclaration("b", "B", False),
-            AssignmentStatement(ObjectAccess(["a"]), ObjectAccess(["b"])),
+            AssignmentStatement(ObjectAccess(["a"]), ObjectAccess(["b"]), pos=(91,12)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)  # Type error
-    assert str(e.value) == "Can not convert struct type 'B' to struct type 'A'"
+    assert str(e.value) == "InterpreterError: row: 91, column: 12, Can not convert struct type 'B' to struct type 'A'"
 
 
 def test_assignment_of_nested_types_using_one_statement():
@@ -348,17 +349,17 @@ def test_cyclic_struct_no_default_value_for_expression():
     ast = Program(
         [
             StructDef(
-                "CyclicStruct", [VariableDeclaration("cs", "CyclicStruct", False)]
+                "CyclicStruct", [VariableDeclaration("cs", "CyclicStruct", False)], pos=(322,111)
             ),
-            VariableDeclaration("cs", "CyclicStruct", False),
+            VariableDeclaration("cs", "CyclicStruct", False, pos=(32,2)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
     assert (
         str(e.value)
-        == "Max struct depth reached. Probably you have cycle dependency in type 'CyclicStruct'"
+        == "InterpreterError: row: 32, column: 2, Max struct depth reached. Probably you have cycle dependency in type 'CyclicStruct'"
     )
 
 
@@ -367,13 +368,16 @@ def test_A_depends_on_B_but_B_depends_on_A():
     ast = Program(
         [
             StructDef(
-                "CyclicStruct", [VariableDeclaration("cs", "CyclicStruct", False)]
+                "A", [VariableDeclaration("b", "B", False, pos=(2, 1))], pos=(1, 1)
             ),
-            VariableDeclaration("cs", "CyclicStruct", False),
+            StructDef(
+                "B", [VariableDeclaration("a", "A", False, pos=(4, 1))], pos=(3, 1)
+            ),
+            VariableDeclaration("x", "A", False, pos=(5, 1)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
     assert (
         "Max struct depth reached. Probably you have cycle dependency in type"
@@ -388,11 +392,11 @@ def test_A_depends_on_B_depends_on_C_depends_on_A():
             StructDef(
                 "CyclicStruct", [VariableDeclaration("cs", "CyclicStruct", False)]
             ),
-            VariableDeclaration("cs", "CyclicStruct", False),
+            VariableDeclaration("cs", "CyclicStruct", False, pos=(32,1)),
         ]
     )
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
     assert (
         "Max struct depth reached. Probably you have cycle dependency in type"

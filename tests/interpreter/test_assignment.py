@@ -1,15 +1,16 @@
 import pytest
 from interpreter import Interpreter
 from AST import *
+from interpreter_errors import InterpreterError
 
 
 def test_assignment_defore_definition():
     """a = 1;"""
-    ast = Program([AssignmentStatement(ObjectAccess(["a"]), IntLiteral(1))])
+    ast = Program([AssignmentStatement(ObjectAccess(["a"]), IntLiteral(1), pos=(1,1))])
     i = Interpreter()
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(InterpreterError) as e:
         ast.accept(i)
-    assert str(e.value) == "Variable 'a' not found in any scope"
+    assert str(e.value) == "InterpreterError: row: 1, column: 1, Variable 'a' not found in any scope"
 
 
 

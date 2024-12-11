@@ -6,6 +6,7 @@ from scopes import Scopes
 from interpreter_types import Variable, Value, StructValue, VariantValue, BuiltInValue
 from multipledispatch import dispatch
 from operations import *
+from interpreter_errors import InterpreterError
 
 
 class Interpreter(Visitor):
@@ -24,43 +25,43 @@ class Interpreter(Visitor):
             if rv:
                 return rv
 
-    def simple_assignment(self, name, target_type, expr):
-        value = self._convert_to_(target_type, expr.accept(self))
-        self.scopes.set_(name, value)
+    def simple_assignment(self, name, target_type, expr, pos):
+        value = self._convert_to_(target_type, expr.accept(self), pos)
+        self.scopes.set_(name, value, pos)
         return
 
     def is_simple_assignment(self, name_chain):
         return len(name_chain) == 1
 
     def complex_assignment(
-        self, variable: Variable, rest_addres: list[str], expr: Expr
+        self, variable: Variable, rest_addres: list[str], expr: Expr, pos
     ):
         for attr_name in rest_addres:
-            variable = self.get_inner_variable(variable, attr_name)
-        variable.value = self._convert_to_(variable.type, expr.accept(self))
+            variable = self.get_inner_variable(variable, attr_name, pos)
+        variable.value = self._convert_to_(variable.type, expr.accept(self), pos)
 
     def find_matching_named_type_with_(
-        self, attr_name: str, named_types: list[NamedType], variant_type: str
+        self, attr_name: str, named_types: list[NamedType], variant_type: str, pos
     ):
         for named_type in named_types:
             if self.scopes.is_struct_type_(
                 named_type.type
-            ) and self.check_attr_name_in_struct_type(attr_name, named_type.type):
+            ) and self.check_attr_name_in_struct_type(attr_name, named_type.type, pos):
                 return named_type
-        raise RuntimeError(
+        raise InterpreterError(pos,
             f"No matching struct type with attribute '{attr_name}' in variant '{variant_type}'"
         )
 
-    def initialise_empty_complex_variable(self, variable: Variable, attr_name: str):
+    def initialise_empty_complex_variable(self, variable: Variable, attr_name: str, pos):
         if self.scopes.is_built_in_type_(variable.type):
-            raise RuntimeError("Simple types do not have attributes!")
+            raise InterpreterError(pos, "Simple types do not have attributes!")
         if self.scopes.is_struct_type_(variable.type):
             variable.value = StructValue(variable.type, dict())
             return
         elif self.scopes.is_variant_type_(variable.type):
-            named_types = self.scopes.get_named_types_for_(variable.type)
+            named_types = self.scopes.get_named_types_for_(variable.type, pos)
             matched_named_type = self.find_matching_named_type_with_(
-                attr_name, named_types, variable.type
+                attr_name, named_types, variable.type, pos
             )
             variable.value = VariantValue(
                 variable.type,
@@ -69,16 +70,16 @@ class Interpreter(Visitor):
             )
             return
 
-        raise RuntimeError(f"Type '{variable.type}' not found")
+        raise InterpreterError(pos,f"Type '{variable.type}' not found")
 
-    def get_inner_variable(self, variable: Variable, attr_name: str):
+    def get_inner_variable(self, variable: Variable, attr_name: str, pos):
         if not variable.can_variable_be_updated():
-            raise RuntimeError("Trying to reassign value to a non-mutable attribute.")
+            raise InterpreterError(pos,"Trying to reassign value to a non-mutable attribute.")
         if not variable.is_initialised():
-            self.initialise_empty_complex_variable(variable, attr_name)
+            self.initialise_empty_complex_variable(variable, attr_name, pos)
 
         if self.variable_needs_extending(variable, attr_name):
-            self.extend_(variable, attr_name)
+            self.extend_(variable, attr_name, pos)
 
         variable = variable.value.get_inner_variable(attr_name) # this name might be confusing, it is not recursion
         return variable
@@ -86,15 +87,16 @@ class Interpreter(Visitor):
     def visit_assignment(self, assignment: AssignmentStatement):
         name_chain = assignment.obj_access.name_chain
         name = name_chain[0]
-        variable = self.scopes.get_variable(name)
+        pos = assignment.pos
+        variable = self.scopes.get_variable(name, pos)
         if self.is_simple_assignment(name_chain):
-            self.simple_assignment(name, variable.type, assignment.expr)
+            self.simple_assignment(name, variable.type, assignment.expr, pos)
             return
-        self.complex_assignment(variable, name_chain[1:], assignment.expr)
+        self.complex_assignment(variable, name_chain[1:], assignment.expr, pos)
 
-    def check_attr_name_in_struct_type(self, attr_name: str, struct_type: str):
+    def check_attr_name_in_struct_type(self, attr_name: str, struct_type: str, pos):
         if self.scopes.is_struct_type_(struct_type):
-            attr_defs = self.scopes.get_var_defs_for_(struct_type)
+            attr_defs = self.scopes.get_var_defs_for_(struct_type, pos)
             for attr_def in attr_defs:
                 if attr_name == attr_def.name:
                     return True
@@ -103,63 +105,66 @@ class Interpreter(Visitor):
     def variable_needs_extending(self, variable: Variable, attr_name: str):
         return not variable.value.is_attr_in_(attr_name)
 
-    def extend_(self, variable: Variable, attr_name):
+    def extend_(self, variable: Variable, attr_name, pos):
         attr_def = self.get_attr_def_from_type_(
-            attr_name, variable.value.get_concrete_type()
+            attr_name, variable.value.get_concrete_type(), pos
         )
         variable.value.add_attr(
             attr_def.name, Variable(attr_def.type, attr_def.is_mutable, None)
         )
 
-    def get_attr_def_from_type_(self, attr_name, type_):
-        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
+    def get_attr_def_from_type_(self, attr_name, type_, pos):
+        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_, pos)
         for var_def in var_defs:
             if attr_name == var_def.name:
                 return var_def
 
-    def check_attr_name_in_(self, type_, attr_name):
-        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
+    def check_attr_name_in_(self, type_, attr_name, pos):
+        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_, pos)
         for var_def in var_defs:
             if attr_name == var_def.name:
                 return True
-        raise RuntimeError(f"Attribute '{attr_name}' not found in type '{type_}'")
+        raise InterpreterError(pos,f"Attribute '{attr_name}' not found in type '{type_}'")
 
     def visit_param(self, param: Param):
         pass
 
     def visit_visit(self, visit_statement: VisitStatement):
         variant_value = visit_statement.obj.accept(self)
+        pos = visit_statement.pos
         if not self.scopes.is_variant_type_(variant_value.type):
-            raise RuntimeError("There is no variant type in visit")
+            raise InterpreterError(pos,"There is no variant type in visit")
         for cs in visit_statement.case_sections:
             if cs.type == variant_value.name:
                 self.scopes.push_scope()
                 self.scopes.add_variable(
-                    variant_value.name, variant_value.type, False, variant_value.value
+                    variant_value.name, variant_value.type, False, variant_value.value,pos
                 )
                 rv = cs.program.accept(self)
-                self.scopes.pop_scope()
+                self.scopes.pop_scope(pos)
                 return rv
 
     def visit_while(self, while_stmt: WhileStatement):
         rv = None
+        pos = while_stmt.pos
         while rv is None and while_stmt.cond.accept(self).bool():
             self.scopes.push_scope()
             rv = while_stmt.prog.accept(self)
-            self.scopes.pop_scope()
+            self.scopes.pop_scope(pos)
         return rv
 
     def visit_if(self, if_stmt):
         evaled_condition = if_stmt.cond.accept(self)
         rv = None
+        pos = if_stmt.pos
         if evaled_condition.bool():
             self.scopes.push_scope()
             rv = if_stmt.prog.accept(self)
-            self.scopes.pop_scope()
+            self.scopes.pop_scope(pos)
         elif if_stmt.else_prog:
             self.scopes.push_scope()
             rv = if_stmt.else_prog.accept(self)
-            self.scopes.pop_scope()
+            self.scopes.pop_scope(pos)
         return rv
 
     def visit_return(self, return_stmt):
@@ -170,9 +175,10 @@ class Interpreter(Visitor):
 
     def visit_func_call(self, func_call: FunctionCall):
         curr_scope = self.scopes.curr_scope
+        pos = func_call.pos
         args = [arg.accept(self) for arg in func_call.args]
         func_def, func_scope_idx = (
-            self.scopes.get_function_definition_and_its_scope_idx(func_call.name)
+            self.scopes.get_function_definition_and_its_scope_idx(func_call.name, pos)
         )
         self.scopes.curr_scope = func_scope_idx
         self.scopes.push_scope()
@@ -181,33 +187,35 @@ class Interpreter(Visitor):
                 param.name,
                 param.type,
                 param.is_mutable,
-                self._convert_to_(param.type, arg),
+                self._convert_to_(param.type, arg, param.pos),
+                param.pos
             )
         self.curr_recursion += 1
         if self.curr_recursion > self._max_recursion_depth:
-            raise RuntimeError("Maximal recursion depth reached!")
-        rv = self._convert_to_(func_def.type, func_def.prog.accept(self))
+            raise InterpreterError(pos,"Maximal recursion depth reached!")
+        rv = self._convert_to_(func_def.type, func_def.prog.accept(self), pos)
 
         self.curr_recursion -= 1
-        self.scopes.pop_scope()
+        self.scopes.pop_scope(pos)
         self.scopes.curr_scope = curr_scope
         return rv
 
     def visit_obj_access(self, obj_access: ObjectAccess):
         value: Value = None
         obj_name = obj_access.name_chain[0]
+        pos = obj_access.pos
         if isinstance(obj_name, str):
-            variable = self.scopes.get_variable(obj_name)
+            variable = self.scopes.get_variable(obj_name, pos)
             value = variable.value
         elif isinstance(obj_name, FunctionCall):
             value = obj_name.accept(self)
         rest_address = obj_access.name_chain[1:]
         if value is None:
-            raise RuntimeError(f"Variable '{obj_name}' has no value")
+            raise InterpreterError(pos, f"Variable '{obj_name}' has no value")
         for attr_name in rest_address:
             value = value[attr_name]
             if value is None:
-                raise RuntimeError(
+                raise InterpreterError(pos,
                     f"Variable '{".".join(obj_access.name_chain)}' has no value"
                 )
         return deepcopy(value)
@@ -217,35 +225,36 @@ class Interpreter(Visitor):
         type_: str = var_dec.type
         is_mutable: bool = var_dec.is_mutable
         value: ASTNode = var_dec.default_value
-        self.scopes.reserve_place_for_(name, type_, is_mutable)
-        if default_value := self._get_default_value(type_, value):
-            converted = self._convert_to_(type_, default_value)
-            self.scopes.set_(name, converted)
+        pos = var_dec.pos
+        self.scopes.reserve_place_for_(name, type_, is_mutable, pos)
+        if default_value := self._get_default_value(type_, value, depth=0, pos=pos):
+            converted = self._convert_to_(type_, default_value, pos)
+            self.scopes.set_(name, converted, pos)
 
-    def _convert_to_(self, target_type: str, value: Value):
+    def _convert_to_(self, target_type: str, value: Value, pos):
         if value is None and target_type == "null_type":
             return None
         if value is None:
-            raise RuntimeError("Can not convert no value to something else!")
+            raise InterpreterError(pos,"Can not convert no value to something else!")
         if value.type == target_type:
             return value
         if self.scopes.is_variant_type_(value.type):
-            return self._convert_to_(target_type, value.value)
+            return self._convert_to_(target_type, value.value, pos)
         if self.scopes.is_struct_type_(value.type):
             if self.scopes.is_struct_type_(target_type):
-                raise RuntimeError(
+                raise InterpreterError(pos,
                     f"Can not convert struct type '{value.type}' to struct type '{target_type}'"
                 )
             if self.scopes.is_built_in_type_(target_type):
-                raise RuntimeError(
+                raise InterpreterError(pos,
                     f"Can not convert struct type '{value.type}' to builtin type '{target_type}'"
                 )
             if self.scopes.is_variant_type_(target_type):
-                named_types = self.scopes.get_named_types_for_(target_type)
+                named_types = self.scopes.get_named_types_for_(target_type, pos)
                 for named_type in named_types:
                     if value.type == named_type.type:
                         return VariantValue(target_type, value, named_type.name)
-                raise RuntimeError(
+                raise InterpreterError(pos,
                     f"No matching struct variant option while converting from struct '{value.type}' to variant type '{target_type}'"
                 )
         if self.scopes.is_built_in_type_(value.type):
@@ -255,7 +264,7 @@ class Interpreter(Visitor):
                 elif value.type == "float":
                     value.value = f"{value.value:.4f}"
                 else:
-                    raise RuntimeError(
+                    raise InterpreterError(pos,
                         f"Hmmm something went wrong when converting from {value.type} into str"
                     )
                 value.type = "str"
@@ -267,11 +276,11 @@ class Interpreter(Visitor):
                     try:
                         value.value = int(float(value.value))
                     except Exception:
-                        raise RuntimeError(
+                        raise InterpreterError(pos,
                             f"Can not convert '{value.value}' str into int"
                         )
                 else:
-                    raise RuntimeError(
+                    raise InterpreterError(pos,
                         f"Hmmm something went wrong when converting from {value.type} into int"
                     )
                 value.type = "int"
@@ -283,14 +292,14 @@ class Interpreter(Visitor):
                     try:
                         value.value = float(value.value)
                     except Exception:
-                        raise RuntimeError(
+                        raise InterpreterError(pos,
                             f"Can not convert '{value.value}' str into float"
                         )
                 value.type = "float"
                 return value
             if self.scopes.is_variant_type_(target_type):
                 # TODO add compatible types - for example traverse named types second time - if there is no direct type then pick first built in
-                named_types = self.scopes.get_named_types_for_(target_type)
+                named_types = self.scopes.get_named_types_for_(target_type, pos)
                 built_in_named_type = None
                 for named_type in named_types:
                     if (
@@ -303,48 +312,48 @@ class Interpreter(Visitor):
                 if built_in_named_type:
                     return VariantValue(
                         built_in_named_type.type,
-                        self._convert_to_(built_in_named_type.type, value),
+                        self._convert_to_(built_in_named_type.type, value, pos),
                         built_in_named_type.name,
                     )
-                raise RuntimeError(
+                raise InterpreterError(pos,
                     f"There is no built in type in named types of variant '{target_type}' so can not convert built in of type '{value.type}'"
                 )
             if self.scopes.is_struct_type_(target_type):
-                raise RuntimeError("Can not convert built in type into struct type. ")
-            raise RuntimeError("Hmmm sth went wrong?")
+                raise InterpreterError(pos,"Can not convert built in type into struct type. ")
+            raise InterpreterError(pos,"Hmmm sth went wrong?")
         if self.scopes.is_variant_type_(target_type):
-            named_types = self.scopes.get_named_types_for_(target_type)
+            named_types = self.scopes.get_named_types_for_(target_type, pos)
             for named_type in named_types:
                 if value.type == named_type.type:
                     return VariantValue(named_type.type, value, named_type.name)
         return value
 
-    def _get_default_value(self, type_: str, value: ASTNode, depth=0):
+    def _get_default_value(self, type_: str, value: ASTNode, depth, pos):
         if value is not None:
             return value.accept(self)
-        return self._get_default_value_for_(type_, depth)
+        return self._get_default_value_for_(type_, depth, pos)
 
-    def _get_default_value_for_(self, type_: str, depth: int = 0):
+    def _get_default_value_for_(self, type_: str, depth: int, pos):
         if self.scopes.is_built_in_type_(type_):
             return None
         if self.scopes.is_struct_type_(type_):
-            return self._get_default_value_for_struct_(type_, depth)
+            return self._get_default_value_for_struct_(type_, depth, pos)
         if self.scopes.is_variant_type_(type_):
             return self._get_default_value_for_variant_(type_)
-        raise RuntimeError(f"Type '{type_}' not found in any scope")
+        raise InterpreterError(pos,f"Type '{type_}' not found in any scope")
 
-    def _get_default_value_for_struct_(self, type_: str, depth=0):
+    def _get_default_value_for_struct_(self, type_: str, depth, pos):
         """Struct value is not None when at least one of its attributes have non none value"""
         if depth > self.max_struct_depth:
-            raise RuntimeError(
+            raise InterpreterError(pos,
                 f"Max struct depth reached. Probably you have cycle dependency in type '{type_}'"
             )
-        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_)
+        var_defs: List[VariableDeclaration] = self.scopes.get_var_defs_for_(type_, pos)
         attr_dict: Dict[str, Variable] = dict()
         not_none = False
         for var_def in var_defs:
             default_value = self._get_default_value(
-                var_def.type, var_def.default_value, depth + 1
+                var_def.type, var_def.default_value, depth + 1, pos
             )
             if default_value:
                 not_none = True
@@ -359,19 +368,22 @@ class Interpreter(Visitor):
         return None
 
     def visit_struct_def(self, struct_def: StructDef):
-        self.scopes.add_struct_type(struct_def.name, struct_def.attributes)
+        pos = struct_def.pos
+        self.scopes.add_struct_type(struct_def.name, struct_def.attributes, pos)
 
     def visit_variant_def(self, variant_def: VariantDef):
-        self.scopes.add_variant_type(variant_def.name, variant_def.named_types)
+        pos = variant_def.pos
+        self.scopes.add_variant_type(variant_def.name, variant_def.named_types, pos)
         if len(variant_def.named_types) <= 1: 
-            raise RuntimeError(f"Variant '{variant_def.name}' should have more than 1 variant options")
+            raise InterpreterError(pos,f"Variant '{variant_def.name}' should have more than 1 variant options")
         for named_type in variant_def.named_types:
             named_type.accept(self)
         
 
     def visit_named_type(self, named_type):
+        pos = named_type.pos
         if self.scopes.is_variant_type_(named_type.type):
-            raise RuntimeError(f"Variant option '{named_type.name}' can no be of type variant")
+            raise InterpreterError(pos,f"Variant option '{named_type.name}' can no be of type variant")
 
     def visit_func_def(self, func_def):
         self.scopes.add_function(func_def)

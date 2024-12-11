@@ -4,16 +4,17 @@ from interpreter import Interpreter
 from AST import *
 from scopes import Scopes
 from interpreter_types import StructValue
+from interpreter_errors import InterpreterError
 
 
 def test_getting_value_of_uninitialised_int():
     """a : int;"""
-    ast = Program([VariableDeclaration("a", "int", False)])
+    ast = Program([VariableDeclaration("a", "int", False, pos = (1,1))])
     i = Interpreter()
     ast.accept(i)
-    with pytest.raises(RuntimeError) as e:
-        i.visit_obj_access(ObjectAccess(["a"])).value
-    assert str(e.value) == "Variable 'a' has no value"
+    with pytest.raises(InterpreterError) as e:
+        i.visit_obj_access(ObjectAccess(["a"], pos=(2,1))).value
+    assert str(e.value) == "InterpreterError: row: 2, column: 1, Variable 'a' has no value"
 
 
 def test_getting_value_of_initialised_int():
@@ -45,6 +46,6 @@ def test_empty_struct():
     ast = Program([StructDef("A", []), VariableDeclaration("a", "A", False)])
     i = Interpreter()
     ast.accept(i)
-    with pytest.raises(RuntimeError) as e:
-        i.visit_obj_access(ObjectAccess(["a"]))
-    assert str(e.value) == "Variable 'a' has no value"
+    with pytest.raises(InterpreterError) as e:
+        i.visit_obj_access(ObjectAccess(["a"], pos=(3,1)))
+    assert str(e.value) == "InterpreterError: row: 3, column: 1, Variable 'a' has no value"
