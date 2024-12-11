@@ -23,12 +23,11 @@ def main():
     )
     args = parser.parse_args()
     interpreter = Interpreter()
-    if True or args.source:
-        # if not os.path.exists(args.source):
-        #     print(f"Error: The specified source path does not exist: {args.source}")
-        #     return
-        # with open(args.source, "r", encoding="ascii") as sf:
-        with open('binary_tree.txt', "r", encoding="ascii") as sf:
+    if args.source:
+        if not os.path.exists(args.source):
+            print(f"Error: The specified source path does not exist: {args.source}")
+            return
+        with open(args.source, "r", encoding="ascii") as sf:
             try:
                 reader = TextIOReader(sf)
                 lexer = Lexer(reader)
@@ -41,7 +40,7 @@ def main():
     else:
         print("No source specified.")
 
-    if True or args.interactive:
+    if args.interactive:
         print("Interactive mode enabled. Type q to quit")
         statement_code  = input("Type statement : ")
         while statement_code != 'q':
