@@ -19,3 +19,7 @@ class NotSupportedOperation(InterpreterError):
 
 class DivisionByZero(InterpreterError):
     pass
+
+
+class NumberTooBig(InterpreterError):
+    pass

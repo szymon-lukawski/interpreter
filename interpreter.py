@@ -6,7 +6,7 @@ from scopes import Scopes
 from interpreter_types import Variable, Value, StructValue, VariantValue, BuiltInValue
 from multipledispatch import dispatch
 from operations import *
-from interpreter_errors import InterpreterError, NotSupportedOperation, DivisionByZero
+from interpreter_errors import InterpreterError, NotSupportedOperation, DivisionByZero, NumberTooBig
 
 
 class Interpreter(Visitor):
@@ -16,6 +16,7 @@ class Interpreter(Visitor):
         self._max_recursion_depth = max_recursion_depth
         self.curr_recursion = 1
         self.max_struct_depth = max_struct_depth
+        self.number_limit = 10**9
 
 
 
@@ -423,9 +424,9 @@ class Interpreter(Visitor):
         result = add_expr.children[0].accept(self)
         for i, op in enumerate(add_expr.operations):
             if op == "+":
-                result = add(result, add_expr.children[i + 1].accept(self))
+                result = self.add(result, add_expr.children[i + 1].accept(self), add_expr.pos)
             elif op == "-":
-                result = sub(result, add_expr.children[i + 1].accept(self))
+                result = self.sub(result, add_expr.children[i + 1].accept(self), add_expr.pos)
         return result
 
     def visit_multi(self, multi_expr):
@@ -613,4 +614,69 @@ class Interpreter(Visitor):
         return BuiltInValue('str', left.replace(right, ""))
     
 
+    @dispatch(BuiltInValue, BuiltInValue, object)
+    def add(self, left, right, pos):
+        return self.add(left.value, right.value, pos)
+
+    @dispatch(int, int, object)
+    def add(self, left, right, pos):
+        if int(left + right) > self.number_limit:
+            raise NumberTooBig(pos, "Not good.")
+        return BuiltInValue('int', int(left + right))
+
+    @dispatch(int, float, object)
+    def add(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('float', right), pos)
+        return BuiltInValue('int', int(left + right.value))
+
+    @dispatch(int, str, object)
+    def add(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('str', right), pos)
+        return BuiltInValue('int', int(left + right.value))
     
+
+    @dispatch(BuiltInValue, StructValue, object)
+    def add(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '+' a builtin and struct.")
+    
+    @dispatch(StructValue, BuiltInValue, object)
+    def add(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '+' a struct and builtin.")
+
+    @dispatch(BuiltInValue, VariantValue, object)
+    def add(self, left, right, pos):
+        return self.add(left, right.value, pos)
+    
+    @dispatch(VariantValue, BuiltInValue, object)
+    def add(self, left, right, pos):
+        return self.add(left.value, right, pos)
+    
+
+    @dispatch(float, int, object)
+    def add(self, left, right, pos):
+        return BuiltInValue('float', left + float(right))
+    
+    @dispatch(float, float, object)
+    def add(self, left, right, pos):
+        return BuiltInValue('float', left + right)
+    
+    @dispatch(float, str, object)
+    def add(self, left, right, pos):
+        right = self._convert_to_('float', BuiltInValue('str', right), pos)
+        return self.add(BuiltInValue('float', left), right, pos)
+    
+    @dispatch(str, int, object)
+    def add(self, left, right, pos):
+        right = self._convert_to_('str', BuiltInValue('int', right), pos)
+        return BuiltInValue('str', left + right.value)
+    
+    @dispatch(str, float, object)
+    def add(self, left, right, pos):
+        right = self._convert_to_('str', BuiltInValue('float', right), pos)
+        return BuiltInValue('str', left + right.value)
+
+    @dispatch(str, str, object)
+    def add(self, left, right, pos):
+        return BuiltInValue('str', left + right)
+    
+

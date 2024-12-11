@@ -404,6 +404,60 @@ def test_division_str_str():
     ast.accept(i)
     assert ast.accept(i).value == 'AAA123'
 
+def test_add_int_int():
+    """102 + 103"""
+    ast = AddExpr([IntLiteral(102), IntLiteral(103)], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 205
+
+def test_add_int_float():
+    """102 + 103"""
+    ast = AddExpr([IntLiteral(102), FloatLiteral(103.2)], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 205
+
+def test_add_int_str():
+    """102 + '103'"""
+    ast = AddExpr([IntLiteral(102), StrLiteral('103.2')], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 205
+
+def test_add_float_int():
+    """102.1 + 103"""
+    ast = AddExpr([FloatLiteral(102.1), IntLiteral(103)], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 205.1
+
+def test_add_float_float():
+    """102.3 + 103.3"""
+    ast = AddExpr([FloatLiteral(102.3), FloatLiteral(103.3)], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 205.6
+
+def test_add_float_str():
+    """102.3 + '103.3'"""
+    ast = AddExpr([FloatLiteral(102.3), StrLiteral('103.3')], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 205.6
+
+
+def test_add_str_int():
+    """'Ala' + 103"""
+    ast = AddExpr([StrLiteral('Ala'), IntLiteral(103)], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 'Ala103'
+
+def test_add_str_float():
+    """'Ala' + 3.14"""
+    ast = AddExpr([StrLiteral('Ala'), FloatLiteral(3.14)], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 'Ala3.1400'
+
+def test_add_str_str():
+    """'Ala' + '3.14'"""
+    ast = AddExpr([StrLiteral('Ala'), StrLiteral('3.14')], ["+"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 'Ala3.14'
 
 
 
