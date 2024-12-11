@@ -321,24 +321,88 @@ def test_multiplication_float_variant_not_compatible():
         == "InterpreterError: row: 101, column: 202, Can not convert 'Ala' str into float"
     )
 
+
 def test_multiplication_str_int():
     """'Ala'*2"""
-    ast = MultiExpr([StrLiteral('Ala'), IntLiteral(2)], ["*"])
+    ast = MultiExpr([StrLiteral("Ala"), IntLiteral(2)], ["*"])
     i = Interpreter()
-    assert ast.accept(i).value == 'AlaAla'
+    assert ast.accept(i).value == "AlaAla"
 
 
 def test_multiplication_str_float():
     """'Ala'*3.14"""
-    ast = MultiExpr([StrLiteral('Ala'), FloatLiteral(3.14)], ["*"])
+    ast = MultiExpr([StrLiteral("Ala"), FloatLiteral(3.14)], ["*"])
     i = Interpreter()
-    assert ast.accept(i).value == 'AlaAlaAla'
+    assert ast.accept(i).value == "AlaAlaAla"
+
 
 def test_multiplication_str_str():
     """'ABC'*'12345'"""
-    ast = MultiExpr([StrLiteral('ABC'), StrLiteral('12345')], ["*"])
+    ast = MultiExpr([StrLiteral("ABC"), StrLiteral("12345")], ["*"])
     i = Interpreter()
-    assert ast.accept(i).value == 'A1B2C3'
+    assert ast.accept(i).value == "A1B2C3"
+
+
+def test_division_int_int():
+    """12/5"""
+    ast = MultiExpr([IntLiteral(12), IntLiteral(5)], ["/"])
+    i = Interpreter()
+    assert ast.accept(i).value == 2
+
+
+def test_division_int_int_by_zero():
+    """12/0"""
+    ast = MultiExpr([IntLiteral(12), IntLiteral(0)], ["/"], pos=(90, 12))
+    i = Interpreter()
+    with pytest.raises(InterpreterError) as e:
+        ast.accept(i)
+    assert str(e.value) == "DivisionByZero: row: 90, column: 12, Not good."
+
+
+def test_division_int_float_less_than_1():
+    """12/0.5"""
+    ast = MultiExpr([IntLiteral(12), FloatLiteral(0.5)], ["/"], pos=(90, 12))
+    i = Interpreter()
+    with pytest.raises(InterpreterError) as e:
+        ast.accept(i)
+    assert str(e.value) == "DivisionByZero: row: 90, column: 12, Not good."
+
+
+def test_division_int_float():
+    """12/1.5"""
+    ast = MultiExpr([IntLiteral(12), FloatLiteral(1.5)], ["/"], pos=(90, 12))
+    i = Interpreter()
+    ast.accept(i)
+    assert abs(ast.accept(i).value - 12) < 10**-9
+
+def test_division_int_str():
+    """12/'1.5'"""
+    ast = MultiExpr([IntLiteral(12), StrLiteral('1.5')], ["/"], pos=(90, 12))
+    i = Interpreter()
+    ast.accept(i)
+    assert abs(ast.accept(i).value - 12) < 10**-9
+
+def test_division_str_int():
+    """'Ala'/0"""
+    ast = MultiExpr([StrLiteral('Ala'), IntLiteral(0)], ["/"], pos=(90, 12))
+    i = Interpreter()
+    ast.accept(i)
+    assert ast.accept(i).value == 'A'
+
+def test_division_str_float():
+    """'Ala'/0"""
+    ast = MultiExpr([StrLiteral('Ala'), FloatLiteral(1.7)], ["/"], pos=(90, 12))
+    i = Interpreter()
+    ast.accept(i)
+    assert ast.accept(i).value == 'l'
+
+
+def test_division_str_str():
+    """'AAAABABAB'/'AB'"""
+    ast = MultiExpr([StrLiteral('AAAABABAB123'), StrLiteral('AB')], ["/"], pos=(90, 12))
+    i = Interpreter()
+    ast.accept(i)
+    assert ast.accept(i).value == 'AAA123'
 
 
 

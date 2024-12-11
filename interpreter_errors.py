@@ -16,3 +16,6 @@ class InterpreterError(Exception):
 
 class NotSupportedOperation(InterpreterError):
     """Class for operation related errors"""
+
+class DivisionByZero(InterpreterError):
+    pass

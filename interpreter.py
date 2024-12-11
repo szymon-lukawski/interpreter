@@ -6,7 +6,7 @@ from scopes import Scopes
 from interpreter_types import Variable, Value, StructValue, VariantValue, BuiltInValue
 from multipledispatch import dispatch
 from operations import *
-from interpreter_errors import InterpreterError, NotSupportedOperation
+from interpreter_errors import InterpreterError, NotSupportedOperation, DivisionByZero
 
 
 class Interpreter(Visitor):
@@ -435,7 +435,7 @@ class Interpreter(Visitor):
                 result = self.mul(result, multi_expr.children[i + 1].accept(self), multi_expr.pos)
             elif op == "/":
                 right = multi_expr.children[i + 1].accept(self)
-                result = div(result, right)
+                result = self.div(result, right, multi_expr.pos)
         return result
 
     def visit_unary(self, unary_expr):
@@ -543,4 +543,74 @@ class Interpreter(Visitor):
         for l, r in zip(left,right):
             result.append((l+r))
         return BuiltInValue('str', "".join(result))
+    
+    @dispatch(BuiltInValue, BuiltInValue, object)
+    def div(self, left, right, pos):
+        return self.div(left.value, right.value, pos)
+
+    @dispatch(int, int, object)
+    def div(self, left, right, pos):
+        if right == 0:
+            raise DivisionByZero(pos, "Not good.")
+        return BuiltInValue('int', int(left / right))
+
+    @dispatch(int, float, object)
+    def div(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('float', right), pos)
+        if right.value == 0:
+            raise DivisionByZero(pos, "Not good.")
+        return BuiltInValue('int', int(left / right.value))
+
+    @dispatch(int, str, object)
+    def div(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('str', right), pos)
+        if right.value == 0:
+            raise DivisionByZero(pos, "Not good.")
+        return BuiltInValue('int', int(left / right.value))
+    
+
+    @dispatch(BuiltInValue, StructValue, object)
+    def div(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '/' a builtin and struct.")
+    
+    @dispatch(StructValue, BuiltInValue, object)
+    def div(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '/' a struct and builtin.")
+
+    @dispatch(BuiltInValue, VariantValue, object)
+    def div(self, left, right, pos):
+        return self.div(left, right.value, pos)
+    
+    @dispatch(VariantValue, BuiltInValue, object)
+    def div(self, left, right, pos):
+        return self.div(left.value, right, pos)
+    
+
+    @dispatch(float, int, object)
+    def div(self, left, right, pos):
+        return BuiltInValue('float', left / float(right))
+    
+    @dispatch(float, float, object)
+    def div(self, left, right, pos):
+        return BuiltInValue('float', left / right)
+    
+    @dispatch(float, str, object)
+    def div(self, left, right, pos):
+        right = self._convert_to_('float', BuiltInValue('str', right), pos)
+        return self.div(BuiltInValue('float', left), right, pos)
+    
+    @dispatch(str, int, object)
+    def div(self, left, right, pos):
+        return BuiltInValue('str', left[right] if len(left) > right else "") # getting char at right idx
+    
+    @dispatch(str, float, object)
+    def div(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('float', right), pos)
+        return self.div(BuiltInValue('str', left), right, pos)
+
+    @dispatch(str, str, object)
+    def div(self, left, right, pos):
+        return BuiltInValue('str', left.replace(right, ""))
+    
+
     
