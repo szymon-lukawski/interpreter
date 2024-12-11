@@ -140,3 +140,9 @@ class Scopes:
                 pos, f"Variant '{name}' already declared in the current scope"
             )
         self.variant_stack[self.curr_scope][name] = named_types
+
+
+    def validate_type_name(self, type_name :str, pos):
+        if not self.is_built_in_type_(type_name) and not self.is_struct_type_(type_name) and not self.is_variant_type_(type_name):
+            raise InterpreterError(pos, f"Type '{type_name}' not found")
+        return True

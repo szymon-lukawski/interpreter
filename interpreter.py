@@ -223,9 +223,11 @@ class Interpreter(Visitor):
     def visit_var_dec(self, var_dec: VariableDeclaration):
         name: str = var_dec.name
         type_: str = var_dec.type
+        pos = var_dec.pos
+        self.scopes.validate_type_name(type_, pos)
         is_mutable: bool = var_dec.is_mutable
         value: ASTNode = var_dec.default_value
-        pos = var_dec.pos
+
         self.scopes.reserve_place_for_(name, type_, is_mutable, pos)
         if default_value := self._get_default_value(type_, value, depth=0, pos=pos):
             converted = self._convert_to_(type_, default_value, pos)
