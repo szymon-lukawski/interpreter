@@ -393,15 +393,15 @@ class Interpreter(Visitor):
 
     def visit_or(self, or_expr):
         for child in or_expr.children:
-            if child.accept(self):
-                return True
-        return False
+            if child.accept(self).bool():
+                return BuiltInValue('int', 1)
+        BuiltInValue('int', 0)
 
     def visit_and(self, and_expr):
         for child in and_expr.children:
-            if not child.accept(self):
-                return False
-        return True
+            if not child.accept(self).bool():
+                BuiltInValue('int', 0)
+        return BuiltInValue('int', 1)
 
     def visit_rel(self, rel_expr):
         left = rel_expr.left.accept(self)
@@ -739,7 +739,7 @@ class Interpreter(Visitor):
         right = self._convert_to_('str', BuiltInValue('float', right), pos)
         return self.sub(BuiltInValue('str', left), right, pos)
     
-    
+
     @dispatch(str, str, object)
     def sub(self, left, right, pos):
         right_index = left.find(right)
