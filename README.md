@@ -13,36 +13,30 @@ Dodakowo mozliwość definiowania struktur oraz struktury wariantowej - typy def
 ## Struktura Projektu
 Projekt podzielony na części:
 1. Czytanie z wejścia, plik lub strumień, znak po znaku i przekazuje wszystkich znaków dalej. Jeśli koniec wejscia to wysyla specjalny znak konca wejscia. Zapytany o kojelny znak znowu specjalny znak konca wejscia, i tak do końca.
-2. Filtr Znaków, niektóre znaki nie są potrzebne lekserowi, jesli natrafi na znak do odfiltrowania do prosi o kolejny az nastrafi na znak nie do odfiltrowania, ten przekazuje dalej. 
-3. Analizator Leksykalny, generowanie tokenów, grupowanie znaków.
-4. Filtr tokenów, np. my_token komentarza jest odfiltrowywany
-5. Analizator Składniowy, generowanie drzewa programu na podstawie gramatyki
-6. Zmiana z duzego drzewa programu do AST
-7. Analizator Semantyczny, sprawdza zakresy zmiennych, poprawnosc typów itp korzysta z tabeli symboli.
-8. Tree traverser
-9. Interpreter
+2. Analizator Leksykalny, generowanie tokenów, grupowanie znaków.
+3. Analizator Składniowy, generowanie drzewa programu (AST) na podstawie gramatyki
+4. Interpreter
 
 ## 1. Zarys uruchomienia:
 ```
-print('Hello World!');
+> git clone https://gitlab-stud.elka.pw.edu.pl/TKOM_24Z_WW/slukawsk/tkom_projekt_sl
+> cd tkom_projekt_sl
+> python -m venv .venv
+> source .venv/bin/activate
+> pip install -r requirements.txt
+> python main.py --source binary_tree.txt -i
+interpreter  >>> Sum of my_tree is:
+interpreter  >>> 45
+Interactive mode enabled. Type q to quit
+Type statement : 
 ```
-Wypisywanie literału.
-Po pobraniu repozytorium i zaintalowaniu zalezności z pliku `requirements.txt` nalezy w terminalu wpisać:
-```
->python3 interpreter.py <nazwa_pliku>
-Hello World!
->
-```
-Plik musi mieć rozszerzenie `.mc`. 
-Istnieje mozliwość stworzenia pliku konfiguracyjnego `config.json` który steruje parametrami interpretera m.i. limity dla typu `int`, limit długości typu `str`, maksymalna dlugosc identyfikatora.
 ## Typy wbudowane to:
-   + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite, domyślnie z przedziału [-99 999 999; +99 999 999]
-   + `float` - typ liczbowy zmiennoprzecinkowy z utratą precyzji. Podobny do typu float64 ze standardu `IEEE 754-1985`. Operacje na liczbach float zgodne z operacjami w języku python3.
-   + `str` - typ reprezentujący ciąg znaków. Mozna przechowywać znaki specjalne jak znak nowej linii, tabulacja itp. realizacja poprzez escaping `\`
-   + `null_type` - specjalny typ reprezentujący dokładnie jedną specjalną wartość `null`. Proba uzyskania wartości zmiennej niezainicjowanej zwraca błąd, a **nie** wartość `null`!
+   + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite, z przedziału [-99 999 999; +99 999 999]. Operacje logiczne jak `&` oraz `|` czy operacje porównania zwracają ten typ. 
+   + `float` - typ liczbowy zmiennoprzecinkowy z utratą precyzji. Podobny do typu float64 ze standardu `IEEE 754-1985`. Operacje na liczbach float zgodne z operacjami w języku python3. 
+   + `str` - typ reprezentujący ciąg znaków. Mozna przechowywać znaki specjalne jak znak nowej linii, tabulacja itp. realizacja poprzez escaping `\`.
+   + `null_type` - specjalny typ do zaznaczenia ze funkcja nie zwraca wartości. Zmienna nie moze miec tego typu.
   
 #### Przykłady:
-Najpierw przykład a pózniej wyjaśnienie:
   ```
   calkowita          : int = 10;
   zmiennoprzecinkowa : float = 3.14;
@@ -52,7 +46,7 @@ Przykład ilustrujący typowe definiowanie zmiennych.
 ```
 x : int = 1;
 ```
-Zmienna `x` jest niemutowalna. Próba zmiany jej wartości zwróci błąd `ReassignmentError`.
+Zmienna `x` jest niemutowalna. Próba zmiany jej wartości zwróci błąd.
 ```
 y : mut int = 1;
 y = 2;
@@ -65,7 +59,7 @@ z2 : mut int;
 z2 = 11; 
 ```
 Zarówno zmienne mutowalne jak i niemutowalne mogą nie mieć przypisanej wartości. Próba nadania wartości zmiennej niemutowalnej nie zwraca błędu (o ile typ się zgadza. O kompatybilności typów pózniej).
-   Próba odczytania wartości zmiennej która nie ma nadanej wartości zwraca błąd, a nie wartość `null`. 
+   Próba odczytania wartości zmiennej która nie ma nadanej wartości zwraca błąd. 
 
 ```
 x : mut int;
@@ -84,42 +78,61 @@ Znienna typu `str` z przypisaną wartością pustego stringa jest czym innym niz
    + `struct` - struktura, typ złozony z agregacji innych typów.
      + dostęp do atrybutów instancji struktury po nazwie atrybutu: `nazwa_instancji.nazwa_atrybutu`
      + brak mozliwości przypisania nowej wartości do atrubutu mutowalnego gdy instancja struktury jest niemutowalna
-     + pola w strukturze mogą mieć przypisane wartości domyślne:
-```
-Point1D : struct
-begin
-  x : mut int = 0; @ wartość domyślna wynosi 0
-end
-p : Point;
-print(p.x); @ wyświela wartość domyślną po automatycznej konwersji z typu 'int' do 'str'
-``` 
+     + zmienna typu struct jest inicjalizowana jeśli dowolne pole w tej strukturze moze zostac zainicjalizowane.
+     + przypisanie do atrybutu niezainicjalizowanej struktury tworzy tą strukturę.
+        ```
+        A : struct
+        begin
+            x : int;
+            y : str;
+        end
+        B : struct
+        begin
+            a: A;
+        end
+        C : struct
+        begin
+            b: B;
+        end
+        c : C;                   # zmienna c nie ma wartości
+        c.b.a.x = 123;           # zmienna c ma wartość
+        c.b.a.y = 'Ala ma kota'; # zwraca błąd bo zmienna c ma wartość a nie jest mutowalna 
+        ```  
+      + pola w strukturze mogą mieć przypisane wartości domyślne:
+
+        ```
+        Point1D : struct
+        begin
+          x : mut int = 0; @ wartość domyślna wynosi 0
+        end
+        p : Point; # zmienna p ma wartość poniewaz przynajmniej jeden z jej atrybutów ma wartość
+        ``` 
+        ```
+        Czlowiek : struct
+        begin
+            imie : str;
+            wiek  : mut int;
+        end
+        janek : mut Czlowiek; # mutowalny zeby mozna bylo przypisac wartosc do wiecej niz jednego atrybutu bez wartosci domyślnej
+        janek.imie = 'Janek';
+        janek.wiek = 20;
+        ```
    + `variant` - tagged union:
      + typy w wariancie nie mogą się powtarzać
-     + azeby przypisac wartosc do zmiennej wariantowej nalezy uzyć bezpośrednio jednego z typów składowych wariantu.
+     + typy w wariancie nie mogą być typami wariantowymi !
+     + variant musi miec przynajmniej 2 typy
+     + azeby przypisac wartosc do zmiennej wariantowej nalezy uzyć wartości która ma typ jednego z typów składowych wariantu. 
+     + wyjątkiem jest przypisanie wartości typu wbudowanego. Jeśli wariant nie ma bezpośredniej zgodności typów to szuka czy jeden z jego wariantów jest typem wbudowanym. Jeśli tak to następuje próba konwersji wartości na typ wbudowany znaleziony jako pierwszy w dostępnych typach wariantu. Uwaga: ta operacja konwersji moze się nie udać dlatego najlepiej jest przypisywać wartości odpowiedniego typu do typu wariantowego... 
+     + variant nie ma wartości domyślnej - pomimo ze typy składowe mogą ją mieć
+     + w przeciwieństwie do `struct`, gdy zmienna variantowa nie ma wartości, nie mozna przypisać do atrybutu struktury składowej. # TODO przejrzyj wszystkie named_types które mają strukturę 
 
-#### Przykłady:
-```
-Czlowiek : struct
-begin
-    imie : str;
-    wiek  : mut int;
-end
-janek : Czlowiek;
-janek.imie = 'Janek';
-janek.wiek = 20;
-```
 Definicja struktury jest zawarta między słowami kluczowymi `begin` oraz `end`.
-Definicja struktury składa się z zera lub więcej definicji zmiennych - pól w tej strukturze.
-Zdefiniowanie zmiennej typu `Czlowiek` odbywa się analogicznie jak przy definicji zmiennych o typach wbudowanych.
-Próba zmiany wartości pola `wiek` w instancji struktury `Czlowiek` np. `janek.wiek=21;` zwróci błąd `ReassignmentError` - zmienna `janek` jest niemutowalna.
-Zeby zmiana wartości pól w strukturze była mozliwa, zarówno sama zmienna musi być mutowalna jak i jej pola muszą być mutowalne.
+Definicja struktury składa się z zera lub więcej definicji zmiennych - pól w tej strukturze - chociaz uzyteczność zmiennej tego typu jest wątpliwa - nie mozna przypisać wartości do takiej zmiennej.
 ```
 cos : Cos;
 Cos : struct begin end;
 ```
-Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zatem zwróci `UndefinedTypeError: 'Cos'`.
-Struktura moze nie miec zadnych pól.
-
+Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zwróci błąd `UndefinedTypeError: 'Cos'`.
 ```
 Kod_pocztowy : struct
 begin
@@ -200,7 +213,6 @@ print(wiadomosc);
 Powyzszy program prezentuje wariant oraz instrukcję `visit`.
 W tym przykladzie zmienna wariantowa `punkt` przechowuje wartość typu `Punkt2D` zatem w instrukcji visit przechodzimy do odpowiadającemu temu typowi bloku (blok po `case Punkt2D`).
 Generacja wiadomości w tym przykladzie dotyka tematu operatorów, który będzie omawiany pózniej.
-Próba storzenia bloku `case <NazwaTypuNieistniejacaWDefinicjiRozwazanegoWariantu>` zwroci błąd `VariantTypeNotFound: '<NazwaTypuNieistniejacaWDefinicjiRozwazanegoWariantu>'`.
 Próba stworzenia powtarzajacego się bloku `case` zwroci błąd `CaseRedefinitionError: '<NazwaPowtarzającegoTypu>'` czyli w sytuacji:
 ```
 visit punkt
@@ -215,42 +227,13 @@ begin
     end
 end
 ```
-`@` - komentarz po końca linii. 
-
-### Komentarze:
-
-Tylko komentarze jednolinijkowe: `@`.
-Koniec linii to znak `\n` 
-Nie mozna stawiac komentarzy w ciele definicji struktury.
-Znak `@` najlepiej stawiać albo na końcu wpisanej instrukcji albo w zupełnie nowej linii.
-```
-@ To sa przyklady dobrych komentarzy
-a : int = 12; @ To rowniez
-@ to jest poprawny komentarz
-Czlowiek : struct
-begin
-end @ to jest poprawny komentarz
-@ to jest poprawny komentarz
-```
-```
-a : int @ to są przyklady blednych kometarzy;
-Czlowiek @ To tez : struct 
-begin @ to tez
-end @ to tez
-
-Czlowiek : struct @ To tez
-begin @ to tez
-end @ to jest poprawny komentarz
-```
-
-
 ### Słabe Typowanie
 W ściśle określonych sytuacjach następuje automatyczna konwersja z typu do innego typu.
  + Z `int` do:
    + `float`: zawsze
    + `str`: zawsze, `print(123);` - wyswietli 123
    + `struct`: nigdy
-   + `variant`: nigdy
+   + `variant`: -- 
  + Z `float` do:
    + `int`: tylko gdy wartosc po odcięciu części ułamkowej jest z zakresu typu `int`.
    + `str`: zawsze, reprezentowana jako zaokrąglona liczba dziesiętna, zawsze z rozwinięciem 7 cyfr po przecinku
@@ -293,15 +276,15 @@ Pierwszy argument to `str`:
 
 Tylko struktury oraz warianty mają dostęp do operatora `.`
 
-Dla typów `int` oraz `float` operacje porównania, dodawanie, odejmowanie, mnozenie, przeciwieństwo - **Zgodnie z intuicją**
+Dla typów `int` oraz `float` operacje porównania, dodawanie, odejmowanie, mnozenie, dzielenie - **Zgodnie z intuicją**
 
 Gdy pierwszy argument jest typu `int` to dzielenie jest całkowite, gdy float to dzielenie jest zgodnie z intuicją.
 
 ### Funkcje
   + istnieją funkcje wbudowane:
-    + `print(msg : str) : null begin ... end` - funkcja do wyswietlania typu `str`
-    + `read() : str begin ... end` - funkcja do wczytywania wartości typu `str` od uzytkownika.
-  + funkcje mozna definiowac w ciele innych funkcji
+    + `print(msg : str) : null` - funkcja do wyswietlania typu `str`
+    + `read() : str` - funkcja do wczytywania wartości typu `str` od uzytkownika.
+  + funkcje mozna definiowac w róznych zakresach a nie tylko w globalnym
 ```
 add(arg1: int, arg2: int) : int
 begin
@@ -374,19 +357,9 @@ end
 wypisz_na_ekran(wiadomosc: str) : null_type 
 begin
   print(wiadomosc);
-  return null;
 end
 ```
-to samo co:
-```
-wypisz_na_ekran(wiadomosc: str) : null_type 
-begin
-  print(wiadomosc);
-end
-```
-  + Jezeli instrukcje w ciele funkcji się skończą to zwracany jest `null`. Jeśli funkcja powinna zwrócić inny typ to nastąpi błąd `TypeError: 'null_type' is not '<nazwa typu zadeklarowany w definicji funkcji>'`
-
-
+  + Brak instrukcji `return` w funkcji oznacza ze funkcja nie zwraca wartości
 ### Zakresy widoczności obiektów:
   + 
   + obiekty to: 
