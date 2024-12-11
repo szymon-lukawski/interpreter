@@ -42,17 +42,17 @@ def main():
 
     if args.interactive:
         print("Interactive mode enabled. Type q to quit")
-        interactive_expr_code = input("Type expr : ")
-        while interactive_expr_code != 'q':
+        statement_code  = input("Type statement : ")
+        while statement_code != 'q':
             try:
-                reader = TextIOReader(StringIO(interactive_expr_code))
+                reader = TextIOReader(StringIO(statement_code ))
                 lexer = Lexer(reader)
                 parser = Parser(lexer)
-                ast = parser._parse_expr()
-                ast.accept(interpreter) # add printing expr
+                ast = parser._parse_statement()
+                ast.accept(interpreter)
             except Exception as e:
                 print(e)
-            interactive_expr_code = input("Type expr : ")
+            statement_code  = input("Type statement : ")
     else:
         print("Interactive mode disabled.")
 
