@@ -408,17 +408,17 @@ class Interpreter(Visitor):
         right = rel_expr.right.accept(self)
         match rel_expr.operator:
             case "==":
-                return eq(left, right)
+                return self.eq(left, right, rel_expr.pos)
             case "!=":
-                return ieq(left, right)
+                return self.ieq(left, right, rel_expr.pos)
             case "<":
-                return lt(left, right)
+                return self.lt(left, right, rel_expr.pos)
             case ">":
-                return gt(left, right)
+                return self.gt(left, right, rel_expr.pos)
             case "<=":
-                return lteq(left, right)
+                return self.lteq(left, right, rel_expr.pos)
             case ">=":
-                return gteq(left, right)
+                return self.gteq(left, right, rel_expr.pos)
 
     def visit_add(self, add_expr):
         result = add_expr.children[0].accept(self)
@@ -747,3 +747,163 @@ class Interpreter(Visitor):
             return BuiltInValue('str', left)    
         return BuiltInValue('str', left[:right_index] + left[right_index + len(right):])
     
+
+    @dispatch(BuiltInValue, BuiltInValue, object)
+    def eq(self, left, right, pos):
+        return self.eq(left.value, right.value, pos)
+
+    @dispatch(int, int, object)
+    def eq(self, left, right, pos):
+        return BuiltInValue('int', int(left==right))
+
+    @dispatch(int, float, object)
+    def eq(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('float', right), pos)
+        return self.eq(BuiltInValue('int', left), right, pos)
+
+    @dispatch(int, str, object)
+    def eq(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('str', right), pos)
+        return self.eq(BuiltInValue('int', left), right, pos)
+    
+
+    @dispatch(BuiltInValue, StructValue, object)
+    def eq(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '==' '!=' a builtin and struct.")
+    
+    @dispatch(StructValue, BuiltInValue, object)
+    def eq(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '==' '!=' a struct and builtin.")
+
+    @dispatch(BuiltInValue, VariantValue, object)
+    def eq(self, left, right, pos):
+        return self.eq(left, right.value, pos)
+    
+    @dispatch(VariantValue, BuiltInValue, object)
+    def eq(self, left, right, pos):
+        return self.eq(left.value, right, pos)
+    
+
+    @dispatch(float, int, object)
+    def eq(self, left, right, pos):
+        right = self._convert_to_('float', BuiltInValue('int', right), pos)
+        return self.eq(left, right.value)
+    
+    @dispatch(float, float, object)
+    def eq(self, left, right, pos):
+        return BuiltInValue('int', int(left==right))
+    
+    @dispatch(float, str, object)
+    def eq(self, left, right, pos):
+        right = self._convert_to_('float', BuiltInValue('str', right), pos)
+        return self.eq(left, right.value, pos)
+    
+    @dispatch(str, int, object)
+    def eq(self, left, right, pos):
+        right = self._convert_to_('str', BuiltInValue('int', right), pos)
+        return self.eq(left, right.value, pos)
+
+    @dispatch(str, float, object)
+    def eq(self, left, right, pos):
+        right = self._convert_to_('str', BuiltInValue('float', right), pos)
+        return self.eq(left, right.value, pos)
+    
+
+    @dispatch(str, str, object)
+    def eq(self, left, right, pos):   
+        return BuiltInValue('int', int(left==right))
+    
+
+    def not_(self, int_value: BuiltInValue):
+        if int_value.value == 1:
+            return BuiltInValue('int', 0)
+        if int_value.value == 0:
+            return BuiltInValue('int', 1)
+        
+    
+    @dispatch(object, object, object)
+    def ieq(self, left, right, pos):
+        return self.not_(self.eq(left,right,pos))
+    
+    @dispatch(BuiltInValue, BuiltInValue, object)
+    def lt(self, left, right, pos):
+        return self.lt(left.value, right.value, pos)
+
+    @dispatch(int, int, object)
+    def lt(self, left, right, pos):
+        return BuiltInValue('int', int(left<right))
+
+    @dispatch(int, float, object)
+    def lt(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('float', right), pos)
+        return self.lt(BuiltInValue('int', left), right, pos)
+
+    @dispatch(int, str, object)
+    def lt(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('str', right), pos)
+        return self.lt(BuiltInValue('int', left), right, pos)
+    
+
+    @dispatch(BuiltInValue, StructValue, object)
+    def lt(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '<' '>' '>=' '<=' a builtin and struct.")
+    
+    @dispatch(StructValue, BuiltInValue, object)
+    def lt(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '<' '>' '>=' '<=' a struct and builtin.")
+
+    @dispatch(BuiltInValue, VariantValue, object)
+    def lt(self, left, right, pos):
+        return self.lt(left, right.value, pos)
+    
+    @dispatch(VariantValue, BuiltInValue, object)
+    def lt(self, left, right, pos):
+        return self.lt(left.value, right, pos)
+    
+
+    @dispatch(float, int, object)
+    def lt(self, left, right, pos):
+        right = self._convert_to_('float', BuiltInValue('int', right), pos)
+        return self.lt(left, right.value)
+    
+    @dispatch(float, float, object)
+    def lt(self, left, right, pos):
+        return BuiltInValue('int', int(left<right))
+    
+    @dispatch(float, str, object)
+    def lt(self, left, right, pos):
+        right = self._convert_to_('float', BuiltInValue('str', right), pos)
+        return self.lt(left, right.value, pos)
+    
+    @dispatch(str, int, object)
+    def lt(self, left, right, pos):
+        right = self._convert_to_('str', BuiltInValue('int', right), pos)
+        return self.lt(left, right.value, pos)
+
+    @dispatch(str, float, object)
+    def lt(self, left, right, pos):
+        right = self._convert_to_('str', BuiltInValue('float', right), pos)
+        return self.lt(left, right.value, pos)
+    
+
+    @dispatch(str, str, object)
+    def lt(self, left, right, pos):   
+        return BuiltInValue('int', int(len(left)<len(right)))
+    
+
+    def and_(self, left, right):
+        if left.value == 1 and right.value == 1:
+            return left
+        return BuiltInValue('int', 0)
+
+    @dispatch(object, object, object)
+    def gt(self, left, right, pos):
+        return self.and_(self.not_(self.lt(left,right,pos)), self.not_(self.eq(left,right,pos)))
+    
+    @dispatch(object, object, object)
+    def gteq(self, left, right, pos):
+        return self.not_(self.lt(left,right,pos))
+    
+    @dispatch(object, object, object)
+    def lteq(self, left, right, pos):
+        return self.not_(self.gt(left,right,pos))
