@@ -680,3 +680,70 @@ class Interpreter(Visitor):
         return BuiltInValue('str', left + right)
     
 
+    @dispatch(BuiltInValue, BuiltInValue, object)
+    def sub(self, left, right, pos):
+        return self.sub(left.value, right.value, pos)
+
+    @dispatch(int, int, object)
+    def sub(self, left, right, pos):
+        return BuiltInValue('int', int(left - right))
+
+    @dispatch(int, float, object)
+    def sub(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('float', right), pos)
+        return BuiltInValue('int', int(left - right.value))
+
+    @dispatch(int, str, object)
+    def sub(self, left, right, pos):
+        right = self._convert_to_('int', BuiltInValue('str', right), pos)
+        return BuiltInValue('int', int(left - right.value))
+    
+
+    @dispatch(BuiltInValue, StructValue, object)
+    def sub(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '-' a builtin and struct.")
+    
+    @dispatch(StructValue, BuiltInValue, object)
+    def sub(self, left, right, pos):
+        raise NotSupportedOperation(pos, "Can not '-' a struct and builtin.")
+
+    @dispatch(BuiltInValue, VariantValue, object)
+    def sub(self, left, right, pos):
+        return self.sub(left, right.value, pos)
+    
+    @dispatch(VariantValue, BuiltInValue, object)
+    def sub(self, left, right, pos):
+        return self.sub(left.value, right, pos)
+    
+
+    @dispatch(float, int, object)
+    def sub(self, left, right, pos):
+        return BuiltInValue('float', left - float(right))
+    
+    @dispatch(float, float, object)
+    def sub(self, left, right, pos):
+        return BuiltInValue('float', left - right)
+    
+    @dispatch(float, str, object)
+    def sub(self, left, right, pos):
+        right = self._convert_to_('float', BuiltInValue('str', right), pos)
+        return self.sub(BuiltInValue('float', left), right, pos)
+    
+    @dispatch(str, int, object)
+    def sub(self, left, right, pos):
+        right = self._convert_to_('str', BuiltInValue('int', right), pos)
+        return self.sub(BuiltInValue('str', left), right, pos)
+
+    @dispatch(str, float, object)
+    def sub(self, left, right, pos):
+        right = self._convert_to_('str', BuiltInValue('float', right), pos)
+        return self.sub(BuiltInValue('str', left), right, pos)
+    
+    
+    @dispatch(str, str, object)
+    def sub(self, left, right, pos):
+        right_index = left.find(right)
+        if right_index == -1:
+            return BuiltInValue('str', left)    
+        return BuiltInValue('str', left[:right_index] + left[right_index + len(right):])
+    

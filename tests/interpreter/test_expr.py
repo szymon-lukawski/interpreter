@@ -459,6 +459,12 @@ def test_add_str_str():
     i = Interpreter()
     assert ast.accept(i).value == 'Ala3.14'
 
+def test_sub_str_str():
+    """'ABCBA' - 'B'"""
+    ast = AddExpr([StrLiteral('ABCBA'), StrLiteral('B')], ["-"], pos=(90, 12))
+    i = Interpreter()
+    assert ast.accept(i).value == 'ACBA'
+
 
 
 
