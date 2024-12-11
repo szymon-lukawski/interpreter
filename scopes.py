@@ -1,11 +1,19 @@
 from AST import *
 from interpreter_types import Variable, Value
 
+
+class PrintProg():
+    def accept(self, interpreter):
+        text = interpreter.scopes.get_variable("text").value.value
+        print(f"interpreter  >>> {text}")
+
+
+
 class Scopes:
     def __init__(self):
         self.built_in_type_names = {"int", "float", "str", "null_type"}
         self.variable_stack = [{}]
-        self.function_stack = [{}]
+        self.function_stack = [{'print' : FuncDef('print', [Param('text', 'str', False)], 'null_type', PrintProg())}]
         self.struct_stack = [{}]
         self.variant_stack = [{}]  # ?
         self.curr_scope = 0

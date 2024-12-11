@@ -24,8 +24,8 @@ class TokenType(Enum):
     VARIANT = 19
     VISIT = 20
     CASE = 21
-    PRINT = 22
-    READ = 23
+    # PRINT = 22
+    # READ = 23
     SEMICOLON = 24
     COLON = 25
     ASSIGNMENT = 26

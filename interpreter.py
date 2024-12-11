@@ -16,6 +16,8 @@ class Interpreter(Visitor):
         self.curr_recursion = 1
         self.max_struct_depth = max_struct_depth
 
+
+
     def visit_program(self, program):
         for statement in program.children:
             rv = statement.accept(self)
