@@ -14,7 +14,7 @@ def test_print():
     r = TextIOReader(StringIO(to_tokenise))
     l = Lexer(r)
     assert l.curr_token is None
-    assert l.get_next_token() == Token(TokenType.PRINT, position=(1,1))
+    assert l.get_next_token() == Token(TokenType.IDENTIFIER, 'print', position=(1,1))
     assert l.get_next_token() == Token(TokenType.LEFT_BRACKET, position=(1,6))
     assert l.get_next_token() == Token(TokenType.STR_LITERAL, "Hello", position=(1,7))
     assert l.get_next_token() == Token(TokenType.RIGHT_BRACKET, position=(1,14))
@@ -38,7 +38,7 @@ end
     assert l.get_next_token() == Token(TokenType.IF, position=(2,1))
     assert l.get_next_token() == Token(TokenType.INT_LITERAL, 1, position=(2,4))
     assert l.get_next_token() == Token(TokenType.BEGIN, position=(3,1))
-    assert l.get_next_token() == Token(TokenType.PRINT, position=(4,5))
+    assert l.get_next_token() == Token(TokenType.IDENTIFIER, 'print', position=(4,5))
     assert l.get_next_token() == Token(TokenType.LEFT_BRACKET, position=(4,10))
     assert l.get_next_token() == Token(TokenType.STR_LITERAL, "Hello", position=(4,11))
     assert l.get_next_token() == Token(TokenType.RIGHT_BRACKET, position=(4,18))

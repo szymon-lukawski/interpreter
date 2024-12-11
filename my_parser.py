@@ -26,11 +26,17 @@ class Parser:
         """
         statements: List[Statement] = []
         pos = self._get_current_pos()
-        while statement := self._parse_statement():
+        while statement := self._try_parse_statement():
             statements.append(statement)
         return Program(statements, pos)
 
     def _parse_statement(self):
+        pos = self._get_current_pos()
+        if statement := self._try_parse_statement():
+            return statement
+        raise PatternNotRecognised(position=pos)
+
+    def _try_parse_statement(self):
         """statement ::=  variable_declaration_statement
         | assignment_statement
         | if_statement
@@ -56,7 +62,7 @@ class Parser:
             starting_with_identifier := self._try_parse_dec_and_def_or_assign_or_fun_call()
         ):
             return starting_with_identifier
-        # raise PatternNotRecognised
+
 
     def _try_parse_return(self):
         """return_statement ::== 'return', [expression], ';';"""

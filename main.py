@@ -40,7 +40,7 @@ def main():
     else:
         print("No source specified.")
 
-    if args.interactive:
+    if args.interactive or True:
         print("Interactive mode enabled. Type q to quit")
         statement_code  = input("Type statement : ")
         while statement_code != 'q':

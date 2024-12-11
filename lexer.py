@@ -276,7 +276,7 @@ class Lexer:
 
         char = self.reader.get_curr_char()
 
-        while char != "\n":
+        while char != "\n" and char:
             comment_value.append(char)
             char = self.reader.get_next_char()
 
