@@ -6,7 +6,7 @@ from scopes import Scopes
 from interpreter_types import Variable, Value, StructValue, VariantValue, BuiltInValue
 from multipledispatch import dispatch
 from operations import *
-from interpreter_errors import InterpreterError
+from interpreter_errors import InterpreterError, NotSupportedOperation
 
 
 class Interpreter(Visitor):
@@ -440,9 +440,7 @@ class Interpreter(Visitor):
 
     def visit_unary(self, unary_expr):
         value = unary_expr.negated.accept(self)
-        if isinstance(value, bool):
-            return not value
-        return -value
+        return self.minus(value, unary_expr.pos)
 
     def visit_null_literal(self, null_literal):
         return None
@@ -456,6 +454,29 @@ class Interpreter(Visitor):
     def visit_str_literal(self, str_literal):
         return BuiltInValue("str", str_literal.value)
     
-    @dispatch(BuiltInValue, BuiltInValue) 
-    def cos(self, left, right):
-        return add(left.value, right.value)
+    @dispatch(BuiltInValue, object) 
+    def minus(self, value, pos):
+        return self.minus(value.value, pos)
+
+    @dispatch(int, object) 
+    def minus(self, value, pos):
+        value *= -1
+        return BuiltInValue('int', value)
+
+    @dispatch(float, object) 
+    def minus(self, value, pos):
+        value *= -1
+        return BuiltInValue('float', value)
+    
+    @dispatch(str, object) 
+    def minus(self, value, pos):
+        raise NotSupportedOperation(pos, "Can not '-' a string.")
+
+    @dispatch(StructValue, object) 
+    def minus(self, value, pos):
+        raise NotSupportedOperation(pos, "Can not '-' a struct.")
+
+    @dispatch(VariantValue, object) 
+    def minus(self, value, pos):
+        value.value = self.minus(value.value, pos)
+        return value

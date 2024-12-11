@@ -1,66 +1,131 @@
-# """test interpretation of expression part of language"""
+"""test interpretation of expression part of language"""
 
-# # pylint: disable=protected-access
-# # pylint: disable=unidiomatic-typecheck
+# pylint: disable=protected-access
+# pylint: disable=unidiomatic-typecheck
 
-# import pytest
-# from token_type import TokenType
-# from interpreter import Interpreter
-# from AST import *
-
-
-# def test_sanity():
-#     """."""
-#     assert 1 == True
+import pytest
+from token_type import TokenType
+from interpreter import Interpreter
+from AST import *
+from interpreter_errors import NotSupportedOperation
 
 
-# def test_int_literal():
-#     """2"""
-#     ast = IntLiteral(2)
-#     i = Interpreter()
-#     assert 2 == ast.accept(i)
+def test_sanity():
+    """."""
+    assert 1 == True
 
 
-# def test_float_literal():
-#     """2.1"""
-#     ast = FloatLiteral(2.1)
-#     i = Interpreter()
-#     assert abs(2.1 - ast.accept(i)) == 0
+def test_int_literal():
+    """2"""
+    ast = IntLiteral(2)
+    i = Interpreter()
+    assert 2 == ast.accept(i).value
 
 
-# def test_str_literal():
-#     """'Ala ma kota.'"""
-#     ast = StrLiteral("Ala ma kota.")
-#     i = Interpreter()
-#     assert ast.accept(i) == "Ala ma kota."
+def test_float_literal():
+    """2.1"""
+    ast = FloatLiteral(2.1)
+    i = Interpreter()
+    assert abs(2.1 - ast.accept(i).value) == 0
 
 
-# def test_null():
-#     """null"""
-#     ast = NullLiteral()
-#     i = Interpreter()
-#     assert ast.accept(i) is None
+def test_str_literal():
+    """'Ala ma kota.'"""
+    ast = StrLiteral("Ala ma kota.")
+    i = Interpreter()
+    assert ast.accept(i).value == "Ala ma kota."
 
 
-# def test_unary_integer():
-#     """-2"""
-#     ast = UnaryExpr(IntLiteral(2))
-#     i = Interpreter()
-#     assert ast.accept(i) == -2
+def test_null():
+    """null"""
+    ast = NullLiteral()
+    i = Interpreter()
+    assert ast.accept(i) is None
 
 
-# def test_unary_float():
-#     """-2.1"""
-#     ast = UnaryExpr(FloatLiteral(2.1))
-#     i = Interpreter()
-#     assert ast.accept(i) == -2.1
+def test_unary_integer():
+    """-2"""
+    ast = UnaryExpr(IntLiteral(2))
+    i = Interpreter()
+    assert ast.accept(i).value == -2
 
 
-# def test_multiplication_two_integers():
-#     """2*3"""
-#     ast = MultiExpr([IntLiteral(2), IntLiteral(3)], ["*"])
-#     i = Interpreter()
-#     assert ast.accept(i) == 6
+def test_unary_float():
+    """-2.1"""
+    ast = UnaryExpr(FloatLiteral(2.1))
+    i = Interpreter()
+    assert ast.accept(i).value == -2.1
+
+
+def test_unary_str():
+    """-'Ala'"""
+    ast = UnaryExpr(StrLiteral("Ala"), pos=(1, 1))
+    i = Interpreter()
+    with pytest.raises(NotSupportedOperation) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "NotSupportedOperation: row: 1, column: 1, Can not '-' a string."
+    )
+
+
+def test_unary_struct_value():
+    """A : struct begin x: int=10; end a : A; print((-a));"""
+    ast = Program(
+        [
+            StructDef("A", [VariableDeclaration("x", "int", False, IntLiteral(10))]),
+            VariableDeclaration("a", "A", False),
+            FunctionCall("print", [UnaryExpr(ObjectAccess(["a"]), pos=(1, 1))]),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(NotSupportedOperation) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "NotSupportedOperation: row: 1, column: 1, Can not '-' a struct."
+    )
+
+
+def test_unary_variant_with_supported_operation():
+    """A : variant begin x: int; y : str; end a : A; a = 1; result : int = -a;"""
+    ast = Program(
+        [
+            VariantDef("A", [NamedType("x", "int"), NamedType("y", "str")]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a"]), IntLiteral(1)),
+            VariableDeclaration("result", "int", False, UnaryExpr(ObjectAccess(["a"]))),
+        ]
+    )
+    i = Interpreter()
+    ast.accept(i)
+    assert i.visit_obj_access(ObjectAccess(["result"])).value.value == -1
+
+
+def test_unary_variant_with_not_supported_operation():
+    """A : variant begin x: int; y : str; end a : A; a = 'Ala'; result : int = -a;"""
+    ast = Program(
+        [
+            VariantDef("A", [NamedType("x", "int"), NamedType("y", "str")]),
+            VariableDeclaration("a", "A", False),
+            AssignmentStatement(ObjectAccess(["a"]), StrLiteral("Ala")),
+            VariableDeclaration("result", "int", False, UnaryExpr(ObjectAccess(["a"]), pos=(109,32))),
+        ]
+    )
+    i = Interpreter()
+    with pytest.raises(NotSupportedOperation) as e:
+        ast.accept(i)
+    assert (
+        str(e.value)
+        == "NotSupportedOperation: row: 109, column: 32, Can not '-' a string."
+    )
+
+
+def test_multiplication_two_integers():
+    """2*3"""
+    ast = MultiExpr([IntLiteral(2), IntLiteral(3)], ["*"])
+    i = Interpreter()
+    assert ast.accept(i).value == 6
 
 
 # def test_multiplication_three_integers():
