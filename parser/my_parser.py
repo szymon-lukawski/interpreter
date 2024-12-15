@@ -1,15 +1,15 @@
 """Module for parser"""
 
 from typing import List
-from lexer import Lexer
-from AST import *
-from token_type import TokenType
-from parser_exceptions import (
+from lexer.lexer import Lexer
+from parser.AST import *
+from lexer.token_type import TokenType
+from parser.parser_exceptions import (
     ParserException,
     ExpectedDifferentToken,
     PatternNotRecognised,
 )
-from utils import get_type_name
+from lexer.utils import get_type_name
 
 
 class Parser:

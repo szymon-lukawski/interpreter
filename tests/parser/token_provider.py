@@ -1,6 +1,6 @@
-from lexer import Lexer
-from my_token import Token
-from token_type import TokenType
+from lexer.lexer import Lexer
+from lexer.my_token import Token
+from lexer.token_type import TokenType
 
 class TokenProvider(Lexer):
     """Mocks lexer."""

@@ -1,7 +1,7 @@
 import pytest
-from interpreter import Interpreter
-from AST import *
-from interpreter_errors import InterpreterError
+from interpreter.interpreter import Interpreter
+from parser.AST import *
+from interpreter.interpreter_errors import InterpreterError
 
 
 def test_assignment_defore_definition():

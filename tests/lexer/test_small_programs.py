@@ -1,12 +1,12 @@
 """Testing lexer tokenisation but for some small programs"""
 
 from io import StringIO
-from char_reader import TextIOReader
-from lexer import Lexer
-from token_type import TokenType
-from my_token import Token
+from lexer.char_reader import TextIOReader
+from lexer.lexer import Lexer
+from lexer.token_type import TokenType
+from lexer.my_token import Token
 
-from my_token_exceptions import MyTokenException
+from lexer.my_token_exceptions import MyTokenException
 
 def test_print():
     """Print built in function call"""

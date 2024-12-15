@@ -1,7 +1,7 @@
 [project]
-name = "tkom-projekt-sl"
+name = "sl-interpreter"
 version = "0.1.0"
-description = "Add your description here"
+description = "Interpreter of my own programming language. Static and weak typing, everything is passed as a value. "
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

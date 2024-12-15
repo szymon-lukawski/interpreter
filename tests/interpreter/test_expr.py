@@ -4,10 +4,10 @@
 # pylint: disable=unidiomatic-typecheck
 
 import pytest
-from token_type import TokenType
-from interpreter import Interpreter
-from AST import *
-from interpreter_errors import InterpreterError, NotSupportedOperation
+from lexer.token_type import TokenType
+from interpreter.interpreter import Interpreter
+from parser.AST import *
+from interpreter.interpreter_errors import InterpreterError, NotSupportedOperation
 
 
 def test_sanity():

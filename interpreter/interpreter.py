@@ -1,11 +1,11 @@
 from copy import deepcopy
 from typing import Dict, Callable
-from AST import *
-from visitor import Visitor
-from scopes import Scopes
-from interpreter_types import Variable, Value, StructValue, VariantValue, BuiltInValue
+from parser.AST import *
+from interpreter.visitor import Visitor
+from interpreter.scopes import Scopes
+from interpreter.interpreter_types import Variable, Value, StructValue, VariantValue, BuiltInValue
 from multipledispatch import dispatch
-from interpreter_errors import InterpreterError, NotSupportedOperation, DivisionByZero, NumberTooBig
+from interpreter.interpreter_errors import InterpreterError, NotSupportedOperation, DivisionByZero, NumberTooBig
 
 
 class Interpreter(Visitor):

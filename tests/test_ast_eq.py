@@ -1,6 +1,6 @@
 """Test for comparing two AST"""
 
-from AST import *
+from parser.AST import *
 
 
 class SomeObject(ASTNode):

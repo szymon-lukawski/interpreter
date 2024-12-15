@@ -1,7 +1,7 @@
 """Parser exceptions"""
 
-from my_token import PositionType
-from token_type import TokenType
+from lexer.my_token import PositionType
+from lexer.token_type import TokenType
 
 class ParserException(Exception):
     """Base class for all Parser related errors"""

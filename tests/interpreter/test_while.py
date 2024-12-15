@@ -1,9 +1,9 @@
 import pytest
-from token_type import TokenType
-from interpreter import Interpreter
-from AST import *
+from lexer.token_type import TokenType
+from interpreter.interpreter import Interpreter
+from parser.AST import *
 from multiprocessing import Process
-from interpreter_errors import InterpreterError
+from interpreter.interpreter import InterpreterError
 
 
 def test_sanity():

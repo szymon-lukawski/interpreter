@@ -1,8 +1,8 @@
 """."""
 from typing import Dict
-from keywords import KEYWORDS_STRS
-from my_token import Token
-from token_type import TokenType
+from lexer.keywords import KEYWORDS_STRS
+from lexer.my_token import Token
+from lexer.token_type import TokenType
 
 
 

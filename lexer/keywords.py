@@ -1,7 +1,7 @@
 """."""
 
 from typing import Dict
-from token_type import TokenType
+from lexer.token_type import TokenType
 
 KEYWORDS_TO_TOKEN_TYPE: Dict[str, TokenType] = {
     "null": TokenType.NULL,

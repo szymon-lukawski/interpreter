@@ -1,6 +1,6 @@
 """Token exceptions"""
 
-from my_token import PositionType
+from lexer.my_token import PositionType
 
 
 class MyTokenException(Exception):

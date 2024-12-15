@@ -1,5 +1,5 @@
-from printer import Printer
-from AST import *
+from test_utils.printer import Printer
+from parser.AST import *
 
 
 # TODO add couter examples with errors

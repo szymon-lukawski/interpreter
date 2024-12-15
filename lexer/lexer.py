@@ -3,11 +3,11 @@
 import string
 from typing import List, Tuple
 
-from token_type import TokenType
-from keywords import KEYWORDS_STRS, KEYWORDS_TO_TOKEN_TYPE
-from char_reader import CharReader
-from my_token import Token, PositionType
-from my_token_exceptions import (
+from lexer.token_type import TokenType
+from lexer.keywords import KEYWORDS_STRS, KEYWORDS_TO_TOKEN_TYPE
+from lexer.char_reader import CharReader
+from lexer.my_token import Token, PositionType
+from lexer.my_token_exceptions import (
     StringLiteralNotEnded,
     EscapingWrongChar,
     ExclamationMarkError,
@@ -23,7 +23,7 @@ from my_token_exceptions import (
     UnrecognisedStartOfToken
 )
 
-from utils import is_identifier_body, is_str_a_keyword, is_separator
+from lexer.utils import is_identifier_body, is_str_a_keyword, is_separator
 
 
 class Lexer:

@@ -1,6 +1,6 @@
-from AST import *
-from interpreter_types import Variable, Value
-from interpreter_errors import InterpreterError
+from parser.AST import *
+from interpreter.interpreter_types import Variable, Value
+from interpreter.interpreter_errors import InterpreterError
 
 
 class PrintProg:

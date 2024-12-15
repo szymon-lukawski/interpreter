@@ -1,8 +1,8 @@
 """Module for printing AST using visitor base class"""
 
-from AST import Param
-from visitor import Visitor
-from AST import *
+from parser.AST import Param
+from interpreter.visitor import Visitor
+from parser.AST import *
 
 
 class Printer(Visitor):

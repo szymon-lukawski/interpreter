@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from AST import *
+from parser.AST import *
 
 
 # pylint: disable=C0116:missing-function-docstring

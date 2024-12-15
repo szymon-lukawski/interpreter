@@ -2,7 +2,7 @@
 
 from typing import Tuple
 from copy import copy
-from token_type import TokenType
+from lexer.token_type import TokenType
 
 
 RowType = int

@@ -1,8 +1,8 @@
 """Module that provides class to turn AST into formatted human readable code"""
 
 from typing import Callable
-from visitor import Visitor
-from AST import * 
+from interpreter.visitor import Visitor
+from parser.AST import * 
 
 
 class PrettyPrinter(Visitor):

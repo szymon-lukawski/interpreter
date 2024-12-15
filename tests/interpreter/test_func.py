@@ -1,9 +1,9 @@
 import pytest
-from token_type import TokenType
-from interpreter import Interpreter
-from AST import *
+from lexer.token_type import TokenType
+from interpreter.interpreter import Interpreter
+from parser.AST import *
 from multiprocessing import Process
-from interpreter_errors import InterpreterError
+from interpreter.interpreter import InterpreterError
 
 
 def test_sanity():
@@ -790,8 +790,10 @@ def test_printing_entire_variant_struct():
             VariantDef("V", [NamedType("a", "A"), NamedType("y", "int")]),
             VariableDeclaration("v", "V", False),
             AssignmentStatement(ObjectAccess(["v", "x"]), StrLiteral("1.2")),
-            FunctionCall("print", [ObjectAccess(["v"])]),
+            FunctionCall("print", [ObjectAccess(["v"])], pos=(32, 4)),
         ]
     )
     i = Interpreter()
-    ast.accept(i)
+    with pytest.raises(InterpreterError) as e:
+        ast.accept(i)
+    assert str(e.value) == "InterpreterError: row: 32, column: 4, Can not convert struct type 'A' to builtin type 'str'"

@@ -3,12 +3,12 @@
 from io import StringIO
 from typing import List, Tuple
 import pytest
-from char_reader import TextIOReader
-from lexer import Lexer
-from token_type import TokenType
-from my_token import Token
+from lexer.char_reader import TextIOReader
+from lexer.lexer import Lexer
+from lexer.token_type import TokenType
+from lexer.my_token import Token
 
-from my_token_exceptions import (
+from lexer.my_token_exceptions import (
     StringLiteralNotEnded,
     EscapingWrongChar,
     EscapingEOT,

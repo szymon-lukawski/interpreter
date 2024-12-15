@@ -1,8 +1,8 @@
 import pytest
-from token_type import TokenType
-from interpreter import Interpreter
-from AST import *
-from interpreter_errors import InterpreterError
+from lexer.token_type import TokenType
+from interpreter.interpreter import Interpreter
+from parser.AST import *
+from interpreter.interpreter_errors import InterpreterError
 
 def test_sanity():
     """."""

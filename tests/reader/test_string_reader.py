@@ -3,7 +3,7 @@
 from io import StringIO
 import pytest
 
-from char_reader import TextIOReader
+from lexer.char_reader import TextIOReader
 
 
 def test_sanity():

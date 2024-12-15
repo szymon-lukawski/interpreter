@@ -1,9 +1,9 @@
 import pytest
-from token_type import TokenType
-from interpreter import Interpreter
-from AST import *
-from scopes import Scopes
-from interpreter_errors import InterpreterError
+from lexer.token_type import TokenType
+from interpreter.interpreter import Interpreter
+from parser.AST import *
+from interpreter.scopes import Scopes
+from interpreter.interpreter import InterpreterError
 
 
 def test_new_struct_is_visable():
