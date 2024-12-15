@@ -8,10 +8,10 @@ import pytest
 
 from lexer.token_type import TokenType
 from lexer.my_token import Token
-from my_parser import Parser
+from parser.my_parser import Parser
 from lexer.lexer import Lexer
 from parser.AST import *
-from parser_exceptions import ParserException, ExpectedDifferentToken
+from parser.parser_exceptions import ParserException, ExpectedDifferentToken
 from token_provider import TokenProvider
 
 
