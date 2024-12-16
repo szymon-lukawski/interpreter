@@ -1,0 +1,70 @@
+Leaf : struct
+begin
+    value : mut int;
+end
+Node : struct
+begin
+    left : mut Tree;
+    right : mut Tree;
+    value : mut int;
+end
+Tree : variant
+begin
+    leaf : Leaf;
+    node : Node;
+end
+sumTree(tree : Tree) : int
+begin
+    visit tree
+    begin
+        case leaf
+            begin
+                return leaf.value;
+            end
+        case node
+        begin
+            return sumTree(node.left) + node.value + sumTree(node.right);
+        end
+    end
+end
+l1 : Leaf;
+l1.value = 1;
+l2 : Leaf;
+l2.value = 2;
+l3 : Leaf;
+l3.value = 3;
+l4 : Leaf;
+l4.value = 4;
+l5 : Leaf;
+l5.value = 5;
+l6 : Leaf;
+l6.value = 6;
+
+ll : mut Node;
+ll.left = l1;
+ll.right = l2;
+ll.value = 2;
+
+lr : mut Node;
+lr.left = l3;
+lr.right = l4;
+lr.value = 4;
+
+r : mut Node;
+r.left = l5;
+r.right = l6;
+r.value = 6;
+
+l : mut Node;
+l.left = ll;
+l.right = lr;
+l.value = 4;
+
+
+my_tree : mut Node;
+my_tree.left = l;
+my_tree.right = r;
+my_tree.value = 8;
+
+print('Sum of my_tree is:');
+print(sumTree(my_tree));

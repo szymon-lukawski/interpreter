@@ -1,0 +1,32 @@
+Kod_pocztowy : struct
+begin
+  wartosc : str;
+end
+
+Adres : struct
+begin 
+  miasto : mut str;
+  kod_pocztowy : mut Kod_pocztowy;
+end
+
+Czlowiek : struct
+begin
+    imie : str;
+    wiek  : mut int;
+    adres : mut Adres;
+end
+
+janek : mut Czlowiek;
+janek.imie = 'Janek';
+janek.wiek = 20;
+
+kod_pocz_janka : Kod_pocztowy;
+kod_pocz_janka.wartosc = '00-111';
+
+adres_janka : mut Adres;
+adres_janka.miasto = 'Warszawa';
+adres_janka.kod_pocztowy = kod_pocz_janka;
+
+janek.adres = adres_janka;
+print('Kod pocztowy Janka to: ');
+print(janek.adres.kod_pocztowy.wartosc);

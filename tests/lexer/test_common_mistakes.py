@@ -2,12 +2,12 @@
 
 from io import StringIO
 import pytest
-from char_reader import TextIOReader
-from lexer import Lexer
-from token_type import TokenType
-from my_token import Token
+from lexer.char_reader import TextIOReader
+from lexer.lexer import Lexer
+from lexer.token_type import TokenType
+from lexer.my_token import Token
 
-from my_token_exceptions import UnrecognisedStartOfToken
+from lexer.my_token_exceptions import UnrecognisedStartOfToken
 
 
 def test_prind():
@@ -188,7 +188,7 @@ def test_missing_left_bracket_in_function_call():
     to_tokenise = """print'Ala');"""
     r = TextIOReader(StringIO(to_tokenise))
     l = Lexer(r)
-    assert l.get_next_token() == Token(TokenType.PRINT, position=(1, 1))
+    assert l.get_next_token() == Token(TokenType.IDENTIFIER, 'print', position=(1, 1))
     assert l.get_next_token() == Token(TokenType.STR_LITERAL, "Ala", position=(1, 6))
     assert l.get_next_token() == Token(TokenType.RIGHT_BRACKET, position=(1, 11))
     assert l.get_next_token() == Token(TokenType.SEMICOLON, position=(1, 12))
@@ -199,7 +199,7 @@ def test_missing_right_bracket_in_function_call():
     to_tokenise = """print('Ala';"""
     r = TextIOReader(StringIO(to_tokenise))
     l = Lexer(r)
-    assert l.get_next_token() == Token(TokenType.PRINT, position=(1, 1))
+    assert l.get_next_token() == Token(TokenType.IDENTIFIER, 'print', position=(1, 1))
     assert l.get_next_token() == Token(TokenType.LEFT_BRACKET, position=(1, 6))
     assert l.get_next_token() == Token(TokenType.STR_LITERAL, "Ala", position=(1, 7))
     assert l.get_next_token() == Token(TokenType.SEMICOLON, position=(1, 12))
@@ -210,7 +210,7 @@ def test_argument_not_inside_brackets():
     to_tokenise = """print()'Ala';"""
     r = TextIOReader(StringIO(to_tokenise))
     l = Lexer(r)
-    assert l.get_next_token() == Token(TokenType.PRINT, position=(1, 1))
+    assert l.get_next_token() == Token(TokenType.IDENTIFIER, 'print', position=(1, 1))
     assert l.get_next_token() == Token(TokenType.LEFT_BRACKET, position=(1, 6))
     assert l.get_next_token() == Token(TokenType.RIGHT_BRACKET, position=(1, 7))
     assert l.get_next_token() == Token(TokenType.STR_LITERAL, "Ala", position=(1, 8))

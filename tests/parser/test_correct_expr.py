@@ -6,12 +6,12 @@
 
 import pytest
 
-from token_type import TokenType
-from my_token import Token
-from my_parser import Parser
-from lexer import Lexer
-from AST import *
-from parser_exceptions import ParserException
+from lexer.token_type import TokenType
+from lexer.my_token import Token
+from parser.my_parser import Parser
+from lexer.lexer import Lexer
+from parser.AST import *
+from parser.parser_exceptions import ParserException
 from token_provider import TokenProvider
 
 

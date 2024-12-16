@@ -6,13 +6,13 @@ from typing import Dict
 from io import StringIO
 import pytest
 
-from char_reader import TextIOReader
-from lexer import Lexer
-from token_type import TokenType
-from my_token import Token
-from keywords import KEYWORDS_TO_TOKEN_TYPE
+from lexer.char_reader import TextIOReader
+from lexer.lexer import Lexer
+from lexer.token_type import TokenType
+from lexer.my_token import Token
+from lexer.keywords import KEYWORDS_TO_TOKEN_TYPE
 
-from my_token_exceptions import *
+from lexer.my_token_exceptions import *
 
 special_chars_to_token_type : Dict[str, TokenType] = {
     '(' : TokenType.LEFT_BRACKET,

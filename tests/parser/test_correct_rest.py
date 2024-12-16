@@ -6,12 +6,12 @@
 
 import pytest
 
-from token_type import TokenType
-from my_token import Token
-from my_parser import Parser
-from lexer import Lexer
-from AST import *
-from parser_exceptions import ParserException
+from lexer.token_type import TokenType
+from lexer.my_token import Token
+from parser.my_parser import Parser
+from lexer.lexer import Lexer
+from parser.AST import *
+from parser.parser_exceptions import ParserException
 from token_provider import TokenProvider
 
 
@@ -1014,7 +1014,7 @@ def test_func_call_arg_starting_with_identifier():
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
     result = parser.parse_program()
-    expected = Program([FunctionCall("add", [ObjectAccess(["add"])])])
+    expected = Program([FunctionCall("add", [ObjectAccess(["arg1"])])])
     assert result == expected
 
 
@@ -1033,7 +1033,7 @@ def test_func_func_call_arg_starting_with_chained_identifier():
     lexer = TokenProvider(None, tokens)
     parser = Parser(lexer)
     result = parser.parse_program()
-    expected = Program([FunctionCall("area", [ObjectAccess(["area", "sqare"])])])
+    expected = Program([FunctionCall("area", [ObjectAccess(["obj", "sqare"])])])
     assert result == expected
 
 

@@ -1,7 +1,7 @@
 from typing import Dict
 import pytest
-from pretty_printer import PrettyPrinter
-from AST import *
+from formating.pretty_printer import PrettyPrinter
+from parser.AST import *
 
 
 def test_print_int_literal():
