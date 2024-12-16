@@ -7,7 +7,8 @@ I used several of the object oriented design patterns. Including but not limited
  - visitator
 
 ## DEMO:
-![](https://github.com/user-attachments/assets/8e271c75-b9b0-43e3-a57b-b57768ffa9e5)
+https://github.com/user-attachments/assets/58d4d7b7-6406-4886-b32f-24f8d7f9f234
+
 ### Getting started
 There are two ways of typing statements:
     1. external `.txt` file
