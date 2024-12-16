@@ -7,7 +7,7 @@ I used several of the object oriented design patterns. Including but not limited
  - visitator
 
 ## DEMO:
-
+[![Watch the DEMO](https://raw.githubusercontent.com/szymon-lukawski/interpreter/main/docs/demo_my_interpreter.mov)](https://raw.githubusercontent.com/szymon-lukawski/interpreter/main/docs/demo_my_interpreter.mov)
 
 ### Getting started
 There are two ways of typing statements:
