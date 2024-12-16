@@ -1,26 +1,22 @@
-# Projekt TKOM - Dokumentacja Wstępna
-Szymon Łukawski
+# Interpreter of my own programming language. 
 
-## Wstęp
-Tematem projektu jest implementacja interpretera własnego języka ogólnego przeznaczenia w `Python`-ie. 
-Zachowanie zmiennych:
-+ typowanie jest **słabe**.
-+ **domyślnie stałe**
-+ przekazywane przez **wartość** 
+### Introduction
+Static and weak typing, everything is passed as a value. 
+This is an educational project - main goal was to learn something new. 
+I used several of the object oriented design patterns. Including but not limited to:
+ - visitator
 
-Dodakowo mozliwość definiowania struktur oraz struktury wariantowej - typy definiowane przez uzytkownika.
+## DEMO:
 
-## Struktura Projektu
-Projekt podzielony na części:
-1. Czytanie z wejścia, plik lub strumień, znak po znaku i przekazuje wszystkich znaków dalej. Jeśli koniec wejscia to wysyla specjalny znak konca wejscia. Zapytany o kojelny znak znowu specjalny znak konca wejscia, i tak do końca.
-2. Analizator Leksykalny, generowanie tokenów, grupowanie znaków.
-3. Analizator Składniowy, generowanie drzewa programu (AST) na podstawie gramatyki
-4. Interpreter
 
-## 1. Zarys uruchomienia:
-```
-> git clone https://gitlab-stud.elka.pw.edu.pl/TKOM_24Z_WW/slukawsk/tkom_projekt_sl
-> cd tkom_projekt_sl
+### Getting started
+There are two ways of typing statements:
+    1. external `.txt` file
+    2. interactive mode
+Or you can first interpret entire file and then immedietly go into interactive mode. Following example shows just that:
+```bash
+> git clone https://github.com/szymon-lukawski/interpreter
+> cd interpreter
 > python -m venv .venv
 > source .venv/bin/activate
 > pip install -r requirements.txt
@@ -30,261 +26,247 @@ interpreter  >>> 45
 Interactive mode enabled. Type q to quit
 Type statement : 
 ```
-## Typy wbudowane to:
-   + `int` - podstawowy typ liczbowy reprezentujący liczby całkowite, z przedziału [-99 999 999; +99 999 999]. Operacje logiczne jak `&` oraz `|` czy operacje porównania zwracają ten typ. 
-   + `float` - typ liczbowy zmiennoprzecinkowy z utratą precyzji. Podobny do typu float64 ze standardu `IEEE 754-1985`. Operacje na liczbach float zgodne z operacjami w języku python3. 
-   + `str` - typ reprezentujący ciąg znaków. Mozna przechowywać znaki specjalne jak znak nowej linii, tabulacja itp. realizacja poprzez escaping `\`.
-   + `null_type` - specjalny typ do zaznaczenia ze funkcja nie zwraca wartości. Zmienna nie moze miec tego typu.
-  
-#### Przykłady:
-  ```
-  calkowita          : int = 10;
-  zmiennoprzecinkowa : float = 3.14;
-  napis              : str = 'Ala ma kota.';
-  ```
-Przykład ilustrujący typowe definiowanie zmiennych.
-```
-x : int = 1;
-```
-Zmienna `x` jest niemutowalna. Próba zmiany jej wartości zwróci błąd.
-```
-y : mut int = 1;
-y = 2;
-```
-Definiowanie zmiennej mutowalnej. Zmiana wartości nie zwraca błędu.
-```
-z1 : int;
-z1 = 0;
-z2 : mut int;
-z2 = 11; 
-```
-Zarówno zmienne mutowalne jak i niemutowalne mogą nie mieć przypisanej wartości. Próba nadania wartości zmiennej niemutowalnej nie zwraca błędu (o ile typ się zgadza. O kompatybilności typów pózniej).
-   Próba odczytania wartości zmiennej która nie ma nadanej wartości zwraca błąd. 
+Congrats! Now you should be able to type any statement and it will be interpreted for you.
 
+### Types:
+#### Built-In
+1. `int`      - integer in range [-999_999_999; +999_999_999]
+2. `float`    - floating-point number. Standard float64 
+3. `str`      - represents list of UTF-8 characters. 
 ```
-x : mut int;
-x = - 99999999;
-x = 99999999;
+current_year    : int   = 2024;
+pi_aprox        : float = 3.14;
+msg             : str   = 'Hello!';
 ```
-Oto domyślne limity dla zmiennej int. Limity mozna modyfikować plikiem konfiguracyjnym o nazwie `config.json` w katalogu w którym uruchomiony został interpreter. Próba stworzenia lierału integer spoza zakresu zgłasza błąd  `LiteralError`
-
+#### User-defined
+   1. `struct`:
+      1. consists of 'attributes'
+      2. attributes can have default values.
+      3. groups other types
+      4. should not have cyclic type dependency
+      5. attributes SHOULD NOT have same name.
+   2. `variant`:
+      1. consists of named `options`
+      2. assigning a value determines which of the options type it is.
+      3. there MUST be at least 2 options
+      4. option names SHOULD be different
+      5. option types SHOULD be different
+      6. option can not be directly of type `variant`
 ```
-y : str = '';
-```
-Znienna typu `str` z przypisaną wartością pustego stringa jest czym innym niz zmienna `str` bez przypisanej wartości.
-
-### Niestandardowe typy danych: 
-   + Język umozliwia tworzenie zlozonych typow danych przez programiste.
-   + `struct` - struktura, typ złozony z agregacji innych typów.
-     + dostęp do atrybutów instancji struktury po nazwie atrybutu: `nazwa_instancji.nazwa_atrybutu`
-     + brak mozliwości przypisania nowej wartości do atrubutu mutowalnego gdy instancja struktury jest niemutowalna
-     + zmienna typu struct jest inicjalizowana jeśli dowolne pole w tej strukturze moze zostac zainicjalizowane.
-     + przypisanie do atrybutu niezainicjalizowanej struktury tworzy tą strukturę.
-        ```
-        A : struct
-        begin
-            x : int;
-            y : str;
-        end
-        B : struct
-        begin
-            a: A;
-        end
-        C : struct
-        begin
-            b: B;
-        end
-        c : C;                   # zmienna c nie ma wartości
-        c.b.a.x = 123;           # zmienna c ma wartość
-        c.b.a.y = 'Ala ma kota'; # zwraca błąd bo zmienna c ma wartość a nie jest mutowalna 
-        ```  
-      + pola w strukturze mogą mieć przypisane wartości domyślne:
-
-        ```
-        Point1D : struct
-        begin
-          x : mut int = 0; @ wartość domyślna wynosi 0
-        end
-        p : Point; # zmienna p ma wartość poniewaz przynajmniej jeden z jej atrybutów ma wartość
-        ``` 
-        ```
-        Czlowiek : struct
-        begin
-            imie : str;
-            wiek  : mut int;
-        end
-        janek : mut Czlowiek; # mutowalny zeby mozna bylo przypisac wartosc do wiecej niz jednego atrybutu bez wartosci domyślnej
-        janek.imie = 'Janek';
-        janek.wiek = 20;
-        ```
-   + `variant` - tagged union:
-     + typy w wariancie nie mogą się powtarzać
-     + typy w wariancie nie mogą być typami wariantowymi !
-     + variant musi miec przynajmniej 2 typy
-     + azeby przypisac wartosc do zmiennej wariantowej nalezy uzyć wartości która ma typ jednego z typów składowych wariantu. 
-     + wyjątkiem jest przypisanie wartości typu wbudowanego. Jeśli wariant nie ma bezpośredniej zgodności typów to szuka czy jeden z jego wariantów jest typem wbudowanym. Jeśli tak to następuje próba konwersji wartości na typ wbudowany znaleziony jako pierwszy w dostępnych typach wariantu. Uwaga: ta operacja konwersji moze się nie udać dlatego najlepiej jest przypisywać wartości odpowiedniego typu do typu wariantowego... 
-     + variant nie ma wartości domyślnej - pomimo ze typy składowe mogą ją mieć
-     + w przeciwieństwie do `struct`, gdy zmienna variantowa nie ma wartości, nie mozna przypisać do atrybutu struktury składowej.
-
-Definicja struktury jest zawarta między słowami kluczowymi `begin` oraz `end`.
-Definicja struktury składa się z zera lub więcej definicji zmiennych - pól w tej strukturze - chociaz uzyteczność zmiennej tego typu jest wątpliwa - nie mozna przypisać wartości do takiej zmiennej.
-```
-cos : Cos;
-Cos : struct begin end;
-```
-Typ `Cos` zdefiniowany po próbie definicji zmiennej tego typu zwróci błąd
-```
-Kod_pocztowy : struct
-begin
-  wartosc : str;
-end
-
-Adres : struct
-begin 
-  miasto : mut str;
-  kod_pocztowy : mut Kod_pocztowy;
-end
-
-Czlowiek : struct
-begin
-    imie : str;
-    wiek  : mut int;
-    adres : mut Adres;
-end
-
-janek : mut Czlowiek;
-janek.imie = 'Janek';
-janek.wiek = 20;
-
-kod_pocz_janka : Kod_pocztowy;
-kod_pocz_janka.wartosc = '00-111';
-
-adres_janka : Adres;
-adres_janka.miasto = 'Warszawa';
-adres_janka.kod_pocztowy = kod_pocztowy_janka;
-
-janek.adres = adres_janka;
-print('Kod pocztowy Janka to: ');
-print(janek.adres.kod_pocztowy.wartosc);
-```
-Przykład prezentuję zagniezdzenie typów oraz operator dostępowy do pól struktury: `<instancja_typu>.<nazwa_pola>`.
-Próba odwołania się do nieistniejącego pola zwraca błąd `CellNameError: <nazwa nieistniejacego pola>`
-W tym przykladzie `janek.a` zwroci bląd `CellNameError: 'a'`
-
-```
-Punkt2D : struct
+Point2D : struct
 begin
   x : mut int = 0;
   y : mut int = 0;
 end
 
-Punkt3D : struct
+Point3D : struct
 begin
   x : mut int = 0;
   y : mut int = 0;
   z : mut int = 0;
 end
 
-Punkt : variant
+Point : variant
 begin
-    p2d : Punkt2D;
-    p3d : Punkt3D;
+    p2d : Point2D;
+    p3d : Point3D;
 end
 
-A : Punkt2D;
-B : Punkt3D;
+A : Point2D;
+B : Point3D;
+```
+### Operations
+* different operations have different precedance:
+    1. `.`  - access to struct attribute
+    2. `-`  - unary minus
+    3. `*` and `/`
+    4. `+` and `-`
+    5. `<=` and `<` and `==` and `!=` and `>=` and `>`
+    6. `&` - logical and
+    7. `|` - logical or
 
-punkt : Punkt = A;
-wiadomosc : str;
+* `.` - works only on struct type or struct assigned variant
+* `-` unary - works with just `int` and `float`
+* left operand of binary operation determines output value type.
+* usually binary operation does: convert to left operand's type, perform operation. But there are exceptions:
+  * `str_val` `*` `int_val` - repeat str_val, int_val times. 
+  * `str_val` `*` `float_val` - convert right side to int. perform operation on new value types.
+  * `str_val_1` `*` `str_val_2` - sum of products. e.g. 'ABCD' * '12' => 'A1B2'
+  * `str_val` `/` `int` - get a char at index. e.g. 'ABCD' / 2 => 'C'
+  * `str_val` `/` `float_val` - convert right side to int. perform operation on new value types.
+  * `str_val_1` `/` `str_val_2` - remove all occurances of str_val_2 from str_val_1
+  * `str_val_1` `+` `str_val_2` - string concatenation
+  * `str_val_1` `-` `str_val_2` - remove first occurance of str_val_2 from str_val_1
+  * `str_val_1` `<` `str_val_2` - compares lenght
 
-visit punkt
-begin
-    case Punkt2D
+
+### Conversion:
+| From\To | int | float | str | struct | variant |
+|-----------|-----|-------|-----|--------|---------|
+| int       | ✅    |  ✅  | ✅    |   ❌     |  ❌       |
+| float     |  ✅ - floors float| ✅      |   ✅ - always rounds to 4 digits after dot  |    ❌    |   ❌       |
+| str       |  🟡 - if can be interpreted as int, str characters can only be digits 0-9 and at max one `.` not before any digits and not at the end   |    🟡 - if can be interpreted as int, str characters can only be digits 0-9 and at max one `.` not before any digits and not at the end    |  ✅   |    ❌     |     ❌     |
+| struct    |   ❌  |    ❌   | ❌    |   🟡 - if types match     |   🟡 - if struct type is in one of variant options      |
+| variant   |   🟡 - if types match  |     🟡 - if types match   |    🟡 - if types match  |  🟡 - if types match     |  🟡 - if current variant value match any option in target variant. If source is of built in type then converts to first built in option in target variant       |
+
+
+### Expression
+* combination of object accesses, literals, operations, function calls, brackets.
+**Example:**
+```
+(a.b + 32) * power(4,12) <= - (5 * '3.14') | is_true(a, c) &  another_func(a, d)
+```
+
+### Scope
+Placeholder for variables, functions, types.
+There MUST NOT be two variables with the same name in one scope.
+There MUST NOT be two functions with the same name in one scope.
+There MUST NOT be two types with the same name in one scope.
+New scope can be created when interpreting:
+* if
+* while
+* visit
+* function call **Also change of context**
+
+### Statements:
+#### if / while
+**Example:**
+```
+n : mut int = 10
+if n * 2 - 17
+begin 
+    while n
     begin
-        wiadomosc = '[' + p2d.x + '; ' + p2d.y + ']';
+        print(('There will be: '+ n +'lines more.'))
+        n = n - 1; 
     end
-    case Punkt3D
+end 
+else 
+begin
+    print('Hmm. It seems that n did not manage to satisfy a condition')
+end
+```
+**Template:**
+* `if <condition> begin <program_1> end` or 
+  `if <condition> begin <program_1> end else begin <program_2> end`
+  * when condition is evaled true
+    1. open new scope
+    2. interpret program_1
+    3. close scope
+  * when condition is evalued false and there exist program_2:
+    1. open new scope
+    2. interpret program_2
+    3. close scope.  
+* `while <condition> begin <program> end`
+    1. check condition
+    2. if it is evaled false go to point `vii.`
+    3. open new scope
+    4. interpret program
+    5. close scope
+    6. go back to point `i.`
+    7. .
+
+* `condition` - any expression. Depending on the expression value:
+  * false, when value is:
+    * Not initialised variable
+    * Empty `str`
+    * 0.0 `float`
+    * 0 `int`
+  * true, when value is:
+    * initialised variables of type struct, or variant if it is initialised struct
+    * all other values.
+* `program` - list of statements. Can be empty. Statements are interpreted in order they have been defined.
+
+#### visit
+**Example:**
+```
+visit point
+begin
+    case Point2D
     begin
-        wiadomosc = '[' + p3d.x + '; ' + p3d.y + '; ' + p3d.z + ']';
+        msg = '[' + p2d.x + '; ' + p2d.y + ']';
+    end
+    case Point3D
+    begin
+        msg = '[' + p3d.x + '; ' + p3d.y + '; ' + p3d.z + ']';
     end
 end
-print(wiadomosc);
+print(msg);
 ```
-Powyzszy program prezentuje wariant oraz instrukcję `visit`.
-W tym przykladzie zmienna wariantowa `punkt` przechowuje wartość typu `Punkt2D` zatem w instrukcji visit przechodzimy do odpowiadającemu temu typowi bloku (blok po `case Punkt2D`).
-Generacja wiadomości w tym przykladzie dotyka tematu operatorów, który będzie omawiany pózniej.
-Próba stworzenia powtarzajacego się bloku `case` zwroci błąd `CaseRedefinitionError: '<NazwaPowtarzającegoTypu>'` czyli w sytuacji:
+**Template:**
+* available only for variant values.
+* if variant value type matches case type:
+  * open new scope
+  * add new variable. Variable name is the same as in variant option of matched type. Value of this variable is the value of expression.
+  * program of the case gets interpreted
+  * close scope
+* if no type match then go to next statement
+
+#### variable declaration
+**Example:**
 ```
-visit punkt
+a : int;
+b : mut int;
+c : int = 1;
+d : mut int = 123;
+```
+**Template:**
+```
+<variable_name> : [mut] <type_name> [= <expr>];
+```
+* variable can be either mutable or non-mutable. non-mutable means that after being initialised it can not change. They are non-mutable by default
+* expr value should be convertable to specified type.
+* Without expr, variable of built in type or variant type is considered not initialised until assignment. 
+* struct type variable can be initialised without expr if at least one of their attribute has default value. Not initialised otherwise.
+
+#### assignment
+**Example:**
+```
+a.b.c.d.e = sum(1,2,3) + 5 * 7;
+a = '1234.567';
+```
+**Template:**
+```
+<object_access> = <expr>;
+```
+* expr value is automaticaly converted into target type.
+* object access:
+  * either just variable name:      e.g.: `a`, `this_is_variable_name`, `x1`
+  * or name with chain of attributes separated by `.`:      e.g.: `point.x`, `john.address.postal_code`
+
+#### struct definition
+**Example:**
+```
+Point3D : struct
 begin
-    case Punkt2D
-    begin
-        wiadmosc = '[' + p2d.x + '; ' +p2d.y + ']';
-    end
-    case Punkt2D @ CaseRedefinitionError: 'Punkt2D'
-    begin
-        wiadmosc = '[' + p3d.x + '; ' +p3d.y + '; ' +p3d.z + ']'; @ UndefinedIdentifierError : 'p3d'
-    end
+  x : mut int = 0;
+  y : mut int = 0;
+  z : mut int = 0;
 end
 ```
-### Słabe Typowanie
-W ściśle określonych sytuacjach następuje automatyczna konwersja z typu do innego typu.
- + Z `int` do:
-   + `float`: zawsze
-   + `str`: zawsze, `print(123);` - wyswietli 123
-   + `struct`: nigdy
-   + `variant`: -- 
- + Z `float` do:
-   + `int`: tylko gdy wartosc po odcięciu części ułamkowej jest z zakresu typu `int`.
-   + `str`: zawsze, reprezentowana jako zaokrąglona liczba dziesiętna, zawsze z rozwinięciem 7 cyfr po przecinku
-   + `struct`: nigdy
-   + `variant`: nigdy
-  + Z `str` do:
-     + `int`: jezeli wartosc typu `str` zlozona ze znakow cyfr oraz cyfry z przedzialu dla `int`. Jeśli wartość typu `str` zawiera znak `.` mozliwa jest konwersja dwuetapowa, najpierw z typu `str` do float (jesli się uda), następnie z `float` do `int`.
-     + `float`: jezeli wartość typu `str` zlozona ze znakow cyfr i ewentualnie z kropki. Jezeli po kropce znajduje się wiecej niz 7 cyfr, kolejne cyfry nie mają wpływu na wartość liczby po konwersji.
-     + `struct`: nigdy
-     + `variant`: nigdy
- + Typy definiowane przez uzytkownika za pomocą : `struct` oraz  `variant`, nie mają automatycznej konwersji do typów wbudowanych 
+**Template:**
 ```
-print(1.0);       @ wyświetla na ekranie 7 cyfr rozwinięcia dziesiętnego: '1.0000000'
+<struct type name> : struct begin {<variable_declaration_statement>} end
 ```
+* number of attributes in one struct type is not limited
 
-### Operacje
-Generalne zasady dla operacji:
- + operacje mają rózny priorytet
- + operacje są lewo-łączne dla operatorów o tym samym priorytecie, `x * y * z` to to samo co `(x * y) * z`
- + pierwszy argument operacji to argument tuz przed operatorem
- + typ pierwszego argumentu definiuje typ wyniku operacji - **Mogą być wyjątki!**
+#### variant definition
+**Example:**
+```
+Point : variant
+begin
+  point2d : Point2D
+  point3d : Point3D
+end
+```
+**Template:**
+```
+<variant type name> : struct begin { <option name> : <option type> ; } end
+```
+* number of options MUST be greater than one.
 
-Priorytety operacji posortowane od najmniejszego do najwyzszego:
-   1. `|` - lub
-   2. `&` - i
-   3. `<=; <; ==; !=; >=; >` - operatory porównania
-   4. `+; -` - dodawanie, odejmowanie
-   5. `*; /` - mnozenie, dzielenie
-   6. `-` - przeciwieństwo (unarny)
-   7. `.` - operator dostepu do pola w strukturze
-
-'|' oraz '&' - zwraca wartość typu `int` 0 albo 1. Następuje automatyczna konwersja pierwszego jak i drugiego argumentu na typ `int` i następnie wykonywana jest operacja.
-
-Pierwszy argument to `str`:
- + `+` - konkatenacja
- + `-` - usunięcie pierwszego wystąpienia wartosci drugiego argumentu z pierwszego
- + `==` oraz `!=` - porównanie znak po znaku
- + `*` jeśli drugi argument jest typu `int` to powtórzenie sekwencji czyli `'ABC'*3` to `'ABCABCABC'`, jeśli drugi argument jest typu `str` to iloczyn kartezjański czyli `'AB'*'12'` to `'A1A2B1B2'`
- + `/` usuniecie kazdego wystapienia wartosci drugiego argumentu z pierwszego
-
-Tylko struktury oraz warianty mają dostęp do operatora `.`
-
-Dla typów `int` oraz `float` operacje porównania, dodawanie, odejmowanie, mnozenie, dzielenie - **Zgodnie z intuicją**
-
-Gdy pierwszy argument jest typu `int` to dzielenie jest całkowite, gdy float to dzielenie jest zgodnie z intuicją.
-
-### Funkcje
-  + istnieją funkcje wbudowane:
-    + `print(msg : str) : null` - funkcja do wyswietlania typu `str`
-    + `read() : str` - funkcja do wczytywania wartości typu `str` od uzytkownika.
-  + funkcje mozna definiowac w róznych zakresach a nie tylko w globalnym
+#### function definition
+**Example:**
 ```
 add(arg1: int, arg2: int) : int
 begin
@@ -301,166 +283,62 @@ begin
   return add(arg1, arg2);
 end
 ```
-W tym przykładzie nie ma rekurencji. Funkcja wewnętrzna add przysłania nazwę funkcji add z odpowiadającymi sobie parametrami. 
-  + funkcje są 'widoczne' od momentu jej zadeklarowania:
+* in this example there is no recursion, because inner function `add` overloads function name. 
+* each time the outer function `add` is called, two inner functions are created. 
+**Template:**
 ```
-@ Tutaj nie widać funkcji add
-add(arg1: int, arg2: int) : int
-begin
-  @ od tego momentu widać funkcję add
-  return arg1 + arg2;
-end
-@ tutaj tez widac funkcje add
+<function name> ( <params> )  : <return type> begin {statements} end; 
 ```
-```
-factorial(n : int) : int 
-begin
-  if n < 0
-  begin
-    return -1;
-  end
-  if n <= 1
-  begin
-    return 1;
-  end
-  return n*factorial(n-1);
-end
+* return type is determined during runtime
+* function is identified by its name, so there can not be two function with the same name defined in the same scope, even with different parameters 
+* function name is visable within function program - recursion is supported
+* params: comma separated variable definitions:
+  * there can be zero or more
+  * default value can be specified but has no effect
+  * param names are visable from within function program
 
+#### return 
+**Example:**
 ```
-  + argumenty do funkcji przekazywane są przez **wartość**: 
+return arg1 + arg2;
 ```
-add(a : int, b : int) : int
-begin
-  a = 100;
-  b = 101;
-  return a + b;
-end
+**Template:**
+```
+return [<expr>] ;
+```
+* ends context:
+  * global context: ends interpretation
+  * function call context: ends interpretation of called function program
+* transfers the value of the expr when function call took place
 
-x : int = 0;
-y : int = 1;
+#### function call
+**Example:**
+```
+print('Ala' + 3.14);
+```
+**Template:**
+```
+<function name> ( <arguments> ) ;
+```
+* function call can be independent of expression or can be called within expression.
+* Arguments MUST be convertable to corresponding param type
+* function call statement loses return value of function call
+* arguments are comma separated expressions
+* when function is called, context of interpretation gets changed:
+  * active scope is the scope of function definition
+  * create new scope
+  * add params to new scope, assign value from arguments of function call
+  * interpret program from function definition
+  * close scope
+  * get value from return statement and convert it into function return type.
+  * active scope is the scope of function call
 
-print(x); 
-print(y);
-c : int = add(x, y);
-print(x); 
-print(y); @ to samo co przed wywolaniem funkcji
-```
-   + Definicja funkcji w ogólności:
-```
-NazwaFunkcji : NazwaTypuZwracanejWartości
-begin
-<Ciało Funkcji>
-end
-```  
-  + Jezeli funkcja nie zwraca wartości nalezy w miejsce nazwy typu zwracanej wartosci wpisac specjalny typ `null_type`
-```
-wypisz_na_ekran(wiadomosc: str) : null_type 
-begin
-  print(wiadomosc);
-end
-```
-  + Brak instrukcji `return` w funkcji oznacza ze funkcja nie zwraca wartości
-### Zakresy widoczności obiektów:
-  + 
-  + obiekty to: 
-    + zmienne
-    + struktury
-    + warianty
-    + funkcje
-  + Rózne rodzaje obiektow mogą mieć tą samą nazwę w tym samym zakresie
-  ```
-  A : int;
-  A : struct begin end
-  A : variant struct begin A : int; end
-  A() : int begin return 0; end @ definicja funkcji o nazwie A 
-  ```
-  + Funkcje o róznej liczbie parametrow równiez mogą miec tą samą nazwę:
-```
-A() : int begin return 0; end
-A(param1: int) : int begin return 1; end
-A(param1: int, param2: int) : int begin return 2; end
-```
-  + domyślny jest zakres globalny
-  + obiekty nie mogą mieć nazwy ze zbioru ***słów kluczowych***.
-  + nowe zakresy są ograniczone przez słowa kluczowe `begin` oraz `end` - ***Wyjątek*** w instrukcji `visit` widoczna jest dodatkowo nazwa z definicji wariantu odpowiadająca typowi z przypadku `case` 
-```
-W : variant struct
-begin
-a : int;
-b : str;
-end
 
-c : W = 1;
 
-visit c
-begin
-    case int
-    begin
-        print('Widoczna zmienna a');
-    end
-    case str
-    begin
-        print('Widoczna zmienna b');
-    end
-end
-```
-  + zakresy mogą być zagniezdzone
-  + zakres bardziej zagniezdzony "przysłania" nazwy z zakresow mniej zagniezdzonych
-```
-x : int = 1;
-print(x); @ 1
-begin
-  x : str = 'Ala ma kota';
-  begin
-    x : float = 2.0;
-    print(x); @ 2.0000000
-  end
-  begin
-    x : float = 3.0;
-    print(x); @ 3.0000000
-  end
-  print(x); @ Ala ma kota
-end
-print(x); @ 1
-```
 
-### Błędy
-+ Po natrafieniu na błąd, przerywamy program
-+ błędy zwracane przez lekser:
-  + za długie literały
-  + za długie nazwy identyfikatora
-  + uzycie niedozwolonego znaku, np emotki
-+ błędy zwracane przez parser:
-  + niedopasowane nawiasy
-  + niedopasowane `begin`, `end`
-+ błędy semantyczne:
-  + funkcja nieznaleziona, np jesli w wywołaniu podamy złą ilośc argumentów 
-  + Niezgodność typów 
-  + Błąd konwersji 
-  + brak `return` w ciele funkcji zwracającej typ inny niz `null_type`
-  + ponowne przypisanie wartosci do zmiennej niemutowalnej
-  + odwołania się do nieistniejącego pola w strukturze
-  + niestniejaca nazwa typu w waraincie podczas instrukcji `visit`
-  + powtórka typu w przypadkach w instrukcji `visit`
-  + niewspierana operacja, np `'abb' < 'abc'`
-  
-+ błędy podczas wykonania:
-  + dzielenie przez zero
-  + próba uzyskania wartosci zmiennej niezainicjowanej
-  
-+ Pozycja błędu, numer wiersza, pozycja w wierszu - pozycja pierwszego znaku fragmentu kodu generującego błąd
 
-### Testowanie
-Testy jednostkowe do kadej funkcji.
-Testy integracyjne do sprawdzenia współpracy między modułami projektu.
-Testy na całych złozonych programach.
-terminal:
-```PYTHONPATH="$(pwd)" pytest tests/ -q```
 
-### Więcej przykładów:
-W pliku `first.mc`
-  
-### Gramatyka w EBNF 2.0:
+### Grammar of this language in EBNF 2.0:
 ```
 program             ::= {statement};
 
@@ -470,18 +348,27 @@ statement           ::=  variable_declaration_statement
                        | while_statement
                        | function_definition_statement
                        | type_definition_statement
+                       | visit_statement
                        | return_statement
-                       | block;
+					   | block
+                       | function_call_statement
+                       | comment;
 
-block                           ::= 'begin', program, 'end';
-return_statement                ::== 'return', expression, ';';
+function_call_statement ::= function_call, ';'
+
+visit_statement ::= 'visit', object_access, 'begin', {case_section} ,'end';
+
+case_section ::= 'case', type, 'begin', program,'end';
+
+block 				            ::= 'begin', program, 'end';
+return_statement                ::== 'return', [expression], ';';
 
 variable_declaration_statement  ::= variable_declaration, ';';
 variable_declaration            ::= identifier, ':', ['mut'], type, ['=', expression];
 
 
 
-assignment_statement            ::= object_access, '=', expression, ';';
+assignment_statement            ::= identifier, {'.', identifier}, '=', expression, ';';
 
 if_statement                    ::= 'if', expression, block, ['else', block];
 
@@ -493,21 +380,25 @@ type_definition_statement       ::= struct_def | variant_def;
 struct_def                      ::= identifier, ':', 'struct', 'begin', {variable_declaration_statement} ,'end';
 variant_def                     ::= identifier, ':', 'variant', 'begin', {named_type_statement} ,'end';
 
-named_type_statement            ::= identifier, ':', type, ';'
+named_type_statement ::= identifier, ':', type, ';'
 
 expression              ::= logical_or_expression;
 logical_or_expression   ::= logical_and_expression, {'|', logical_and_expression};
 logical_and_expression  ::= relational_expr {'&', relational_expr};
-relational_expr         ::= additive_expr, {relational_operator, additive_expr};
+relational_expr         ::= additive_expr, [relational_operator, additive_expr];
 additive_expr           ::= multi_expr, {additive_operator, multi_expr};
 multi_expr              ::= unary_expr, {multi_operator, unary_expr};
 unary_expr              ::= ['-'], term;
 term                    ::=	literal
-                          | object_access;
+                          | object_access
+                          | '(', expression, ')';
 
-object_access           ::=  identifier, {('.', identifier)};
+object_access           ::=  func_or_ident, {('.', func_or_ident)};
 
-function_call ::= identifier, '(', [expression , (',', expression)], ')';
+func_or_ident           ::= function_call | identifier;
+
+
+function_call ::= identifier, '(', [expression , {',', expression}], ')';
 
 param         ::= identifier, ':', ['mut'], type;
 params        ::= param , {',', param};
@@ -522,8 +413,6 @@ literal        ::=  int_literal
             	| float_literal
             	| str_literal;
             	| 'null'
-
-----------------------------------------------------------------------------------------
 
 str_literal  ::= ''',{all_chars_from_utf8_if_Apostrophe_is_escaped} , ''';
 
@@ -561,6 +450,8 @@ letter       ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
 comment      ::= '@', {all_exept_newline}, newline;
 newline      ::= '\n'
               |  '\r\n';
-
-
 ```
+
+
+
+

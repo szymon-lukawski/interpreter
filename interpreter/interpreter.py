@@ -922,6 +922,7 @@ class Interpreter(Visitor):
 
     @dispatch(object, object, object)
     def gt(self, left, right, pos):
+        # 'A' > 'B' yields true but it should yield False
         return self.and_(self.not_(self.lt(left,right,pos)), self.not_(self.eq(left,right,pos)))
     
     @dispatch(object, object, object)
